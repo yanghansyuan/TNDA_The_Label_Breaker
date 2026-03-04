@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Forest — Single Light Beam</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #18241d;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resize);
+        resize();
+
+        /* ===== 森林背景 ===== */
+        function drawForest() {
+            const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            g.addColorStop(0, "#2f4035");
+            g.addColorStop(0.6, "#22352a");
+            g.addColorStop(1, "#152018");
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        /* ===== 單一固定光束 ===== */
+        const beam = {
+            topX: 0.62,     // 光從上方的位置（比例）
+            width: 0.14,    // 光束寬度
+            slope: -0.22    // 傾斜程度
+        };
+
+        function drawBeam() {
+            const x = canvas.width * beam.topX;
+            const w = canvas.width * beam.width;
+            const dx = canvas.width * beam.slope;
+
+            const g = ctx.createLinearGradient(x, 0, x + dx, canvas.height);
+            g.addColorStop(0, "rgba(255,245,215,0.35)");
+            g.addColorStop(0.25, "rgba(255,245,215,0.20)");
+            g.addColorStop(0.5, "rgba(255,245,215,0.08)");
+            g.addColorStop(0.7, "rgba(255,245,215,0.02)");
+            g.addColorStop(1, "rgba(255,245,215,0)");
+
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x + w, 0);
+            ctx.lineTo(x + w + dx, canvas.height);
+            ctx.lineTo(x + dx, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        /* 判斷是否在光束中（含邊界衰減） */
+        function beamIntensity(p) {
+            const xTop = canvas.width * beam.topX;
+            const xBottom = xTop + canvas.width * beam.slope;
+            const w = canvas.width * beam.width;
+            const t = p.y / canvas.height;
+            const left = xTop + (xBottom - xTop) * t;
+            const right = left + w;
+
+            if (p.x < left || p.x > right) return 0;
+
+            const edge = Math.min((p.x - left) / w, (right - p.x) / w);
+            return Math.max(0, Math.min(1, edge * 2));
+        }
+
+        /* ===== 粒子 ===== */
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.r = Math.random() * 1.4 + 0.4;
+                this.vx = (Math.random() - 0.5) * 0.07;
+                this.vy = (Math.random() - 0.5) * 0.07;
+                this.phase = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.phase += 0.04;
+
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                const intensity = beamIntensity(this);
+                if (intensity <= 0) return;
+
+                const pulse = Math.sin(this.phase) * 0.25 + 0.75;
+                ctx.fillStyle = `rgba(255,250,225,${0.5 * intensity * pulse})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r * pulse, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 280; i++) {
+            particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
+        }
+
+        /* 點擊：加入粒子 */
+        canvas.addEventListener("mousedown", e => {
+            for (let i = 0; i < 30; i++) {
+                particles.push(new Particle(
+                    e.clientX + (Math.random() - 0.5) * 60,
+                    e.clientY + (Math.random() - 0.5) * 60
+                ));
+            }
+        });
+
+        /* ===== 主動畫 ===== */
+        function animate() {
+            drawForest();
+            drawBeam();
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

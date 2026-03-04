@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>鍵盤互動小實驗</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #222; /* 初始背景色 */
+      color: white;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .info {
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .key {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="info">
+    <p>按鍵盤試試：</p>
+    <p>
+      按 <span class="key">R</span> 變紅色、  
+      按 <span class="key">G</span> 變綠色、  
+      按 <span class="key">B</span> 變藍色、  
+      按 <span class="key">Space</span> 回到灰黑色。
+    </p>
+    <p>（滑鼠在畫面中任何地方，直接按鍵就可以）</p>
+  </div>
+
+  <script>
+    // 監聽整個文件的 keydown 事件
+    document.addEventListener("keydown", function (event) {
+      const key = event.key; // 取得按下的是哪個鍵
+
+      if (key === "r" || key === "R") {
+        document.body.style.backgroundColor = "crimson";
+      } else if (key === "g" || key === "G") {
+        document.body.style.backgroundColor = "seagreen";
+      } else if (key === "b" || key === "B") {
+        document.body.style.backgroundColor = "royalblue";
+      } else if (key === " ") { // 空白鍵
+        document.body.style.backgroundColor = "#222";
+      }
+    });
+  </script>
+</body>
+</html>

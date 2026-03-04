@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INCONSOLABLE - Add Shape</title>
+    <style>
+        :root {
+            /* 整體低飽和藍紫灰黑調 */
+            --bg-start: #2c3e50; /* 較深的藍灰 */
+            --bg-end: #1a1a2e;   /* 更接近純黑的深紫 */
+            --mist-color: rgba(40, 48, 64, 0.6); /* 迷霧感 */
+            --line-color: rgba(150, 160, 180, 0.4); /* 歪斜線條 */
+            --dot-color: rgba(200, 210, 230, 0.5);  /* 點的顏色 */
+            --circle-stroke-color: rgba(180, 190, 210, 0.6);
+            --interaction-glow: rgba(100, 110, 130, 0.5); /* 滑鼠互動時的輝光 */
+            --added-circle-base-color-hue: 210; /* 藍色的色相 */
+            --added-circle-base-color-saturation: 30%; /* 較低的飽和度 */
+            --added-circle-base-color-lightness-min: 60%;
+            --added-circle-base-color-lightness-max: 100%;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 隱藏滾動條 */
+            height: 100vh; /* 佔滿整個視窗高度 */
+            background: linear-gradient(to bottom, var(--bg-start), var(--bg-end));
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%2396A0B4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>'), auto; /* 基礎游標 */
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* 讓canvas在最底層 */
+        }
+
+        .content {
+            display: none; /* 刪除畫面中的文字 */
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="emotionCanvas"></canvas>
+
+    <div class="content" id="introText"></div>
+
+    <script>
+        const canvas = document.getElementById("emotionCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let dots = [];
+        let lines = [];
+        let circles = []; // 點擊生成的可互動圓
+        let addedCircle = null; // 新增的實心圓
+        let mousePos = { x: -100, y: -100 }; // 初始化滑鼠位置到畫布外
+        let isMouseNearCircle = false; // 標記滑鼠是否靠近圓
+
+        // 1. 自適應畫布大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createDots();
+            createLines(); // 重新生成線條
+            // 確保新生成的 addedCircle 也在畫面中央
+            if (!addedCircle) {
+                createAddedCircle();
+            } else {
+                // 如果 addedCircle 已存在，可能需要調整其位置或大小
+                addedCircle.x = canvas.width / 2;
+                addedCircle.y = canvas.height / 2;
+                addedCircle.initialY = canvas.height / 2; // 重置初始Y
+            }
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas(); // 初始調用
+
+        // 2. 受重力影響的點（雨滴）
+        function createDots() {
+            dots = [];
+            const numberOfDots = Math.max(200, Math.floor(canvas.width * canvas.height / 2000));
+            for (let i = 0; i < numberOfDots; i++) {
+                dots.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    speed: 0.5 + Math.random() * 1.0,
+                    size: 1.5 + Math.random() * 1.5,
+                    density: Math.random()
+                });
+            }
+            dots.sort((a, b) => a.density - b.density);
+        }
+
+        // 3. 垂直方向的細線，隨機旋轉
+        function createLines() {
+            lines = [];
+            const numberOfLines = Math.max(30, Math.floor(canvas.width / 20));
+            for (let i = 0; i < numberOfLines; i++) {
+                const startX = Math.random() * canvas.width;
+                const startY = Math.random() * canvas.height;
+                const length = 50 + Math.random() * 100;
+                // 隨機旋轉角度：-15度到+15度（弧度制）
+                const angleVariation = (Math.random() * 30 - 15) * Math.PI / 180;
+                const baseAngle = -Math.PI / 2; // 基礎為垂直向下
+                const angle = baseAngle + angleVariation;
+
+                const endX = startX + length * Math.cos(angle);
+                const endY = startY + length * Math.sin(angle);
+
+                lines.push({
+                    x1: startX,
+                    y1: startY,
+                    x2: endX,
+                    y2: endY,
+                    speedY: 0.2 + Math.random() * 0.3,   // 主要向下移動
+                    opacity: 0.3 + Math.random() * 0.3,
+                    width: 0.5 + Math.random() * 0.5,
+                    initialAngle: angle // 記錄初始角度，用於旋轉
+                });
+            }
+        }
+
+        // 4. 點擊時出現的圓
+        canvas.addEventListener("click", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            // 明度在60-100%隨機的帶有藍色傾向的灰色
+            const lightness = 60 + Math.random() * 40; // 60% to 100%
+            const hue = 210; // 藍色色相
+            const saturation = 10 + Math.random() * 20; // 較低的飽和度，使其偏灰
+
+            circles.push({
+                x: clickX,
+                y: clickY,
+                initialY: clickY,
+                radius: 30,
+                fallSpeed: 0.5,
+                stretchFactor: 0,
+                alpha: 0.8,
+                color: `hsl(${hue}, ${saturation}%, ${lightness}%)` // 動態生成顏色
+            });
+        });
+
+        // 5. 新增的實心圓 (中心)
+        function createAddedCircle() {
+            const lightness = 60 + Math.random() * 40;
+            const hue = 210;
+            const saturation = 10 + Math.random() * 20;
+
+            addedCircle = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                initialY: canvas.height / 2,
+                radius: Math.min(canvas.width, canvas.height) / 5, // 比其他圓大
+                fallSpeed: 0.2, // 較慢的下沉速度
+                stretchFactor: 0,
+                alpha: 0.7,
+                color: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+                distortion: 0, // 用於滑鼠互動變形
+                wormyFactor: 0 // 用於蟲狀變形
+            };
+        }
+        createAddedCircle(); // 初始創建
+
+        // 滑鼠移動事件，用於互動效果
+        canvas.addEventListener("mousemove", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            mousePos.x = event.clientX - rect.left;
+            mousePos.y = event.clientY - rect.top;
+        });
+
+        // 移除滑鼠移出畫布的事件
+        canvas.addEventListener("mouseout", () => {
+            mousePos.x = -100;
+            mousePos.y = -100;
+        });
+
+        // 動畫循環
+        function animate() {
+            // 半透明背景疊加，產生濕霧感和殘影
+            ctx.fillStyle = "rgba(46, 52, 64, 0.1)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 點 (雨滴) - 越下方越密集
+            ctx.fillStyle = "var(--dot-color)";
+            dots.forEach(d => {
+                d.y += d.speed;
+                d.speed += d.density * 0.005;
+
+                if (d.y > canvas.height) {
+                    d.y = -d.size * 2;
+                    d.x = Math.random() * canvas.width;
+                    d.speed = 0.5 + Math.random() * 1.0;
+                    d.density = Math.random();
+                }
+
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 垂直方向的細線，隨機旋轉
+            ctx.strokeStyle = "var(--line-color)";
+            ctx.lineWidth = 0.8;
+            lines.forEach((line, index) => {
+                line.y1 += line.speedY;
+                line.y2 += line.speedY;
+
+                // 如果線條完全移出畫布，則重置
+                if (line.y1 > canvas.height && line.y2 > canvas.height) {
+                    line.x1 = Math.random() * canvas.width;
+                    line.y1 = -50 - Math.random() * 50;
+                    const length = 50 + Math.random() * 100;
+                    const angleVariation = (Math.random() * 30 - 15) * Math.PI / 180;
+                    const baseAngle = -Math.PI / 2;
+                    const angle = baseAngle + angleVariation;
+
+                    line.x2 = line.x1 + length * Math.cos(angle);
+                    line.y2 = line.y1 + length * Math.sin(angle);
+                    line.speedY = 0.2 + Math.random() * 0.3;
+                    line.opacity = 0.3 + Math.random() * 0.3;
+                    line.width = 0.5 + Math.random() * 0.5;
+                    line.initialAngle = angle;
+                }
+
+                ctx.globalAlpha = line.opacity;
+                ctx.beginPath();
+                ctx.moveTo(line.x1, line.y1);
+                ctx.lineTo(line.x2, line.y2);
+                ctx.stroke();
+            });
+            ctx.globalAlpha = 1.0; // 重置透明度
+
+            // 點擊時出現的圓
+            circles.forEach((circle, index) => {
+                circle.y += circle.fallSpeed;
+                circle.fallSpeed += 0.005;
+                circle.stretchFactor = Math.min(1, (circle.y - circle.initialY) / (canvas.height * 0.5));
+
+                const dx = mousePos.x - circle.x;
+                const dy = mousePos.y - circle.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const mouseInfluenceRadius = circle.radius * 3;
+
+                let distortion = 0;
+                if (distance < mouseInfluenceRadius) {
+                    distortion = mouseInfluenceRadius - distance;
+                    isMouseNearCircle = true;
+                } else {
+                    isMouseNearCircle = false; // 這裡需要更精確的判斷，是否 *任何* 圓被靠近
+                }
+
+                // 繪製圓
+                ctx.beginPath();
+                ctx.ellipse(
+                    circle.x,
+                    circle.y + circle.radius * circle.stretchFactor * 0.8,
+                    circle.radius,
+                    circle.radius * (1 + circle.stretchFactor * 0.5),
+                    0, 0, Math.PI * 2
+                );
+                ctx.fillStyle = circle.color;
+                ctx.fill();
+
+                ctx.strokeStyle = `rgba(200, 210, 230, ${circle.alpha})`;
+                ctx.lineWidth = 1.5 + circle.stretchFactor * 2;
+                ctx.stroke();
+
+                // 模擬滑鼠靠近時邊緣向內縮
+                if (distance < mouseInfluenceRadius) {
+                    ctx.save();
+                    // 創建一個變形效果，讓邊緣向內凹陷
+                    const shape = new Path2D();
+                    shape.ellipse(circle.x, circle.y + circle.radius * circle.stretchFactor * 0.8, circle.radius, circle.radius * (1 + circle.stretchFactor * 0.5), 0, 0, Math.PI * 2);
+                    ctx.clip(shape); // 剪裁到圓的區域
+                    ctx.strokeStyle = "var(--interaction-glow)";
+                    ctx.lineWidth = 3;
+                    // 在滑鼠位置繪製一個凹陷效果
+                    const inwardPush = (mouseInfluenceRadius - distance) / mouseInfluenceRadius * 8; // 凹陷程度
+                    ctx.beginPath();
+                    ctx.arc(circle.x, circle.y, circle.radius + circle.radius * circle.stretchFactor * 0.5, 0, Math.PI * 2);
+                    ctx.lineWidth = 3 + inwardPush; // 讓邊緣看起來被推動
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                if (circle.y > canvas.height + circle.radius * 2) {
+                    circles.splice(index, 1);
+                }
+            });
+
+            // 檢查是否有任何一個圓被滑鼠靠近，用於全局改變游標
+            let anyCircleNearMouse = circles.some(circle => {
+                const dx = mousePos.x - circle.x;
+                const dy = mousePos.y - circle.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const mouseInfluenceRadius = circle.radius * 3;
+                return distance < mouseInfluenceRadius;
+            });
+
+
+            // 新增的實心圓 (中心)
+            if (addedCircle) {
+                // 模擬下沉和拉長
+                addedCircle.y += addedCircle.fallSpeed;
+                addedCircle.fallSpeed += 0.003; // 更慢的重力加速
+                addedCircle.stretchFactor = Math.min(1, (addedCircle.y - addedCircle.initialY) / (canvas.height * 0.8)); // 總體拉伸範圍更大
+
+                // 模擬滑鼠靠近時的變形 (凹陷)
+                const dxAdded = mousePos.x - addedCircle.x;
+                const dyAdded = mousePos.y - addedCircle.y;
+                const distanceAdded = Math.sqrt(dxAdded * dxAdded + dyAdded * dyAdded);
+                const mouseInfluenceRadiusAdded = addedCircle.radius * 1.5; // 影響範圍稍小，更精確
+
+                if (distanceAdded < mouseInfluenceRadiusAdded) {
+                    // 越靠近滑鼠，變形越明顯，向內收縮
+                    addedCircle.distortion = (mouseInfluenceRadiusAdded - distanceAdded) / mouseInfluenceRadiusAdded * 10; // 凹陷程度
+                    anyCircleNearMouse = true; // 標記有滑鼠靠近
+                } else {
+                    addedCircle.distortion *= 0.9; // 緩慢恢復
+                }
+
+                // 模擬蟲狀變形 (更複雜的拉伸和扭曲)
+                addedCircle.wormyFactor = Math.min(1, Math.abs(addedCircle.fallSpeed * 20)); // 速度越快，蟲狀感越強
+                const wormyIntensity = addedCircle.wormyFactor * 15; // 蟲狀變形的強度
+
+                ctx.save();
+                ctx.fillStyle = addedCircle.color;
+                ctx.strokeStyle = `rgba(200, 210, 230, ${addedCircle.alpha})`;
+                ctx.lineWidth = 1.5 + addedCircle.stretchFactor * 3; // 隨拉伸變化
+
+                // 使用 Path2D 繪製更複雜的形狀
+                const path = new Path2D();
+                const currentRadius = addedCircle.radius * (1 + addedCircle.stretchFactor * 0.7); // 基礎拉伸
+                const centerX = addedCircle.x;
+                const centerY = addedCircle.y + addedCircle.radius * addedCircle.stretchFactor * 0.8;
+
+                // 繪製一個被拉伸、變形的圓
+                const segments = 60; // 增加細節
+                for (let i = 0; i <= segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2;
+                    let segmentRadius = currentRadius;
+
+                    // 蟲狀變形：在圓周上加入波浪
+                    const waveOffset = Math.sin(angle * 5 + addedCircle.y * 0.02) * wormyIntensity * Math.sin(i / segments * Math.PI); // 確保波浪在底部不明顯
+                    segmentRadius += waveOffset;
+
+                    // 滑鼠互動凹陷：在滑鼠方向上縮小半徑
+                    const angleToMouse = Math.atan2(centerY - mousePos.y, centerX - mousePos.x);
+                    if (Math.abs(angle - angleToMouse) < Math.PI / 8) { // 僅在滑鼠附近應用凹陷
+                        const distToMouse = Math.sqrt((centerX - mousePos.x)**2 + (centerY - mousePos.y)**2);
+                        if (distToMouse < mouseInfluenceRadiusAdded * 1.5) {
+                             const pushAmount = (mouseInfluenceRadiusAdded - distToMouse) / mouseInfluenceRadiusAdded * addedCircle.distortion * 1.5; // 凹陷程度
+                             segmentRadius -= pushAmount;
+                        }
+                    }
+
+
+                    const x = centerX + segmentRadius * Math.cos(angle);
+                    const y = centerY + segmentRadius * Math.sin(angle);
+
+                    if (i === 0) {
+                        path.moveTo(x, y);
+                    } else {
+                        path.lineTo(x, y);
+                    }
+                }
+                path.closePath();
+
+                ctx.fill(path);
+                ctx.stroke(path);
+                ctx.restore(); // 恢復狀態
+
+                // 移除超出畫布的圓
+                if (addedCircle.y > canvas.height + addedCircle.radius * 2) {
+                    addedCircle = null; // 設為 null，下次點擊會重新創建
+                }
+            }
+
+
+            // 根據是否有圓被滑鼠靠近來改變游標
+            if (anyCircleNearMouse) {
+                canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23E0E0E0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9 15l6-6M15 9l-6 6"></path></svg>'), pointer`;
+            } else {
+                 canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%2396A0B4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>'), auto`;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // 初始生成點和線
+        createDots();
+        createLines();
+
+        // 開始動畫
+        animate();
+
+    </script>
+
+</body>
+</html>

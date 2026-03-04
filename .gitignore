@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+.Python
+*.so
+
+# 若不想把產生的資料一起版控可取消註解：
+# Gallery/gallery_embedded.js

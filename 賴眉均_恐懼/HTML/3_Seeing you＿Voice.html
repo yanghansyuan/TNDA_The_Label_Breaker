@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>THE ABYSS - 藝術創作</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --accent: #e6e2af;
+            --danger: #900;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            cursor: none; /* 隱藏鼠標增加未知感 */
+        }
+
+        /* 噪點遮罩 */
+        .noise {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.05; pointer-events: none; z-index: 10;
+        }
+
+        /* 手電筒遮罩 */
+        #flashlight {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle 100px at 50% 50%, rgba(230,226,175,0.1) 0%, #000 100%);
+            z-index: 5; pointer-events: none;
+        }
+
+        /* 中央提示 */
+        .ui {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none;
+            transition: opacity 2s;
+        }
+
+        h1 { font-size: 1.2rem; letter-spacing: 0.8rem; opacity: 0.4; filter: blur(1px); }
+
+        /* 裂痕樣式 */
+        .crack {
+            position: fixed; width: 150px; height: 150px;
+            background: rgba(230,226,175,0.2);
+            clip-path: polygon(50% 50%, 55% 10%, 52% 45%, 90% 30%, 55% 55%, 70% 95%, 48% 60%, 15% 85%, 45% 52%, 5% 15%);
+            z-index: 4; pointer-events: none;
+            animation: crack-out 3s forwards;
+        }
+
+        @keyframes crack-out {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+
+        /* 螢幕閃爍 (右鍵用) */
+        .glitch-flash {
+            animation: flash 0.15s ease-out;
+        }
+        @keyframes flash {
+            0% { filter: invert(1) contrast(500%); }
+            100% { filter: none; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;"> <div class="noise"></div>
+    <div id="flashlight"></div>
+
+    <div class="ui" id="ui-box">
+        <h1 id="status-text">探索未知</h1>
+        <p style="font-size: 0.7rem; opacity: 0.3;">[ 左鍵試探 / 右鍵破壞 ]</p>
+    </div>
+
+    <script>
+        const flashlight = document.getElementById('flashlight');
+        const statusText = document.getElementById('status-text');
+        const uiBox = document.getElementById('ui-box');
+        
+        let audioCtx;
+        let idleTimer;
+
+        // 初始化 AudioContext
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                startDrone(); // 啟動背景低頻
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // --- 音效生成器 ---
+
+        // 背景低頻 (Drone) - 營造壓迫感
+        function startDrone() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 45; // 極低頻震動
+            gain.gain.value = 0.03;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+        }
+
+        // 左鍵：重擊聲 (Low Thud)
+        function playThud() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // 右鍵：尖銳破碎聲 (Sharp Crackle)
+        function playCrackle() {
+            const bufferSize = audioCtx.sampleRate * 0.15;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize / 3));
+            }
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "highpass";
+            filter.frequency.value = 3000; // 只保留刺耳高頻
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.4;
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            source.start();
+        }
+
+        // --- 互動邏輯 ---
+
+        window.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            // 手電筒跟隨
+            flashlight.style.background = `radial-gradient(circle 120px at ${x}px ${y}px, rgba(230,226,175,0.12) 0%, #000 100%)`;
+
+            // 適應性：恢復狀態
+            clearTimeout(idleTimer);
+            statusText.innerText = "探索未知";
+            statusText.style.color = "var(--accent)";
+            uiBox.style.opacity = "0.4";
+
+            // 停頓適應
+            idleTimer = setTimeout(() => {
+                statusText.innerText = "它看見你了";
+                statusText.style.color = "var(--danger)";
+                uiBox.style.opacity = "1";
+                flashlight.style.background = `radial-gradient(circle 50px at ${x}px ${y}px, rgba(150,0,0,0.3) 0%, #000 100%)`;
+            }, 2500);
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            initAudio(); // 確保聲音啟動
+
+            if (e.button === 0) { // 左鍵：重擊
+                playThud();
+                createVisualCrack(e.clientX, e.clientY);
+            } 
+            else if (e.button === 2) { // 右鍵：破碎
+                playCrackle();
+                document.body.classList.remove('glitch-flash');
+                void document.body.offsetWidth; // 重新觸發動畫
+                document.body.classList.add('glitch-flash');
+                // 右鍵點擊額外效果：隨機擾動
+                uiBox.style.transform = `translate(-50%, -50%) skew(${Math.random()*20}deg)`;
+                setTimeout(()=> uiBox.style.transform = "translate(-50%, -50%)", 100);
+            }
+        });
+
+        function createVisualCrack(x, y) {
+            const crack = document.createElement('div');
+            crack.className = 'crack';
+            crack.style.left = `${x}px`;
+            crack.style.top = `${y}px`;
+            crack.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+            document.body.appendChild(crack);
+            setTimeout(() => crack.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

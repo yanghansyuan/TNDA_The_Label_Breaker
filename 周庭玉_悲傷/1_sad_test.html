@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>1_sad_test</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #2e3440; /* 去飽和藍灰 */
+}
+
+canvas {
+    display: block;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+
+// ======================
+// 下沉的點（雨）
+// ======================
+let dots = [];
+
+function createDots(){
+    dots = [];
+    for(let i=0; i<120; i++){
+        dots.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            speed: 0.3 + Math.random() * 0.5,
+            size: 1 + Math.random() * 2
+        });
+    }
+}
+createDots();
+
+
+// ======================
+// 漣漪
+// ======================
+let ripples = [];
+
+canvas.addEventListener("click", e=>{
+    ripples.push({
+        x: e.clientX,
+        y: e.clientY,
+        r: 0,
+        alpha: 0.4
+    });
+});
+
+
+// ======================
+// 畫不完整圓
+// ======================
+function drawBrokenCircle(){
+    let cx = canvas.width/2;
+    let cy = canvas.height/2;
+    let radius = Math.min(canvas.width, canvas.height)/5;
+
+    ctx.strokeStyle = "rgba(180,190,210,0.6)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    // 畫 80% 的圓，留下缺口
+    ctx.arc(cx, cy, radius, Math.PI*0.2, Math.PI*1.8);
+    ctx.stroke();
+}
+
+
+// ======================
+// 動畫
+// ======================
+function animate(){
+
+    // 半透明背景疊加，產生濕霧感
+    ctx.fillStyle = "rgba(46,52,64,0.2)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // 雨點
+    ctx.fillStyle = "rgba(200,210,230,0.4)";
+    dots.forEach(d=>{
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.size, 0, Math.PI*2);
+        ctx.fill();
+
+        d.y += d.speed;
+        if(d.y > canvas.height){
+            d.y = -5;
+            d.x = Math.random() * canvas.width;
+        }
+    });
+
+    // 漣漪
+    ripples.forEach((r,index)=>{
+        ctx.strokeStyle = `rgba(200,210,230,${r.alpha})`;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+        ctx.stroke();
+
+        r.r += 0.5;
+        r.alpha -= 0.003;
+
+        if(r.alpha <= 0){
+            ripples.splice(index,1);
+        }
+    });
+
+    drawBrokenCircle();
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>

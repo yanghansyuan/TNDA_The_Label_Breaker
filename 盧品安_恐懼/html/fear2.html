@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear - 2-interactive_fear.html</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a; /* 暗色系 */
+            cursor: none; /* 隱藏系統滑鼠，用自訂視覺元素 */
+            user-select: none; /* 防止選取 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let audioCtx = null;
+    let audioFilter, audioGain;
+    let mouse = { x: 0, y: 0, clicked: false, lastX: 0, lastY: 0 };
+    let triangles = [];
+    let chaosLines = [];
+    let frameCount = 0;
+
+    // 自適應調整大小
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 隨機數生成
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    // 三角形物件
+    class Triangle {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.baseSize = rand(15, 40);
+            this.size = this.baseSize;
+            this.color = `rgba(${rand(30, 80)}, ${rand(0, 20)}, ${rand(0, 20)}, ${rand(0.2, 0.5)})`;
+            this.rotation = rand(0, Math.PI * 2);
+            this.speedX = rand(-0.5, 0.5);
+            this.speedY = rand(-0.5, 0.5);
+            this.targetX = this.x;
+            this.targetY = this.y;
+            this.avoiding = false;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation + Math.sin(frameCount * 0.05 + this.x) * 0.1); // 微小抖動
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = rand(0.5, 2);
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 2);
+            ctx.lineTo(-this.size / 2, this.size / 2);
+            ctx.lineTo(this.size / 2, this.size / 2);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        update() {
+            if (this.avoiding) {
+                this.x += this.speedX * 5; // 閃避時加速
+                this.y += this.speedY * 5;
+                // 逐漸回到原位 (減速)
+                this.speedX *= 0.95;
+                this.speedY *= 0.95;
+                if (Math.abs(this.speedX) < 0.1 && Math.abs(this.speedY) < 0.1) {
+                    this.avoiding = false;
+                    this.speedX = rand(-0.5, 0.5);
+                    this.speedY = rand(-0.5, 0.5);
+                }
+            } else {
+                // 緩慢漂移
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // 邊界反彈
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+        }
+
+        avoid(targetX, targetY) {
+            this.avoiding = true;
+            const dx = this.x - targetX;
+            const dy = this.y - targetY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const force = 100 / (dist + 1); // 距離越近，閃避力越大
+            this.speedX = dx / dist * force;
+            this.speedY = dy / dist * force;
+        }
+    }
+
+    // 混亂線條物件
+    class ChaosLine {
+        constructor(x1, y1, x2, y2, opacity) {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+            this.opacity = opacity;
+            this.life = 1;
+            this.color = `rgba(${rand(50, 150)}, ${rand(0, 50)}, ${rand(0, 50)}, `;
+        }
+
+        draw() {
+            ctx.strokeStyle = this.color + (this.opacity * this.life) + ')';
+            ctx.lineWidth = rand(0.5, 2);
+            ctx.beginPath();
+            ctx.moveTo(this.x1, this.y1);
+            ctx.lineTo(this.x2, this.y2);
+            ctx.stroke();
+        }
+
+        update() {
+            this.life -= 0.01; // 逐漸消失
+            return this.life > 0;
+        }
+    }
+
+    // 初始化音訊 (產生煩躁的雜訊)
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = 2 * audioCtx.sampleRate,
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate),
+        output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        audioFilter = audioCtx.createBiquadFilter();
+        audioFilter.type = 'lowpass';
+        audioFilter.frequency.value = 200; // 初始低頻雜訊
+
+        audioGain = audioCtx.createGain();
+        audioGain.gain.value = 0.03; // 初始音量極小
+
+        whiteNoise.connect(audioFilter);
+        audioFilter.connect(audioGain);
+        audioGain.connect(audioCtx.destination);
+        whiteNoise.start();
+    }
+
+    // 初始化三角形
+    for (let i = 0; i < 50; i++) {
+        triangles.push(new Triangle(rand(0, width), rand(0, height)));
+    }
+
+    // 主要繪圖迴圈
+    function animate() {
+        frameCount++;
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.2)'; // 輕微殘影效果
+        ctx.fillRect(0, 0, width, height);
+
+        // 更新與繪製混亂線條
+        if (frameCount % 3 === 0) { // 每隔幾幀生成新的背景混亂線條
+            chaosLines.push(new ChaosLine(rand(0, width), rand(0, height), rand(0, width), rand(0, height), rand(0.05, 0.15)));
+        }
+        chaosLines = chaosLines.filter(line => line.update());
+        chaosLines.forEach(line => line.draw());
+
+
+        // 更新與繪製三角形
+        triangles.forEach(tri => {
+            tri.update();
+            tri.draw();
+        });
+
+        // 滑鼠殘影
+        if (mouse.lastX !== mouse.x || mouse.lastY !== mouse.y) {
+            chaosLines.push(new ChaosLine(mouse.lastX, mouse.lastY, mouse.x + rand(-20, 20), mouse.y + rand(-20, 20), 0.3));
+            mouse.lastX = mouse.x;
+            mouse.lastY = mouse.y;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // 滑鼠移動事件
+    window.addEventListener('mousemove', (e) => {
+        if (!audioCtx) initAudio();
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+
+        // 隨滑鼠移動調整音訊 (輕微煩躁感)
+        const distToCenter = Math.sqrt(Math.pow(e.clientX - width / 2, 2) + Math.pow(e.clientY - height / 2, 2));
+        const normalizedDist = Math.min(1, distToCenter / (Math.max(width, height) / 2));
+        audioFilter.frequency.value = 200 + normalizedDist * 800; // 越遠雜訊越刺耳
+        audioGain.gain.value = 0.03 + normalizedDist * 0.05; // 音量略增
+
+        document.body.style.transform = `translate(${rand(-1, 1)}px, ${rand(-1, 1)}px)`; // 輕微抖動
+    });
+
+    // 滑鼠點擊事件 (閃避與強烈音效)
+    window.addEventListener('mousedown', (e) => {
+        mouse.clicked = true;
+        if (!audioCtx) initAudio();
+
+        // 點擊時，所有三角形閃避
+        triangles.forEach(tri => tri.avoid(e.clientX, e.clientY));
+
+        // 強烈音效變化
+        audioGain.gain.setTargetAtTime(0.2, audioCtx.currentTime, 0.1);
+        audioFilter.frequency.setTargetAtTime(rand(1500, 4000), audioCtx.currentTime, 0.1);
+        document.body.style.transform = `translate(${rand(-10, 10)}px, ${rand(-10, 10)}px)`; // 強烈震動
+    });
+
+    window.addEventListener('mouseup', () => {
+        mouse.clicked = false;
+        if (audioCtx) {
+            audioGain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.5); // 恢復背景音量
+            audioFilter.frequency.setTargetAtTime(200, audioCtx.currentTime, 0.5); // 恢復背景頻率
+        }
+        document.body.style.transform = 'translate(0, 0)';
+    });
+
+    // 啟動動畫
+    animate();
+</script>
+</body>
+</html>

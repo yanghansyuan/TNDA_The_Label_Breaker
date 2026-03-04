@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEEP SEA - BUBBLE & LIGHT</title>
+    <style>
+        :root {
+            --sea-dark: #00040a;
+            --sea-bright: #0d2a4d;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: #000;
+            overflow: hidden; cursor: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* 噪點層：模擬混濁水質 */
+        .water-grain {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.15; pointer-events: none; z-index: 100;
+            filter: contrast(150%) brightness(40%);
+        }
+
+        /* 呼吸震動容器 */
+        #viewport {
+            position: fixed; width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1;
+            animation: breath 5s ease-in-out infinite;
+        }
+
+        @keyframes breath {
+            0%, 100% { transform: scale(1); filter: blur(0px); }
+            50% { transform: scale(1.02); filter: blur(1.5px); }
+        }
+
+        /* 窒息狀態震動 */
+        @keyframes panic-breath {
+            0%, 100% { transform: scale(1); filter: blur(4px) brightness(0.6); }
+            50% { transform: scale(1.06); filter: blur(10px) brightness(0.4); }
+        }
+
+        /* 深海背景 */
+        #ocean-floor {
+            position: absolute; width: 140%; height: 140%;
+            background: radial-gradient(circle at center, var(--sea-bright) 0%, var(--sea-dark) 100%);
+            transition: transform 0.2s ease-out;
+        }
+
+        /* 正向手電筒：中心更亮、範圍更廣 */
+        #flashlight {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50; pointer-events: none;
+            /* 調整手電筒參數：中心完全透明，邊緣擴散 */
+            background: radial-gradient(circle 220px at 50% 50%, transparent 0%, rgba(0,0,0,0.7) 60%, black 100%);
+        }
+
+        .light-off { background: black !important; }
+
+        /* 氣泡樣式 */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 45;
+            box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.2);
+            animation: rise 3s ease-out forwards;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            10% { opacity: 0.8; }
+            100% { transform: translateY(-500px) translateX(20px); opacity: 0; }
+        }
+
+        /* 白色遺骸 */
+        .remnant {
+            position: absolute;
+            width: 100px; height: 220px;
+            background: rgba(255, 255, 255, 0.1);
+            filter: blur(50px);
+            border-radius: 50%;
+            z-index: 5;
+            animation: float-up 20s linear infinite;
+        }
+
+        @keyframes float-up {
+            from { transform: translateY(110vh); opacity: 0; }
+            50% { opacity: 0.2; }
+            to { transform: translateY(-20vh); opacity: 0; }
+        }
+
+        .ui {
+            position: absolute; top: 50%; width: 100%; text-align: center;
+            color: rgba(255, 255, 255, 0.2); z-index: 60; pointer-events: none;
+            letter-spacing: 0.5rem;
+        }
+
+        .suffocating #viewport { animation: panic-breath 1.5s ease-in-out infinite; }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="water-grain"></div>
+    <div id="flashlight"></div>
+
+    <div id="viewport">
+        <div id="ocean-floor">
+            <div id="entities"></div>
+        </div>
+        <div class="ui">
+            <h2>SURVIVE THE DEPTHS</h2>
+            <p>點擊產生氧氣 | 靜止即窒息</p>
+        </div>
+    </div>
+
+    <script>
+        const viewport = document.getElementById('viewport');
+        const ocean = document.getElementById('ocean-floor');
+        const fl = document.getElementById('flashlight');
+        const entities = document.getElementById('entities');
+        
+        let audioCtx, drone;
+        let idleTimer;
+        let isLightOn = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                drone = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                drone.type = 'sine'; drone.frequency.value = 30;
+                g.gain.value = 0.08;
+                drone.connect(g); g.connect(audioCtx.destination);
+                drone.start();
+            }
+        }
+
+        function playKnock() {
+            [0, 0.15, 0.3].forEach(t => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.frequency.setValueAtTime(80, audioCtx.currentTime + t);
+                g.gain.setValueAtTime(0.2, audioCtx.currentTime + t);
+                g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + t + 0.1);
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + t);
+                osc.stop(audioCtx.currentTime + t + 0.1);
+            });
+        }
+
+        // 產生氣泡
+        function spawnBubbles(x, y) {
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    const b = document.createElement('div');
+                    b.className = 'bubble';
+                    const size = Math.random() * 15 + 5 + 'px';
+                    b.style.width = size;
+                    b.style.height = size;
+                    // 位置輕微隨機偏移
+                    b.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+                    b.style.top = (y + (Math.random() - 0.5) * 40) + 'px';
+                    document.body.appendChild(b);
+                    setTimeout(() => b.remove(), 3000);
+                }, i * 80);
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            initAudio();
+            const x = e.clientX, y = e.clientY;
+
+            // 更新手電筒 (鼠標處透出亮光)
+            if (isLightOn) {
+                fl.style.background = `radial-gradient(circle 220px at ${x}px ${y}px, transparent 0%, rgba(0,0,0,0.7) 60%, black 100%)`;
+            }
+
+            // 視差移動
+            ocean.style.transform = `translate(${(x - window.innerWidth/2)/-30}px, ${(y - window.innerHeight/2)/-30}px)`;
+
+            document.body.classList.remove('suffocating');
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                document.body.classList.add('suffocating');
+            }, 3000);
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            initAudio();
+            playKnock();
+            spawnBubbles(e.clientX, e.clientY); // 產生氣泡
+            
+            isLightOn = !isLightOn;
+            fl.classList.toggle('light-off', !isLightOn);
+        });
+
+        // 定期產生白色幽靈
+        setInterval(() => {
+            const s = document.createElement('div');
+            s.className = 'remnant';
+            s.style.left = Math.random() * 100 + 'vw';
+            entities.appendChild(s);
+            setTimeout(() => s.remove(), 20000);
+        }, 5000);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emotional Flow</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 背景 */
+.bg-gradient{
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background: linear-gradient(180deg, #dbe7f3, #f2f4f7);
+}
+
+/* 星空 */
+.stars {
+    position: fixed;
+    width: 200%;
+    height: 200%;
+    top:-50%;
+    left:-50%;
+    pointer-events: none;
+    z-index: 1;
+    transition: transform 0.1s ease-out;
+}
+
+.star {
+    position: absolute;
+    background: rgb(120, 28, 205);
+    border-radius: 50%;
+    animation: twinkle var(--twinkleSpeed) ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+    from { transform: scale(0.6); opacity: 0.3; }
+    to   { transform: scale(1.4); opacity: 1; }
+}
+
+/* 泡泡 */
+.bubble{
+    position:absolute;
+    bottom:-50px;
+    border-radius:50%;
+    background:rgba(168, 223, 255, 0.4);
+    backdrop-filter: blur(3px);
+    cursor:pointer;
+    animation: floatUp linear forwards;
+}
+
+@keyframes floatUp{
+    from { transform: translateY(0); opacity:0.8; }
+    to   { transform: translateY(-110vh); opacity:0; }
+}
+
+/* 玻璃層 */
+.glass-layer {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    pointer-events: none;
+    backdrop-filter: blur(3px);
+}
+
+/* 電話線 */
+.phone-line {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 3;
+}
+
+.phone-line path {
+    fill: none;
+    stroke: #9fb3c8;
+    stroke-width: 2;
+}
+
+.content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 20vh 5vw;
+    color: #5f6c7b;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-gradient"></div>
+<div class="stars" id="stars"></div>
+<div class="glass-layer" id="glassLayer"></div>
+
+<section class="content">
+<h1>月光下的公園</h1>
+<p>盛大結尾之後，只剩下風聲與回憶。</p>
+</section>
+
+<svg class="phone-line" viewBox="0 0 1440 200">
+<path id="phonePath"/>
+</svg>
+
+<script>
+
+/* ⭐ 生成星空 */
+const starContainer = document.getElementById("stars");
+
+for(let i=0;i<200;i++){
+    let star = document.createElement("div");
+    star.className="star";
+
+    let size = Math.random()*3 + 1;
+    star.style.width = size + "px";
+    star.style.height = size + "px";
+
+    star.style.left=Math.random()*200+"%";
+    star.style.top=Math.random()*200+"%";
+
+    star.style.setProperty("--twinkleSpeed",(Math.random()*2+1)+"s");
+
+    starContainer.appendChild(star);
+}
+
+/* ⭐ 星空視差跟隨滑鼠 */
+document.addEventListener("mousemove",(e)=>{
+    let x = (e.clientX / window.innerWidth - 0.5) * 40;
+    let y = (e.clientY / window.innerHeight - 0.5) * 40;
+
+    starContainer.style.transform =
+      `translate(${x}px, ${y}px)`;
+});
+
+/* 🫧 泡泡 */
+function createBubble(){
+    let bubble = document.createElement("div");
+    bubble.className="bubble";
+
+    let size = Math.random()*40 + 20;
+    bubble.style.width=size+"px";
+    bubble.style.height=size+"px";
+    bubble.style.left=Math.random()*100+"vw";
+    bubble.style.animationDuration=(Math.random()*10+10)+"s";
+
+    bubble.addEventListener("click",()=>{
+        bubble.style.transform="scale(1.5)";
+        bubble.style.opacity="0";
+        setTimeout(()=>bubble.remove(),200);
+    });
+
+    document.body.appendChild(bubble);
+    setTimeout(()=>bubble.remove(),20000);
+}
+setInterval(createBubble,1200);
+
+/* 💎 裂痕 */
+const glassLayer=document.getElementById("glassLayer");
+
+document.addEventListener("click",(e)=>{
+    let svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("width","200");
+    svg.setAttribute("height","200");
+    svg.style.position="absolute";
+    svg.style.left=(e.clientX-100)+"px";
+    svg.style.top=(e.clientY-100)+"px";
+    svg.style.opacity="1";
+    svg.style.transition="opacity 3s ease";
+
+    for(let i=0;i<8;i++){
+        let line=document.createElementNS("http://www.w3.org/2000/svg","line");
+        let angle=Math.random()*Math.PI*2;
+        let length=Math.random()*100+40;
+
+        line.setAttribute("x1",100);
+        line.setAttribute("y1",100);
+        line.setAttribute("x2",100+Math.cos(angle)*length);
+        line.setAttribute("y2",100+Math.sin(angle)*length);
+        line.setAttribute("stroke","#9fb3c8");
+        line.setAttribute("stroke-width","1.2");
+
+        svg.appendChild(line);
+    }
+
+    glassLayer.appendChild(svg);
+
+    setTimeout(()=>{
+        svg.style.opacity="0";
+        setTimeout(()=>svg.remove(),3000);
+    },3000);
+});
+
+/* ☎ 電話線 */
+const path = document.getElementById("phonePath");
+let t = 0;
+let mouseY = 100;
+let currentAttract = 0;
+
+document.addEventListener("mousemove",(e)=>{
+    mouseY = e.clientY;
+});
+
+function animateLine(){
+    t += 0.02;
+
+    let targetAttract = (mouseY - window.innerHeight/2)*0.1;
+    currentAttract += (targetAttract - currentAttract)*0.05;
+
+    let d = `
+    M0 100
+    C 300 ${100+Math.sin(t)*40 + currentAttract},
+      600 ${100+Math.sin(t+1)*60 + currentAttract},
+      900 ${100+Math.sin(t+2)*40 + currentAttract}
+    S 1200 ${100+Math.sin(t+3)*60 + currentAttract},
+      1440 ${100+Math.sin(t+4)*40 + currentAttract}
+    `;
+
+    path.setAttribute("d", d);
+    requestAnimationFrame(animateLine);
+}
+animateLine();
+
+</script>
+
+</body>
+</html>

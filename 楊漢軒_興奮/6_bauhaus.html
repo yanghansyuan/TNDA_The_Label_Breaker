@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>康丁斯基式興奮粒子場</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: white;
+    }
+
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      background: radial-gradient(circle at 30% 20%, #222 0, #050505 60%, #000 100%);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    /* 基礎形狀：圓（預設） */
+    .shape-circle {
+      border-radius: 50%;
+    }
+
+    /* 線段：用細長矩形表現 */
+    .shape-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    /* 抖動線：粗一些，視覺上更重，會加上抖動的 transform */
+    .shape-jitter-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    /* 三角形：用 clip-path 做幾何感的尖角形狀 */
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    /* 星形：用 clip-path 畫一個五角星，偏康丁斯基幾何風格 */
+    .shape-star {
+      clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+      );
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="hint">
+      <div>點擊畫布</div>
+      <div>圓、線、三角、星形會以不同速度在空間裡興奮亂彈，再慢慢平靜</div>
+    </div>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+    const STAGE_SIZE = 1024;
+
+    const colors = [
+      "#FF1744", // 紅
+      "#FFEA00", // 黃
+      "#00E5FF", // 電光藍
+      "#E040FB", // 紫
+      "#76FF03"  // 萊姆綠
+    ];
+    let colorIndex = 0;
+
+    const particles = [];
+
+    // 形狀列表：會用亂數挑一種
+    const shapeTypes = ["circle", "line", "jitter-line", "triangle", "star"];
+
+    stage.addEventListener("click", (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const count = 26 + Math.floor(Math.random() * 18); // 每次大概 26~44 個
+
+      for (let i = 0; i < count; i++) {
+        const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        createParticle(x, y, shape);
+      }
+    });
+
+    function createParticle(cx, cy, shape) {
+      const el = document.createElement("div");
+      el.classList.add("particle");
+
+      // 顏色
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.style.backgroundColor = baseColor;
+
+      // 依形狀決定大小與速度等級
+      let baseSpeed;
+      let w, h;
+
+      switch (shape) {
+        case "line":
+          el.classList.add("shape-line");
+          w = 80 + Math.random() * 70;   // 長度
+          h = 3 + Math.random() * 3;     // 很細
+          baseSpeed = 380 + Math.random() * 180; // 最快
+          break;
+        case "jitter-line":
+          el.classList.add("shape-jitter-line");
+          w = 50 + Math.random() * 40;
+          h = 6 + Math.random() * 4;
+          baseSpeed = 320 + Math.random() * 150; // 次快
+          break;
+        case "triangle":
+          el.classList.add("shape-triangle");
+          w = 26 + Math.random() * 18;
+          h = w;
+          baseSpeed = 260 + Math.random() * 120; // 中等
+          break;
+        case "star":
+          el.classList.add("shape-star");
+          w = 32 + Math.random() * 24;
+          h = w;
+          baseSpeed = 210 + Math.random() * 80;  // 最慢
+          break;
+        default:
+          el.classList.add("shape-circle");
+          const radius = 7 + Math.random() * 9;
+          w = radius * 2;
+          h = radius * 2;
+          baseSpeed = 280 + Math.random() * 130; // 中間
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+
+      // 初始位置
+      let x = cx;
+      let y = cy;
+
+      // 初始速度：從中心向外噴
+      const angle = Math.random() * Math.PI * 2;
+      let speed = baseSpeed;
+      // 每顆再加一點亂數
+      speed *= 0.8 + Math.random() * 0.4; // 0.8~1.2 倍
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+
+      // 初始 opacity 與 scale
+      el.style.opacity = "1";
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 1500 + Math.random() * 900; // 共存活 1.5~2.4 秒
+
+      // 為 jitter 線保留一個「基準角」供抖動使用
+      const baseAngleDeg = (angle * 180) / Math.PI;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w,
+        h,
+        shape,
+        life,
+        createdAt: now,
+        baseAngleDeg
+      });
+    }
+
+    let lastTime = null;
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      updateParticles(dt, timestamp);
+      requestAnimationFrame(animate);
+    }
+
+    function updateParticles(dt, now) {
+      const drag = 0.96;        // 阻力
+      const wallDamping = 0.8;  // 撞牆衰減
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.createdAt;
+        const t = age / p.life; // 0~1
+
+        if (t >= 1) {
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        // 不同形狀在時間上的「躁度」可略微不同
+        let localDrag = drag;
+        if (p.shape === "line") {
+          localDrag = 0.97;       // 線段更滑，慢慢才平靜
+        } else if (p.shape === "jitter-line") {
+          localDrag = 0.95;       // 抖動線阻力略小，保留一點躁動
+        } else if (p.shape === "star") {
+          localDrag = 0.93;       // 星形比較鈍，阻力再小一點，飄比較久
+        }
+
+        // 速度衰減
+        p.vx *= localDrag;
+        p.vy *= localDrag;
+
+        // 位置更新
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        const halfW = p.w / 2;
+        const halfH = p.h / 2;
+        const minX = halfW;
+        const maxX = STAGE_SIZE - halfW;
+        const minY = halfH;
+        const maxY = STAGE_SIZE - halfH;
+
+        // 撞牆反彈
+        if (p.x < minX) {
+          p.x = minX;
+          p.vx = -p.vx * wallDamping;
+        } else if (p.x > maxX) {
+          p.x = maxX;
+          p.vx = -p.vx * wallDamping;
+        }
+
+        if (p.y < minY) {
+          p.y = minY;
+          p.vy = -p.vy * wallDamping;
+        } else if (p.y > maxY) {
+          p.y = maxY;
+          p.vy = -p.vy * wallDamping;
+        }
+
+        // 時間對應的「情緒」：前面躁、後面平靜
+        const easeOut = 1 - Math.pow(1 - t, 2);
+        const scale = 0.7 + (1.3 - 0.7) * (1 - easeOut);
+        const opacity = 1 - easeOut;
+
+        // 抖動線：在原本角度附近高頻抖動
+        let rotationDeg = 0;
+        if (p.shape === "line") {
+          rotationDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+        } else if (p.shape === "jitter-line") {
+          const jitterAmount = 10; // 抖動角度幅度
+          const jitter = (Math.random() - 0.5) * jitterAmount * (1 - t); // 越後面越平穩
+          rotationDeg = p.baseAngleDeg + jitter;
+        } else if (p.shape === "triangle" || p.shape === "star") {
+          rotationDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+        }
+
+        p.el.style.left = p.x + "px";
+        p.el.style.top = p.y + "px";
+        p.el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rotationDeg}deg)`;
+        p.el.style.opacity = opacity.toString();
+        p.el.style.filter = `saturate(${1 - t * 0.6}) brightness(${1 - t * 0.15})`;
+      }
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

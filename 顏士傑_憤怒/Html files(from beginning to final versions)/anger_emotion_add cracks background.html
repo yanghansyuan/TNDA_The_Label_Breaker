@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>憤怒 - 情緒視覺化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #1a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(135deg, #0a0505 0%, #1a0808 100%);
+            width: 100%;
+            height: 100%;
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #662222;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            font-size: 14px;
+            text-align: center;
+            opacity: 0.6;
+            pointer-events: none;
+            padding: 0 20px;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 768px) {
+            #info {
+                font-size: 12px;
+                bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="info">點擊畫面 · 觸發憤怒的心跳與血液噴發</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 響應式參數
+        let scale = 1;
+        let centerX, centerY, heartSize, gearDistance, heartCenterY;
+        
+        // 岩漿粒子系統
+        let lavaParticles = [];
+        
+        // 裂痕系統
+        let cracks = [];
+        
+        // 齒輪參數
+        const gears = [
+            { x: 0, y: 0, radius: 80, teeth: 16, rotation: 0, speed: 0 },
+            { x: 0, y: 0, radius: 70, teeth: 14, rotation: 0, speed: 0 },
+            { x: 0, y: 0, radius: 85, teeth: 18, rotation: 0, speed: 0 },
+            { x: 0, y: 0, radius: 75, teeth: 15, rotation: 0, speed: 0 }
+        ];
+        
+        // 心臟跳動相關
+        let heartBeatScale = 1.0;
+        let heartBeatSpeed = 0.015;
+        let heartBeatDirection = 1;
+        let isAccelerated = false;
+        let accelerationTimer = 0;
+        let rotationSpeed = 0.02;
+        
+        // 生成裂痕
+        function generateCracks() {
+            cracks = [];
+            const numMainCracks = 12;
+            
+            for (let i = 0; i < numMainCracks; i++) {
+                const angle = (i / numMainCracks) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+                const crack = {
+                    segments: [],
+                    angle: angle
+                };
+                
+                let currentX = 0;
+                let currentY = 0;
+                let currentAngle = angle;
+                const numSegments = 15 + Math.floor(Math.random() * 10);
+                
+                for (let j = 0; j < numSegments; j++) {
+                    const segmentLength = (10 + Math.random() * 20) * scale;
+                    currentAngle += (Math.random() - 0.5) * 0.4;
+                    
+                    const newX = currentX + Math.cos(currentAngle) * segmentLength;
+                    const newY = currentY + Math.sin(currentAngle) * segmentLength;
+                    
+                    crack.segments.push({
+                        x1: currentX,
+                        y1: currentY,
+                        x2: newX,
+                        y2: newY,
+                        width: Math.max(1, (numSegments - j) / numSegments * 3)
+                    });
+                    
+                    currentX = newX;
+                    currentY = newY;
+                    
+                    // 分支
+                    if (j > 3 && Math.random() < 0.3) {
+                        const branchAngle = currentAngle + (Math.random() - 0.5) * 1.2;
+                        let branchX = currentX;
+                        let branchY = currentY;
+                        const branchSegments = 3 + Math.floor(Math.random() * 5);
+                        
+                        for (let k = 0; k < branchSegments; k++) {
+                            const branchLength = (8 + Math.random() * 15) * scale;
+                            const newBranchX = branchX + Math.cos(branchAngle) * branchLength;
+                            const newBranchY = branchY + Math.sin(branchAngle) * branchLength;
+                            
+                            crack.segments.push({
+                                x1: branchX,
+                                y1: branchY,
+                                x2: newBranchX,
+                                y2: newBranchY,
+                                width: Math.max(0.5, 2 - k * 0.5)
+                            });
+                            
+                            branchX = newBranchX;
+                            branchY = newBranchY;
+                        }
+                    }
+                }
+                
+                cracks.push(crack);
+            }
+        }
+        
+        // 初始化畫布和響應式參數
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            
+            scale = Math.min(canvas.width, canvas.height) / 800;
+            heartSize = 90 * scale;
+            gearDistance = 140 * scale;
+            rotationSpeed = 0.02 * scale;
+            
+            const heartOffsetY = -15 * scale;
+            heartCenterY = centerY + heartOffsetY;
+            
+            // 更新齒輪位置
+            gears[0].x = centerX;
+            gears[0].y = centerY - gearDistance;
+            gears[0].radius = 80 * scale;
+            
+            gears[1].x = centerX + gearDistance;
+            gears[1].y = centerY;
+            gears[1].radius = 70 * scale;
+            
+            gears[2].x = centerX;
+            gears[2].y = centerY + gearDistance;
+            gears[2].radius = 85 * scale;
+            
+            gears[3].x = centerX - gearDistance;
+            gears[3].y = centerY;
+            gears[3].radius = 75 * scale;
+            
+            generateCracks();
+        }
+        
+        // 岩漿粒子類
+        class LavaParticle {
+            constructor(x, y, isBloodRed = false) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.life = 1.0;
+                this.size = 3 + Math.random() * 5;
+                
+                if (isBloodRed) {
+                    this.color = Math.random() > 0.5 ? '#cc0000' : '#ff0000';
+                    this.color2 = '#aa0000';
+                } else {
+                    this.color = Math.random() > 0.5 ? '#ff4500' : '#ff6b1a';
+                    this.color2 = '#ff8c00';
+                }
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.015;
+                this.size *= 0.98;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(0.5, this.color2);
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+        
+        // 生成岩漿粒子
+        function spawnLava() {
+            if (Math.random() < 0.15) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = heartSize * heartBeatScale * 0.7;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = heartCenterY + Math.sin(angle) * distance;
+                lavaParticles.push(new LavaParticle(x, y, false));
+            }
+            
+            if (isAccelerated && Math.random() < 0.3) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = heartSize * heartBeatScale * 0.6;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = heartCenterY + Math.sin(angle) * distance;
+                lavaParticles.push(new LavaParticle(x, y, true));
+            }
+        }
+        
+        // 繪製放射狀裂痕
+        function drawCracks() {
+            ctx.save();
+            ctx.translate(centerX, heartCenterY);
+            
+            cracks.forEach(crack => {
+                crack.segments.forEach(segment => {
+                    const gradient = ctx.createLinearGradient(
+                        segment.x1, segment.y1,
+                        segment.x2, segment.y2
+                    );
+                    gradient.addColorStop(0, '#4a0a0a');
+                    gradient.addColorStop(0.5, '#3a0505');
+                    gradient.addColorStop(1, '#2a0303');
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = segment.width;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(segment.x1, segment.y1);
+                    ctx.lineTo(segment.x2, segment.y2);
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle = 'rgba(74, 10, 10, 0.3)';
+                    ctx.lineWidth = segment.width + 2;
+                    ctx.beginPath();
+                    ctx.moveTo(segment.x1, segment.y1);
+                    ctx.lineTo(segment.x2, segment.y2);
+                    ctx.stroke();
+                });
+            });
+            
+            ctx.restore();
+        }
+        
+        // 繪製粗糙質感的心臟
+        function drawHeart(x, y, size, scaleVal = 1.0) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scaleVal, scaleVal);
+            
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+            gradient.addColorStop(0, '#3a0a0a');
+            gradient.addColorStop(0.5, '#2a0505');
+            gradient.addColorStop(1, '#1a0303');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(0, size * 0.3);
+            ctx.bezierCurveTo(-size * 0.5, -size * 0.3, -size * 0.9, size * 0.1, 0, size * 0.9);
+            ctx.bezierCurveTo(size * 0.9, size * 0.1, size * 0.5, -size * 0.3, 0, size * 0.3);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#4a0808';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const startR = Math.random() * size * 0.3;
+                const endR = startR + Math.random() * size * 0.4;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(angle) * startR, Math.sin(angle) * startR);
+                ctx.lineTo(Math.cos(angle) * endR, Math.sin(angle) * endR);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+        
+        // 繪製鋸齒齒輪
+        function drawGear(gear) {
+            ctx.save();
+            ctx.translate(gear.x, gear.y);
+            ctx.rotate(gear.rotation);
+            
+            const { radius, teeth } = gear;
+            const toothHeight = radius * 0.3;
+            
+            const gearGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+            gearGradient.addColorStop(0, '#4a1515');
+            gearGradient.addColorStop(0.7, '#3a0a0a');
+            gearGradient.addColorStop(1, '#2a0505');
+            ctx.fillStyle = gearGradient;
+            
+            ctx.beginPath();
+            for (let i = 0; i < teeth; i++) {
+                const angle = (i / teeth) * Math.PI * 2;
+                const nextAngle = ((i + 1) / teeth) * Math.PI * 2;
+                
+                const innerX = Math.cos(angle) * radius;
+                const innerY = Math.sin(angle) * radius;
+                const outerX = Math.cos(angle + 0.5 / teeth * Math.PI * 2) * (radius + toothHeight);
+                const outerY = Math.sin(angle + 0.5 / teeth * Math.PI * 2) * (radius + toothHeight);
+                const nextInnerX = Math.cos(nextAngle) * radius;
+                const nextInnerY = Math.sin(nextAngle) * radius;
+                
+                if (i === 0) ctx.moveTo(innerX, innerY);
+                ctx.lineTo(outerX, outerY);
+                ctx.lineTo(nextInnerX, nextInnerY);
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.strokeStyle = '#5a1a1a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#3a0808';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < teeth * 8; i++) {
+                const angle = (i / (teeth * 8)) * Math.PI * 2;
+                const baseR = radius + toothHeight * 0.5;
+                const x1 = Math.cos(angle) * baseR;
+                const y1 = Math.sin(angle) * baseR;
+                const hairLength = 5 + Math.random() * 15;
+                const hairAngle = angle + (Math.random() - 0.5) * 0.3;
+                const x2 = Math.cos(hairAngle) * (baseR + hairLength);
+                const y2 = Math.sin(hairAngle) * (baseR + hairLength);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#0a0000';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // 繪製連接線
+        function drawConnections() {
+            ctx.strokeStyle = '#2a0505';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            for (let i = 0; i < gears.length; i++) {
+                const gear1 = gears[i];
+                ctx.beginPath();
+                ctx.moveTo(gear1.x, gear1.y);
+                ctx.lineTo(centerX, heartCenterY);
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]);
+        }
+        
+        // 動畫循環
+        function animate() {
+            ctx.fillStyle = '#0a0505';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製裂痕（最底層）
+            drawCracks();
+            
+            // 更新心臟跳動
+            const currentSpeed = isAccelerated ? heartBeatSpeed * 3 : heartBeatSpeed;
+            heartBeatScale += heartBeatDirection * currentSpeed;
+            
+            if (heartBeatScale >= 1.15) {
+                heartBeatScale = 1.15;
+                heartBeatDirection = -1;
+            } else if (heartBeatScale <= 0.85) {
+                heartBeatScale = 0.85;
+                heartBeatDirection = 1;
+            }
+            
+            if (isAccelerated) {
+                accelerationTimer--;
+                if (accelerationTimer <= 0) {
+                    isAccelerated = false;
+                }
+            }
+            
+            drawConnections();
+            
+            gears.forEach((gear, index) => {
+                const targetSpeed = isAccelerated ? rotationSpeed * 0.3 : rotationSpeed;
+                gear.speed = gear.speed * 0.9 + targetSpeed * 0.1 * (index % 2 === 0 ? 1 : -1);
+                gear.rotation += gear.speed;
+                drawGear(gear);
+            });
+            
+            spawnLava();
+            
+            lavaParticles = lavaParticles.filter(particle => !particle.isDead());
+            lavaParticles.forEach(particle => {
+                particle.update();
+                particle.draw(ctx);
+            });
+            
+            drawHeart(centerX, heartCenterY, heartSize, heartBeatScale);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 點擊事件
+        function handleClick(e) {
+            e.preventDefault();
+            isAccelerated = true;
+            accelerationTimer = 120;
+        }
+        
+        canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('touchstart', handleClick);
+        
+        window.addEventListener('resize', () => {
+            initCanvas();
+        });
+        
+        // 初始化並開始
+        initCanvas();
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒互動：空間崩潰</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #C8C9C7; cursor: crosshair; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+    const { Engine, Render, Runner, Bodies, Composite, Vector, Body } = Matter;
+
+    const colors = {
+        bgNormal: '#C8C9C7',   // Pantone Cool Gray 3 C
+        bgExtreme: '#591014',  // Pantone 1817 C (極限狀態的深紅)
+        main: '#1D2327',       // Pantone 433 C
+        ripple: '#0F4C81'      // Pantone 19-4052 Classic Blue (憂鬱藍)
+    };
+
+    const engine = Engine.create();
+    engine.world.gravity.y = 3.5; // 極速墜落
+
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let width, height, ground, wallLeft, wallRight;
+    const ironStones = [];
+    const shockwaves = [];
+    let isExtremeState = false;
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        if (ground) Composite.remove(engine.world, [ground, wallLeft, wallRight]);
+        ground = Bodies.rectangle(width / 2, height + 60, width, 120, { isStatic: true });
+        wallLeft = Bodies.rectangle(-60, height / 2, 120, height * 3, { isStatic: true });
+        wallRight = Bodies.rectangle(width + 60, height / 2, 120, height * 3, { isStatic: true });
+        Composite.add(engine.world, [ground, wallLeft, wallRight]);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function createIronStone(x, y) {
+        const radius = Math.random() * 20 + 25;
+        const body = Bodies.polygon(x, y, 15, radius, {
+            density: 0.6, friction: 0.95, restitution: 0.01, frictionAir: 0.002,
+            render: { visible: false }
+        });
+
+        ironStones.push({
+            body, radius, 
+            offsets: Array.from({ length: 15 }, () => Math.random() * 8),
+            alpha: 0.4 + Math.random() * 0.6,
+            mouthType: Math.random() > 0.5 ? 'line' : 'invertedV',
+            crumbleTimer: 0,
+            vibration: 0
+        });
+        Composite.add(engine.world, body);
+    }
+
+    // 點擊觸發：憂鬱藍色非線性餘震
+    window.addEventListener('mousedown', (e) => {
+        const pos = { x: e.clientX, y: e.clientY };
+        
+        // 主震
+        shockwaves.push({ x: pos.x, y: pos.y, r: 0, maxR: 700, speed: 18, opacity: 0.8, weight: 12 });
+        
+        // 餘震：隨機半徑增量與速度，打破等距感
+        for (let i = 0; i < 6; i++) {
+            setTimeout(() => {
+                shockwaves.push({
+                    x: pos.x, y: pos.y, r: Math.random() * -50,
+                    maxR: 400 + Math.random() * 400,
+                    speed: 5 + Math.random() * 15,
+                    opacity: 0.5,
+                    weight: Math.random() * 6 + 2
+                });
+            }, Math.random() * 900);
+        }
+
+        ironStones.forEach(s => {
+            const dist = Vector.magnitude(Vector.sub(s.body.position, pos));
+            if (dist < 500) {
+                s.vibration = 30;
+                s.crumbleTimer = 10000;
+                Body.applyForce(s.body, s.body.position, Vector.mult(Vector.normalise(Vector.sub(s.body.position, pos)), 0.25));
+            }
+        });
+    });
+
+    setInterval(() => {
+        if (ironStones.length < 180) createIronStone(Math.random() * width, -200);
+    }, 1100);
+
+    let lastTime = 0;
+    (function render(time) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+
+        // 偵測最高點
+        let highestY = height;
+        ironStones.forEach(s => { if (s.body.position.y < highestY) highestY = s.body.position.y; });
+        
+        // 判斷是否進入極限狀態（堆疊高度超過 85%）
+        isExtremeState = highestY < height * 0.15;
+
+        // 計算背景閃爍：受震波數量影響
+        let flicker = 0;
+        if (shockwaves.length > 0) {
+            flicker = (Math.random() - 0.5) * (shockwaves.length * 5);
+        }
+
+        ctx.save();
+        // 如果極限狀態，全螢幕劇烈抖動
+        if (isExtremeState) {
+            ctx.translate((Math.random()-0.5) * 15, (Math.random()-0.5) * 15);
+            ctx.fillStyle = colors.bgExtreme;
+        } else {
+            // 背景隨震波隨機閃爍
+            const grayVal = 200 + flicker;
+            ctx.fillStyle = `rgb(${grayVal},${grayVal+5},${grayVal+8})`; 
+        }
+        ctx.fillRect(0, 0, width, height);
+
+        Engine.update(engine);
+
+        // 渲染憂鬱藍色漣漪
+        shockwaves.forEach((sw, i) => {
+            sw.r += sw.speed;
+            sw.opacity -= 0.012;
+            if (sw.r > 0) {
+                ctx.beginPath();
+                ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(15, 76, 129, ${sw.opacity})`; 
+                ctx.lineWidth = sw.weight;
+                ctx.stroke();
+            }
+            if (sw.opacity <= 0) shockwaves.splice(i, 1);
+        });
+
+        // 渲染生鐵石
+        ironStones.forEach(s => {
+            const { position, angle } = s.body;
+            ctx.save();
+            ctx.translate(position.x, position.y);
+            if (s.vibration > 0) {
+                ctx.translate((Math.random()-0.5)*s.vibration, (Math.random()-0.5)*s.vibration);
+                s.vibration *= 0.8;
+            }
+            ctx.rotate(angle);
+
+            if (s.crumbleTimer > 0) s.crumbleTimer -= deltaTime;
+            
+            ctx.beginPath();
+            for (let i = 0; i < 15; i++) {
+                const ang = (i / 15) * Math.PI * 2;
+                const crumble = s.crumbleTimer > 0 ? (Math.random() * 20 * (s.crumbleTimer/10000)) : 0;
+                const r = s.radius + s.offsets[i] + crumble;
+                const x = Math.cos(ang) * r;
+                const y = Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = `rgba(29, 35, 39, ${s.alpha})`;
+            ctx.fill();
+
+            // 繪製穿透背景的開孔
+            ctx.fillStyle = isExtremeState ? colors.bgExtreme : `rgb(${200+flicker},${205+flicker},${208+flicker})`;
+            const eS = s.radius * 0.16;
+            ctx.beginPath(); ctx.arc(-s.radius*0.38, -s.radius*0.28, eS, 0, 7); ctx.fill();
+            ctx.beginPath(); ctx.arc(s.radius*0.38, -s.radius*0.28, eS, 0, 7); ctx.fill();
+
+            if (s.mouthType === 'line') {
+                ctx.fillRect(-s.radius*0.5, s.radius*0.25, s.radius, s.radius*0.18);
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(-s.radius*0.4, s.radius*0.45);
+                ctx.lineTo(0, s.radius*0.05);
+                ctx.lineTo(s.radius*0.4, s.radius*0.45);
+                ctx.lineWidth = s.radius * 0.2;
+                ctx.strokeStyle = ctx.fillStyle;
+                ctx.stroke();
+            }
+            ctx.restore();
+        });
+        ctx.restore();
+        requestAnimationFrame(render);
+    })(0);
+</script>
+
+</body>
+</html>

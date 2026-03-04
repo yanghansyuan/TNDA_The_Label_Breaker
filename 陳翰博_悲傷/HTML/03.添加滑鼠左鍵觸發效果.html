@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>散去後的悲傷</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #888;
+            font-family: "Noto Serif TC", serif;
+            cursor: crosshair;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 1s;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.5rem;
+            margin: 0;
+            opacity: 0.7;
+        }
+
+        p {
+            font-size: 0.8rem;
+            margin-top: 10px;
+            opacity: 0.5;
+        }
+
+        .instruction {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 25px;
+            border-radius: 30px;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            letter-spacing: 0.1rem;
+            transition: all 0.3s;
+        }
+
+        #start-screen:hover .instruction {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" onclick="startExperience()">
+        <h1>散去後的悲傷</h1>
+        <div class="instruction">點擊進入寧靜的空間</div>
+    </div>
+
+    <div id="ui-overlay">
+        <h1>散去後的悲傷</h1>
+        <p>移動滑鼠留下痕跡，點擊讓悲傷四散</p>
+    </div>
+
+    <script>
+        let particles = [];
+        const MAX_PARTICLES = 300; // 稍微增加上限以應對點擊產生的爆發
+        
+        // 原生 Web Audio API 變數
+        let audioCtx;
+        let masterGain, masterFilter;
+        let subOsc, subGain;
+        let leadOsc, leadGain;
+        let audioInitialized = false;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            noStroke();
+            
+            // 初始化部分靜態粒子
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle(random(width), random(height)));
+            }
+        }
+
+        function initNativeAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            masterFilter = audioCtx.createBiquadFilter();
+            masterFilter.type = 'lowpass';
+            masterFilter.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            masterFilter.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            // Sub Bass
+            subOsc = audioCtx.createOscillator();
+            subGain = audioCtx.createGain();
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            subGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            subOsc.connect(subGain);
+            subGain.connect(masterFilter);
+            subOsc.start();
+
+            // Lead Synth
+            leadOsc = audioCtx.createOscillator();
+            leadGain = audioCtx.createGain();
+            leadOsc.type = 'sine';
+            leadOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            leadGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            leadOsc.connect(leadGain);
+            leadGain.connect(masterFilter);
+            leadOsc.start();
+        }
+
+        function startExperience() {
+            if (!audioInitialized) {
+                initNativeAudio();
+                masterGain.gain.exponentialRampToValueAtTime(0.8, audioCtx.currentTime + 2);
+                document.getElementById('start-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('start-screen').style.display = 'none';
+                }, 1200);
+                audioInitialized = true;
+            }
+        }
+
+        // 滑鼠點擊觸發「煙花四散」效果
+        function mousePressed() {
+            if (!audioInitialized) return;
+            
+            // 產生 30-40 個具有初速度的爆發粒子
+            let burstCount = random(30, 45);
+            for (let i = 0; i < burstCount; i++) {
+                // 傳入 true 代表這是爆發粒子
+                particles.push(new Particle(mouseX, mouseY, true));
+            }
+
+            // 點擊時聲音短暫變得明亮且音量微增
+            if (audioCtx) {
+                let now = audioCtx.currentTime;
+                masterFilter.frequency.setTargetAtTime(3000, now, 0.05);
+                masterFilter.frequency.setTargetAtTime(800, now + 0.1, 0.5); // 迅速降回
+                
+                leadGain.gain.setTargetAtTime(0.3, now, 0.01);
+                leadGain.gain.setTargetAtTime(0, now + 0.1, 0.2);
+            }
+        }
+
+        function draw() {
+            background(10, 10, 10, 25);
+
+            if (audioInitialized) {
+                updateAudioContext();
+            }
+
+            // 滑鼠移動產生的微弱粒子
+            if (mouseX > 0 && mouseY > 0 && (pmouseX !== mouseX || pmouseY !== mouseY)) {
+                particles.push(new Particle(mouseX, mouseY, false));
+                
+                if (audioInitialized) {
+                    let freq = map(mouseY, height, 0, 150, 600);
+                    leadOsc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
+                    let speed = dist(mouseX, mouseY, pmouseX, pmouseY);
+                    let vol = constrain(map(speed, 0, 100, 0, 0.15), 0, 0.2);
+                    leadGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
+                }
+            } else if (audioInitialized) {
+                leadGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].display();
+                if (particles[i].isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            if (particles.length > MAX_PARTICLES) {
+                particles.shift();
+            }
+        }
+
+        function updateAudioContext() {
+            let cutoff = map(particles.length, 0, MAX_PARTICLES, 300, 2000);
+            masterFilter.frequency.setTargetAtTime(cutoff, audioCtx.currentTime, 0.2);
+            let lfo = sin(frameCount * 0.03) * 0.02 + 0.08;
+            subGain.gain.setTargetAtTime(lfo, audioCtx.currentTime, 0.1);
+        }
+
+        class Particle {
+            constructor(x, y, isBurst = false) {
+                this.pos = createVector(x, y);
+                this.isBurst = isBurst;
+                
+                if (this.isBurst) {
+                    // 爆發粒子：360度隨機方向，較大的初速度
+                    let angle = random(TWO_PI);
+                    let speed = random(2, 7);
+                    this.vel = createVector(cos(angle) * speed, sin(angle) * speed);
+                    this.lifespan = 255;
+                    this.decay = random(3, 7); // 消失較快
+                    this.size = random(2, 5);
+                } else {
+                    // 常規粒子：緩慢飄動
+                    this.vel = createVector(random(-0.4, 0.4), random(-0.7, 0.1));
+                    this.lifespan = 255;
+                    this.decay = 1.1;
+                    this.size = random(1.5, 4);
+                }
+                
+                this.acc = createVector(0, 0);
+                this.noiseOffset = random(2000);
+                this.colorVal = random(200, 255); // 點擊的粒子偏純白
+            }
+
+            update() {
+                if (this.isBurst) {
+                    // 爆發粒子受摩擦力影響迅速減速
+                    this.vel.mult(0.95);
+                } else {
+                    // 常規粒子受氣流影響
+                    let n = noise(this.noiseOffset, frameCount * 0.008);
+                    this.acc.x = map(n, 0, 1, -0.02, 0.02);
+                }
+                
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                
+                this.lifespan -= this.decay;
+                this.size *= 0.995;
+                this.noiseOffset += 0.01;
+            }
+
+            display() {
+                fill(this.colorVal, this.lifespan);
+                ellipse(this.pos.x, this.pos.y, this.size);
+                
+                // 點擊產生的粒子具有更明顯的光暈
+                if (this.isBurst && this.lifespan > 100) {
+                    fill(255, 255, 255, this.lifespan * 0.15);
+                    ellipse(this.pos.x, this.pos.y, this.size * 3);
+                } else if (this.lifespan > 180) {
+                    fill(255, 255, 255, this.lifespan * 0.08);
+                    ellipse(this.pos.x, this.pos.y, this.size * 2.5);
+                }
+            }
+
+            isDead() {
+                return this.lifespan < 0;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interactive Night Cursor</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1f24; cursor: none; }
+    canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+    .glass{
+      position: fixed; inset: 0; pointer-events: none;
+      opacity: 0; transition: opacity 120ms ease;
+      background: rgba(255,255,255,0.06);
+
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+
+      --x: 50vw; --y: 50vh; --cut: 200px;
+      -webkit-mask-image: radial-gradient(circle at var(--x) var(--y),
+        transparent 0 var(--cut),
+        rgba(0,0,0,1) calc(var(--cut) + 2px)
+      );
+      mask-image: radial-gradient(circle at var(--x) var(--y),
+        transparent 0 var(--cut),
+        rgba(0,0,0,1) calc(var(--cut) + 2px)
+      );
+    }
+    .glass.on { opacity: 1; }
+    * { user-select: none; }
+  </style>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+  <div id="glass" class="glass"></div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const glass = document.getElementById('glass');
+
+    function resize(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ===== Stars =====
+    const STAR_COUNT = 90;
+    const stars = [];
+    const rand = (min,max)=>Math.random()*(max-min)+min;
+
+    function initStars(){
+      stars.length = 0;
+      for(let i=0;i<STAR_COUNT;i++){
+        stars.push({ x: rand(0,innerWidth), y: rand(0,innerHeight), r: rand(0.6,1.8),
+          baseA: rand(0.12,0.5), tw: rand(0.8,2.2), ph: rand(0,Math.PI*2) });
+      }
+    }
+    initStars();
+    window.addEventListener('resize', initStars);
+
+    function drawBackground(){
+      const g = ctx.createRadialGradient(innerWidth*0.5, innerHeight*0.35, 50, innerWidth*0.5, innerHeight*0.35, Math.max(innerWidth, innerHeight));
+      g.addColorStop(0, '#20262c');
+      g.addColorStop(1, '#161a1f');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,innerWidth,innerHeight);
+
+      const t = performance.now()*0.001;
+      for(const s of stars){
+        const a = s.baseA + 0.18*Math.sin(t*s.tw + s.ph);
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0,a)})`;
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ===== Cursor / press growth =====
+    let mouseX = innerWidth*0.5, mouseY = innerHeight*0.5;
+    let isDown = false;
+    let pressStart = 0;
+
+    const R_FULL = 120;
+    const R_IDLE = R_FULL/3;
+    let currentR = R_IDLE;
+
+    // 你要的「距離由遠到近」：1 秒內 100 -> 50
+    const GAP_START = 300;
+    const GAP_END   = 50;
+
+    // blur 隨長按進度增加（保留上一版）
+    const BLUR_MIN = 10;
+    const BLUR_MAX = 26;
+
+    window.addEventListener('mousemove', (e)=>{ mouseX=e.clientX; mouseY=e.clientY; }, {passive:true});
+
+    window.addEventListener('mousedown', (e)=>{
+      if(e.button!==0) return;
+      isDown = true;
+      pressStart = performance.now();
+      glass.classList.add('on');
+    });
+
+    window.addEventListener('mouseup', (e)=>{
+      if(e.button!==0) return;
+      isDown = false;
+      glass.classList.remove('on');
+      setGlassBlur(BLUR_MIN);
+    });
+
+    const clamp01 = v => Math.max(0, Math.min(1, v));
+    const lerp = (a,b,t)=>a+(b-a)*t;
+    const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+    function setGlassBlur(px){
+      const v = `blur(${px.toFixed(2)}px) saturate(140%)`;
+      glass.style.backdropFilter = v;
+      glass.style.webkitBackdropFilter = v;
+    }
+
+    function updateGlass(x,y,sphereR,progress01){
+      // 距離：由遠到近（100 -> 50）
+      const gap = lerp(GAP_START, GAP_END, progress01);
+
+      // 洞大小：球半徑 + gap
+      const cut = sphereR + gap;
+      glass.style.setProperty('--x', x+'px');
+      glass.style.setProperty('--y', y+'px');
+      glass.style.setProperty('--cut', cut+'px');
+
+      // blur 隨進度提高（無漸層單層）
+      const blur = lerp(BLUR_MIN, BLUR_MAX, progress01);
+      setGlassBlur(blur);
+    }
+
+    function drawSphere(x,y,r,pressed){
+      ctx.save();
+      ctx.translate(x,y);
+
+      if(!pressed){
+        const g = ctx.createRadialGradient(-r*0.35,-r*0.35,r*0.2, 0,0,r*1.25);
+        g.addColorStop(0, '#d8842a');
+        g.addColorStop(0.45, '#b15a12');
+        g.addColorStop(1, '#6d2f06');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.ellipse(-r*0.25,-r*0.28,r*0.22,r*0.15,-0.5,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.stroke();
+      } else {
+        ctx.shadowColor = 'rgba(255, 190, 70, 1)';
+        ctx.shadowBlur = 70;
+
+        const g = ctx.createRadialGradient(-r*0.35,-r*0.35,r*0.2, 0,0,r*1.55);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.18, '#fff2c8');
+        g.addColorStop(0.45, '#ffd37a');
+        g.addColorStop(1, '#ff7a12');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.34;
+        for(let i=-4;i<=4;i++){
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+          ctx.lineWidth = 1.4;
+          ctx.arc(0,0,r*0.92,(i*0.22)+0.12,(i*0.22)+0.48);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = 'rgba(255, 245, 225, 0.55)';
+        ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function tick(){
+      drawBackground();
+
+      let progress = 0;
+      let targetR = R_IDLE;
+
+      if(isDown){
+        const p = clamp01((performance.now() - pressStart) / 3000);
+        const eased = easeOutCubic(p);
+        progress = eased;
+
+        targetR = lerp(R_IDLE, R_FULL, eased);
+        currentR = lerp(currentR, targetR, 0.22);
+
+        updateGlass(mouseX, mouseY, currentR, eased);
+      } else {
+        currentR = lerp(currentR, R_IDLE, 0.18);
+        // 不按時玻璃不顯示，但仍同步更新洞參數（避免下一次突跳）
+        updateGlass(mouseX, mouseY, currentR, 0);
+      }
+
+      drawSphere(mouseX, mouseY, currentR, isDown);
+
+      requestAnimationFrame(tick);
+    }
+
+    setGlassBlur(BLUR_MIN);
+    tick();
+  </script>
+</body>
+</html>

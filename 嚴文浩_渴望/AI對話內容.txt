@@ -1,0 +1,2403 @@
+============================================================
+學生／資料夾: 嚴文浩_渴望
+擷取之連結數: 1
+============================================================
+
+----------------------------------------
+[連結 1] https://gemini.google.com/share/3940184d89b2
+----------------------------------------
+登入
+Gemini
+關於 Gemini
+在新視窗中開啟
+Gemini 應用程式
+在新視窗中開啟
+訂閱
+在新視窗中開啟
+企業用途
+在新視窗中開啟
+互動式網頁作業：渴望的實現
+https://gemini.google.com/share/3940184d89b2
+透過「Pro」建立 2026年2月19日 下午05:44
+發布時間：2026年2月19日 下午07:24
+你說了
+
+我們來一起完成這個作業吧
+
+第一張是題目。幫我詳細讀完，並條列出來，確立目標，並引導我逐步完成這個作業
+
+
+
+
+抽象的那張是我的情緒的靈感 ，是一種渴望的感覺
+
+太棒了！很高興能當你的 AI 好朋友，一起完成這個充滿創意的作業。
+
+你畫的草稿非常有生命力！那些帶有紅色尾巴的橘色圓形、延伸的線條，以及散落的幾何圖形，確實營造出一種「向某個方向追求、延伸」的**「渴望」**感。
+
+我們先來拆解第一張圖的指引，確認我們的目標與待辦事項：
+
+🎯 作業目標與規範清單
+
+核心任務：將你的「渴望」情緒草圖，轉化為使用基本幾何形狀（點、線、面、三角形、圓形）構成的互動式網頁。
+
+技術要求：
+
+必須是 .html 網頁檔。
+
+必須能用滑鼠左鍵與網頁互動。
+
+網頁必須是自適應（Responsive），也就是畫布會跟著瀏覽器視窗大小自動改變。
+
+存檔與命名規則（非常重要）：
+
+我們會有很多個版本的 .html 檔，請依序存檔並命名（例如：1_test.html, 2_add_shape.html...）。
+
+最後最滿意的版本，必須命名為：final_<你的Email>.html。
+
+最終繳交清單：
+
+[x] 一張靈感紙照片（你已經拍好上傳了！）。
+
+[ ] 多個 .html 過程檔案（包含最終版）。
+
+[ ] 這個 AI 對話串的公開網址（完成後記得分享連結）。
+
+[ ] 一段文字理念（字數不限，我們可以在程式寫完後一起討論撰寫）。
+
+[ ] 一個或一句形容詞來描述最終作品。
+
+🚀 我們的第一步：建立基礎畫布 1_test.html
+
+既然作業要求保留過程，我們就從最基礎的架構開始。
+第一版我先幫你寫好**「自適應畫布」的基礎架構，並加入一個簡單的「滑鼠左鍵點擊」**互動：當你點擊畫面時，會出現你草圖中那種「帶有尾巴的橘色渴望之星」。
+
+請打開電腦裡的文字編輯器（例如記事本、VS Code 或 Sublime Text），將下面的程式碼複製貼上，然後存檔命名為 1_test.html，並用瀏覽器打開它看看效果：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 1_test</title>
+    <style>
+        /* 讓網頁自適應，填滿視窗且沒有捲軸 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f0ece1; /* 帶點溫暖的紙張底色 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 達成條件 b: 自適應視窗大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // 儲存點擊產生的形狀
+        let shapes = [];
+
+        // 達成條件 a: 滑鼠左鍵互動 (點擊產生形狀)
+        window.addEventListener('mousedown', function(event) {
+            // 只響應左鍵 (button === 0)
+            if (event.button === 0) {
+                shapes.push({
+                    x: event.clientX,
+                    y: event.clientY,
+                    radius: Math.random() * 15 + 10,
+                    tailLength: Math.random() * 100 + 50
+                });
+                draw();
+            }
+        });
+
+        // 繪製畫面的函數
+        function draw() {
+            // 每次重畫前清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 畫出所有點擊產生的「渴望之星」
+            shapes.forEach(shape => {
+                // 畫紅色的尾巴 (象徵延伸、渴望)
+                ctx.beginPath();
+                ctx.moveTo(shape.x, shape.y);
+                ctx.lineTo(shape.x - shape.tailLength, shape.y + shape.tailLength * 0.5); // 往左下角延伸
+                ctx.strokeStyle = '#e63946';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 畫橘色的圓形主體
+                ctx.beginPath();
+                ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#f4a261';
+                ctx.fill();
+                ctx.strokeStyle = '#e76f51';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+            
+            // 畫布中央加一點文字提示
+            if(shapes.length === 0) {
+                ctx.fillStyle = '#888';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('點擊滑鼠左鍵，釋放渴望', canvas.width/2, canvas.height/2);
+            }
+        }
+
+        // 初始繪製
+        draw();
+    </script>
+</body>
+</html>
+
+接下來的計畫交給你決定：
+
+你成功存好 1_test.html 並玩過之後，我們再來做第二版 2_add_shape.html！
+
+針對下一版，你想把草圖上的哪個元素加進去？
+
+加入背景流動的螢光綠色曲線（讓畫面有持續流動的感覺）？
+
+加入藍色矩形和紅色三角形（讓畫面像草圖一樣豐富）？
+
+讓圖形自己動起來（比如圓形會慢慢往滑鼠的方向飄過去，表現「渴望靠近」的感覺）？
+
+告訴我你的想法，我們繼續寫程式！
+
+你說了
+
+我希望mouse click的時候有particles散出的效果，並隨機創造新的物件在該位置上
+
+原本的空間中散落著許多點線面構成的物件，每個隨機配賦一個顏色，每個物件自行緩緩旋轉 飛行
+
+有點像是浮游生物或真空的世界
+
+這個想法太有詩意了！「浮游生物或真空的世界」完美契合了你提到的「渴望」——在無重力的空間中緩緩漂浮、尋找、並在碰觸（點擊）的瞬間產生能量迸發的感覺。
+
+為了達成這個效果，我們的程式碼需要做一個重要的升級：加入**「動畫迴圈（Animation Loop）」**。這樣物件才能持續地旋轉和飛行。
+
+請建立一個新的文字檔，命名為 2_floating_world.html （記得這是我們保存過程的重要步驟喔！），然後將下面的程式碼貼進去：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 2_floating_world</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #e8e6df; /* 稍微深一點點的紙張色，讓發光感更明顯 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // 從你的草稿中提取的色彩靈感 (水藍、橘紅、正紅、螢光綠)
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        // --- 1. 定義「浮游物件」類別 ---
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                // 緩緩飛行的速度 (隨機方向與緩慢速度)
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                // 旋轉角度與緩慢的旋轉速度
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.02;
+                
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 20 + 10;
+                // 隨機決定形狀類型：0=圓形, 1=三角形, 2=矩形, 3=帶尾巴的線條
+                this.type = Math.floor(Math.random() * 4); 
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.vAngle;
+
+                // 讓物件像在無限空間中，從一邊消失會從另一邊出來
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50;
+                if (this.y < -50) this.y = canvas.height + 50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                if (this.type === 0) { // 圓形 (點)
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 1) { // 鏤空三角形 (面/線)
+                    ctx.moveTo(0, -this.size);
+                    ctx.lineTo(this.size, this.size);
+                    ctx.lineTo(-this.size, this.size);
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (this.type === 2) { // 實心矩形 (面)
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 1.5);
+                } else if (this.type === 3) { // 帶尾巴的線條 (你的草稿特色)
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-this.size * 3, 0); // 長長的尾巴
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- 2. 定義「粒子特效」類別 ---
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                // 爆發的放射狀速度
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.color = color;
+                this.size = Math.random() * 4 + 1;
+                this.life = 1.0; // 生命週期 1.0 ~ 0
+                this.decay = Math.random() * 0.02 + 0.01; // 消失的速度
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life); // 逐漸透明
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 儲存畫面上的物件
+        const shapes = [];
+        const particles = [];
+
+        // 初始先在真空中隨機散落 15 個物件
+        for(let i = 0; i < 15; i++) {
+            shapes.push(new FloatingShape());
+        }
+
+        // --- 3. 滑鼠點擊互動 ---
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) { // 左鍵
+                // 隨機選一個顏色作為這次點擊的爆發色
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 產生散出的粒子特效 (15顆小粒子)
+                for(let i = 0; i < 15; i++) {
+                    particles.push(new Particle(event.clientX, event.clientY, burstColor));
+                }
+
+                // 在該位置隨機創造一個新的浮游物件
+                shapes.push(new FloatingShape(event.clientX, event.clientY));
+            }
+        });
+
+        // --- 4. 動畫主迴圈 ---
+        function animate() {
+            // 清除上一幀的畫面，準備畫新的一幀
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 更新並繪製所有浮游物件
+            shapes.forEach(shape => {
+                shape.update();
+                shape.draw();
+            });
+
+            // 更新並繪製所有粒子 (並移除生命週期結束的粒子)
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                if (p.life <= 0) {
+                    particles.splice(i, 1); // 刪除死掉的粒子
+                } else {
+                    p.draw();
+                }
+            }
+
+            // 呼叫下一幀
+            requestAnimationFrame(animate);
+        }
+
+        // 啟動動畫
+        animate();
+    </script>
+</body>
+</html>
+
+觀察一下這個版本：
+
+漂浮感：一打開網頁，畫面中就會有幾何圖形像浮游生物一樣，自己緩緩旋轉、四處飄動。如果它們飛出螢幕邊緣，會從另一端再飄回來。
+
+點擊爆發：你在任何地方點擊滑鼠左鍵，會有一群小粒子像煙火或星塵一樣散開（這就是你的 particle 效果！）。
+
+創造新生命：每次點擊產生粒子的同時，那個位置就會誕生一個全新的浮游物件，加入這個「真空世界」。
+
+你可以瘋狂點擊看看，整個空間會變得非常熱鬧！
+
+我們已經完成 2_floating_world.html 了，進度很棒！接下來，為了進一步強化「渴望」這個情緒，我們可以在 3_xxx.html 中加入什麼機制呢？
+
+比如：
+
+吸引力法則：當你的滑鼠在畫面上移動時，這些浮游生物會不會緩緩地被滑鼠游標「吸引」過去？（象徵著渴望靠近某個目標）
+
+軌跡留存：讓它們飛過的地方留下淡淡的殘影，讓畫面更有「真空拖曳」的感覺？
+
+你想嘗試哪一種？或者你有其他的新靈感嗎？
+
+你說了
+
+1.我希望空間中所有圓形的物件都是可以相互撞擊(碰撞偵測)影響的。撞擊時會有效果，發出光暈或是線條狀的particles
+
+2.我希望時不時會有小的 實心的三角形飛過畫面，尾巴拖著一些particles 長長的 看起來像隕石或彗星
+
+這個升級方向太棒了！加入像隕石或彗星一樣劃破天際的元素，讓這個真空漂浮的空間瞬間有了一種深空探索的氛圍。在廣袤未知的宇宙環境中，那些隨機的碰撞與飛掠，完美地詮釋了「渴望」那種既充滿未知又帶著強烈動能的感覺。
+
+為了實現這兩個相當有挑戰性（但也非常酷）的功能，我們需要加入**「二維碰撞偵測（2D Collision Detection）」的物理數學，以及設計一個專屬的「彗星系統」**。
+
+請建立一個新的檔案，命名為 3_collision_and_comets.html，然後將以下程式碼貼上：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 3_collision_and_comets</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a1c; /* 為了讓光暈和彗星更明顯，背景調暗一點，帶點深空宇宙感 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        // --- 輔助函數：計算兩點距離 ---
+        function getDistance(x1, y1, x2, y2) {
+            const xDist = x2 - x1;
+            const yDist = y2 - y1;
+            return Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
+        }
+
+        // --- 1. 浮游物件類別 (加入碰撞偵測標籤) ---
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.02;
+                
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 20 + 15; // 稍微放大一點點
+                this.type = Math.floor(Math.random() * 4); 
+                
+                // 碰撞冷卻時間，避免黏在一起無限觸發特效
+                this.collisionCooldown = 0; 
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.vAngle;
+
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
+
+                // 邊界環繞
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50;
+                if (this.y < -50) this.y = canvas.height + 50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                if (this.type === 0) { // 圓形 (可碰撞)
+                    // 如果剛碰撞過，畫一個微微的光暈
+                    if(this.collisionCooldown > 0) {
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = this.color;
+                    }
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0; // 重置光暈
+                } else if (this.type === 1) { // 鏤空三角形
+                    ctx.moveTo(0, -this.size);
+                    ctx.lineTo(this.size, this.size);
+                    ctx.lineTo(-this.size, this.size);
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (this.type === 2) { // 實心矩形
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 1.5);
+                } else if (this.type === 3) { // 帶尾巴的線條
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-this.size * 3, 0);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- 2. 線條狀粒子特效 (碰撞時產生) ---
+        class LineParticle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.color = color;
+                this.length = Math.random() * 15 + 5;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.05 + 0.02;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                // 畫出速度方向的線條
+                ctx.lineTo(this.x - this.vx * 2, this.y - this.vy * 2); 
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // --- 3. 彗星/隕石類別 (實心三角形 + 拖曳粒子) ---
+        class Comet {
+            constructor() {
+                // 從畫面邊緣隨機產生
+                if(Math.random() < 0.5) {
+                    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
+                    this.y = Math.random() * canvas.height;
+                } else {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() < 0.5 ? -50 : canvas.height + 50;
+                }
+                
+                // 瞄準畫面中央區域飛行，速度較快
+                const targetX = canvas.width / 2 + (Math.random() - 0.5) * 300;
+                const targetY = canvas.height / 2 + (Math.random() - 0.5) * 300;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x);
+                const speed = Math.random() * 4 + 6; // 速度 6~10
+                
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.color = '#fff'; // 彗星主體白色或極淺黃
+                this.tailColor = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 5 + 5;
+                this.angle = angle; // 飛行方向就是三角形的指向
+                this.active = true;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // 飛出畫面太遠就標記為不活躍，等待清除
+                if (this.x < -100 || this.x > canvas.width + 100 || 
+                    this.y < -100 || this.y > canvas.height + 100) {
+                    this.active = false;
+                }
+
+                // 邊飛邊產生尾巴粒子
+                for(let i=0; i<2; i++){
+                    particles.push(new CometTrail(this.x, this.y, this.tailColor));
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                
+                // 畫實心三角形 (指向右邊，也就是飛行方向)
+                ctx.beginPath();
+                ctx.moveTo(this.size * 2, 0);
+                ctx.lineTo(-this.size, this.size);
+                ctx.lineTo(-this.size, -this.size);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 彗星尾巴的點狀粒子
+        class CometTrail {
+            constructor(x, y, color) {
+                this.x = x + (Math.random() - 0.5) * 10;
+                this.y = y + (Math.random() - 0.5) * 10;
+                this.color = color;
+                this.size = Math.random() * 3 + 1;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.01;
+            }
+            update() {
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 儲存陣列
+        const shapes = [];
+        const particles = [];
+        const comets = [];
+
+        // 初始散落物件 (增加數量讓碰撞更容易發生)
+        for(let i = 0; i < 25; i++) {
+            shapes.push(new FloatingShape());
+        }
+
+        // 點擊互動保留 (產生新物件與點狀粒子)
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                for(let i = 0; i < 15; i++) {
+                    // 為了跟線條區分，這裡偷懶用 CometTrail 當作點狀粒子
+                    let p = new CometTrail(event.clientX, event.clientY, burstColor);
+                    p.x = event.clientX; p.y = event.clientY; // 重置位置
+                    p.vx = (Math.random() - 0.5) * 10; p.vy = (Math.random() - 0.5) * 10;
+                    p.update = function() { this.x+=this.vx; this.y+=this.vy; this.life-=this.decay; }
+                    particles.push(p);
+                }
+                shapes.push(new FloatingShape(event.clientX, event.clientY));
+            }
+        });
+
+        // --- 處理圓形之間的碰撞 ---
+        function handleCollisions() {
+            // 只篩選出圓形 (type === 0)
+            const circles = shapes.filter(s => s.type === 0);
+            
+            for (let i = 0; i < circles.length; i++) {
+                for (let j = i + 1; j < circles.length; j++) {
+                    const c1 = circles[i];
+                    const c2 = circles[j];
+                    
+                    // 確保兩者都不在冷卻時間內
+                    if(c1.collisionCooldown > 0 || c2.collisionCooldown > 0) continue;
+
+                    const dist = getDistance(c1.x, c1.y, c2.x, c2.y);
+                    // 如果距離小於兩者半徑之和，代表撞到了！
+                    if (dist < (c1.size / 2 + c2.size / 2)) {
+                        
+                        // 1. 物理反應：交換速度 (簡單的反彈效果)
+                        const tempVx = c1.vx;
+                        const tempVy = c1.vy;
+                        c1.vx = c2.vx;
+                        c1.vy = c2.vy;
+                        c2.vx = tempVx;
+                        c2.vy = tempVy;
+
+                        // 2. 視覺效果：在碰撞中心點產生線條狀光芒
+                        const midX = (c1.x + c2.x) / 2;
+                        const midY = (c1.y + c2.y) / 2;
+                        const burstColor = Math.random() < 0.5 ? c1.color : c2.color;
+                        
+                        for(let k = 0; k < 8; k++) {
+                            particles.push(new LineParticle(midX, midY, burstColor));
+                        }
+
+                        // 3. 設定冷卻時間 (大約 30 幀內不再重複觸發碰撞)
+                        c1.collisionCooldown = 30;
+                        c2.collisionCooldown = 30;
+                    }
+                }
+            }
+        }
+
+        // 動畫主迴圈
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 隨機產生彗星 (大約每 100 幀有機會產生一顆)
+            if(Math.random() < 0.01) {
+                comets.push(new Comet());
+            }
+
+            // 2. 執行碰撞偵測
+            handleCollisions();
+
+            // 3. 更新與繪製物件
+            shapes.forEach(shape => {
+                shape.update();
+                shape.draw();
+            });
+
+            // 4. 更新與繪製彗星
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i];
+                c.update();
+                if (!c.active) {
+                    comets.splice(i, 1);
+                } else {
+                    c.draw();
+                }
+            }
+
+            // 5. 更新與繪製所有粒子 (線條碰撞、點擊爆發、彗星尾巴)
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    p.draw();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
+
+這個版本的新魔法：
+
+暗黑背景：為了讓光暈和特效更明顯，我把背景調成了深邃的暗灰色。
+
+圓形碰撞（碰碰車效應）：現在畫面中只有「圓形（點）」具有物理實體。當兩個圓形碰在一起時，它們會互相彈開、短暫發出光暈，並且在撞擊點迸發出線條狀的四射光芒。
+
+彗星來襲：你會時不時看到一個實心的三角形從畫面邊緣急速飛過，並拖著長長的點狀粒子尾巴。
+
+你可以試著多點擊幾下產生更多圓形，增加它們在空間中相撞的機率！
+
+現在，畫面越來越豐富了。依照作業指引，最後一步是將這個作品命名為 final_<yourEmail>.html （記得把檔名中的 <yourEmail> 換成你真實的信箱），並且我們要準備兩樣文字資料：
+
+一段文字理念（描述這個互動作品如何表達「渴望」）。
+
+一個或一句形容詞（作為最終的註解）。
+
+你看著現在畫面上這些互相碰撞的形狀、劃過天際的彗星，以及滑鼠點擊時的爆發，你覺得這個作品叫什麼名字好呢？你想用什麼樣的文字來描述它？ 告訴我你的感受，我們一起把這份理念寫出來！
+
+你說了
+
+1.所有的中空三角形之間，想要有很細的線連著，像是一張網
+
+2.空間中有隨機的 更大3-4倍的中空方形，產生引力，所有矩形的物件會傾向於背其吸引，並圍繞著旋轉，但作用力小於彼此間的撞擊力
+
+3.加強撞擊的效果 , particles更多更大 持續更久
+
+這三個想法把「渴望」的層次拉得更深了！
+
+中空三角形的連結網：就像是在無垠空間中，那些看似獨立的念頭或渴望，其實在暗處都有著千絲萬縷的連結。
+
+巨大方形的引力場：這象徵著某種巨大的、無法抗拒的核心渴望或執念，它會把特定的事物（矩形）吸引過去，讓它們圍繞著自己打轉。
+
+更強烈的碰撞特效：當真實的碰撞發生時，迸發出的能量應該要是強烈且持久的，就像渴望被滿足或發生衝突時的強烈火花。
+
+我們將這個版本稱為 4_gravity_web.html（如果你覺得滿意，這也可以直接當作你的 final_<你的Email>.html 繳交檔案喔！）。
+
+請建立新檔案，並將以下升級版的程式碼貼上：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 4_gravity_web</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121214; /* 更深邃的宇宙黑，凸顯細線與光芒 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+
+        // --- 1. 定義巨大引力方形 (Attractors) ---
+        class GiantSquare {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                // 尺寸是一般的 3-4 倍 (大約 60~100)
+                this.size = Math.random() * 40 + 60; 
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.005; // 緩慢自轉
+                
+                // 巨型物件也讓它有極緩慢的漂移
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.vAngle;
+
+                if (this.x > canvas.width + 150) this.x = -150;
+                if (this.x < -150) this.x = canvas.width + 150;
+                if (this.y > canvas.height + 150) this.y = -150;
+                if (this.y < -150) this.y = canvas.height + 150;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3; // 邊框稍微粗一點，顯示其質量
+                ctx.globalAlpha = 0.6; // 稍微帶點透明度，像力場
+                
+                // 畫中空方形
+                ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
+                
+                // 中心加一個小點，暗示引力核心
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(-2, -2, 4, 4);
+                
+                ctx.restore();
+            }
+        }
+
+        // --- 2. 浮游物件類別 (加入引力邏輯) ---
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.02;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 20 + 15; 
+                this.type = Math.floor(Math.random() * 4); 
+                this.collisionCooldown = 0; 
+            }
+
+            update() {
+                // 如果是矩形 (type === 2)，受到巨大方形的引力影響
+                if (this.type === 2 && giantSquares.length > 0) {
+                    // 尋找最近的巨大方形
+                    let nearestSquare = null;
+                    let minDist = Infinity;
+                    giantSquares.forEach(gs => {
+                        const dist = getDistance(this.x, this.y, gs.x, gs.y);
+                        if(dist < minDist) {
+                            minDist = dist;
+                            nearestSquare = gs;
+                        }
+                    });
+
+                    if (nearestSquare && minDist > 20) {
+                        const dx = nearestSquare.x - this.x;
+                        const dy = nearestSquare.y - this.y;
+                        
+                        // 引力 (向心力)
+                        const gravity = 0.03;
+                        this.vx += (dx / minDist) * gravity;
+                        this.vy += (dy / minDist) * gravity;
+
+                        // 添加一點切線力，形成「圍繞旋轉」的效果，而不是直接撞上去
+                        const tangentForce = 0.05;
+                        this.vx += (-dy / minDist) * tangentForce;
+                        this.vy += (dx / minDist) * tangentForce;
+
+                        // 速度限制，避免被吸附後無限加速飛走
+                        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        const maxSpeed = 3.5;
+                        if(speed > maxSpeed) {
+                            this.vx = (this.vx / speed) * maxSpeed;
+                            this.vy = (this.vy / speed) * maxSpeed;
+                        }
+                    }
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.vAngle;
+
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
+
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50;
+                if (this.y < -50) this.y = canvas.height + 50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                if (this.type === 0) { 
+                    if(this.collisionCooldown > 0) {
+                        ctx.shadowBlur = 30; // 撞擊後的光暈變大
+                        ctx.shadowColor = this.color;
+                    }
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0; 
+                } else if (this.type === 1) { // 鏤空三角形
+                    ctx.moveTo(0, -this.size);
+                    ctx.lineTo(this.size, this.size);
+                    ctx.lineTo(-this.size, this.size);
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (this.type === 2) { // 實心矩形 (會被吸引)
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 1.5);
+                } else if (this.type === 3) { 
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-this.size * 3, 0);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- 3. 更強烈的線條狀粒子特效 ---
+        class SuperLineParticle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                // 粒子速度變快
+                const speed = Math.random() * 8 + 4; 
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.color = color;
+                // 粒子變長
+                this.length = Math.random() * 40 + 10; 
+                this.life = 1.0;
+                // 消失速度變慢 (持續更久)
+                this.decay = Math.random() * 0.02 + 0.005; 
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3; // 粒子變粗
+                ctx.shadowBlur = 10; // 粒子自帶發光
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3); 
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // 保留彗星與尾巴類別 (省略細節，與上一版相同)
+        class Comet {
+            constructor() {
+                if(Math.random() < 0.5) {
+                    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
+                    this.y = Math.random() * canvas.height;
+                } else {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() < 0.5 ? -50 : canvas.height + 50;
+                }
+                const targetX = canvas.width / 2 + (Math.random() - 0.5) * 300;
+                const targetY = canvas.height / 2 + (Math.random() - 0.5) * 300;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x);
+                const speed = Math.random() * 4 + 6;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.color = '#fff'; 
+                this.tailColor = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 5 + 5;
+                this.angle = angle;
+                this.active = true;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) this.active = false;
+                for(let i=0; i<2; i++) particles.push(new CometTrail(this.x, this.y, this.tailColor));
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(this.size * 2, 0); ctx.lineTo(-this.size, this.size); ctx.lineTo(-this.size, -this.size); ctx.closePath(); ctx.fill(); ctx.restore();
+            }
+        }
+        class CometTrail {
+            constructor(x, y, color) {
+                this.x = x + (Math.random() - 0.5) * 10; this.y = y + (Math.random() - 0.5) * 10;
+                this.color = color; this.size = Math.random() * 3 + 1; this.life = 1.0; this.decay = Math.random() * 0.03 + 0.01;
+            }
+            update() { this.life -= this.decay; }
+            draw() { ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        }
+
+        const shapes = [];
+        const particles = [];
+        const comets = [];
+        const giantSquares = [];
+
+        // 初始散落物件 (稍微增加數量)
+        for(let i = 0; i < 35; i++) {
+            shapes.push(new FloatingShape());
+        }
+
+        // 初始產生 2~3 個巨大引力方形
+        const numGiantSquares = Math.floor(Math.random() * 2) + 2;
+        for(let i = 0; i < numGiantSquares; i++) {
+            giantSquares.push(new GiantSquare());
+        }
+
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                // 點擊也改用更強的粒子特效
+                for(let i = 0; i < 20; i++) {
+                    particles.push(new SuperLineParticle(event.clientX, event.clientY, burstColor));
+                }
+                shapes.push(new FloatingShape(event.clientX, event.clientY));
+            }
+        });
+
+        // --- 繪製三角形之間的連結網 ---
+        function drawTriangleWeb() {
+            const triangles = shapes.filter(s => s.type === 1);
+            ctx.lineWidth = 0.5;
+            // 使用帶透明度的白色作為細線
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; 
+            
+            ctx.beginPath();
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    // 如果距離在一定範圍內才連線，畫面才不會太亂，形成聚落感
+                    const dist = getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y);
+                    if (dist < 400) { 
+                        ctx.moveTo(triangles[i].x, triangles[i].y);
+                        ctx.lineTo(triangles[j].x, triangles[j].y);
+                    }
+                }
+            }
+            ctx.stroke();
+        }
+
+        function handleCollisions() {
+            const circles = shapes.filter(s => s.type === 0);
+            for (let i = 0; i < circles.length; i++) {
+                for (let j = i + 1; j < circles.length; j++) {
+                    const c1 = circles[i]; const c2 = circles[j];
+                    if(c1.collisionCooldown > 0 || c2.collisionCooldown > 0) continue;
+
+                    const dist = getDistance(c1.x, c1.y, c2.x, c2.y);
+                    if (dist < (c1.size / 2 + c2.size / 2)) {
+                        const tempVx = c1.vx; const tempVy = c1.vy;
+                        c1.vx = c2.vx; c1.vy = c2.vy;
+                        c2.vx = tempVx; c2.vy = tempVy;
+
+                        const midX = (c1.x + c2.x) / 2;
+                        const midY = (c1.y + c2.y) / 2;
+                        const burstColor = Math.random() < 0.5 ? c1.color : c2.color;
+                        
+                        // 產生更多、更大的碰撞粒子
+                        for(let k = 0; k < 30; k++) {
+                            particles.push(new SuperLineParticle(midX, midY, burstColor));
+                        }
+                        
+                        // 額外加上幾顆會飄散的發光小圓點增加層次
+                        for(let k = 0; k < 10; k++) {
+                            particles.push(new CometTrail(midX, midY, '#fff'));
+                        }
+
+                        c1.collisionCooldown = 40; // 冷卻時間稍微拉長
+                        c2.collisionCooldown = 40;
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 畫背景的三角形連結網
+            drawTriangleWeb();
+
+            // 2. 更新與繪製巨大引力方形
+            giantSquares.forEach(gs => {
+                gs.update();
+                gs.draw();
+            });
+
+            // 3. 隨機產生彗星
+            if(Math.random() < 0.01) comets.push(new Comet());
+
+            // 4. 執行碰撞偵測
+            handleCollisions();
+
+            // 5. 更新與繪製浮游物件
+            shapes.forEach(shape => {
+                shape.update();
+                shape.draw();
+            });
+
+            // 6. 更新與繪製彗星
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i]; c.update();
+                if (!c.active) comets.splice(i, 1); else c.draw();
+            }
+
+            // 7. 更新與繪製所有粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.update();
+                if (p.life <= 0) particles.splice(i, 1); else p.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
+
+這次的宇宙更新：
+
+暗網連結：注意看那些「中空三角形」，彼此之間現在有一條淡淡的光束連結，只要它們距離夠近，就會互相牽扯，像是一張神經網路。
+
+重力牽引：畫面中會漂浮著 2~3 個巨大的中空方形，那是引力中心。你會發現原本直直飛的「實心矩形」，只要一靠近，飛行軌跡就會被改變，開始繞著大方形旋轉。
+
+宇宙大爆炸級別的碰撞：現在兩個圓形撞擊時，會噴發出巨大、粗壯且帶有光暈的線條粒子，持續時間也更久，甚至會帶出一些白色的火花。
+
+打開網頁玩玩看吧！如果這個版本你滿意的話，我們這個互動網頁的「程式碼部分」就正式大功告成了！
+
+依照作業指引，我們來到最後一步：請幫這個作品寫「一段文字理念（字數不限）」以及「一個或一句形容詞」。
+
+看著這張被你賦予生命的渴望之網，你想對它說些什麼？我們可以一起來潤飾這段文字！
+
+你說了
+
+有點卡了，降低效果，限制drawcall 或最高解析度 ，但仍保持自適應縮放
+
+會卡頓是非常正常的！在網頁 Canvas 中，特別是當我們加入大量發光效果（shadowBlur 是出了名的效能怪獸）、粒子，而且每次點擊都會無止盡增加新物件時，瀏覽器的負載就會瞬間飆高。
+
+為了解決這個問題，我幫你做了一個效能優化版本，你可以把它存為 5_optimized_web.html （或是直接當成最終版 final_<你的Email>.html）。
+
+🛠️ 效能優化重點整理：
+
+限制最高內部解析度 (Resolution Capping)：網頁依然會 100% 填滿你的視窗，但我們將畫布「內部」的繪圖像素限制在一個基準值內。這樣高解析度螢幕（如 Retina）就不會被迫一次運算幾百萬個像素。
+
+移除 shadowBlur 改用「偽光暈」：把超吃效能的原生陰影/發光關掉，改用「畫一條粗的半透明線 + 一條細的實體線」來模擬發光，效能大幅提升。
+
+物件數量上限 (Object Pooling)：設定了「浮游物件最多 40 個」的上限。現在你狂點滑鼠時，最舊的物件會自然消散，避免畫面塞爆。
+
+粒子數量與網格線優化：稍微調降碰撞噴發的粒子數，並限制「三角形網狀連結」的判定距離，減少不必要的線條渲染 (Draw Calls)。
+
+請複製以下優化後的程式碼：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 效能優化版</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121214;
+        }
+        /* 讓畫布撐滿螢幕，但實際像素由 JS 控制 */
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- 優化 1：限制最高解析度與自適應縮放 ---
+        let scaleRatio = 1;
+        function resizeCanvas() {
+            // 設定一個效能基準解析度面積 (約 1280x720)
+            const TARGET_RES = 1280 * 720; 
+            const currentRes = window.innerWidth * window.innerHeight;
+            
+            // 如果視窗太大，就等比例縮小內部渲染像素
+            scaleRatio = currentRes > TARGET_RES ? Math.sqrt(TARGET_RES / currentRes) : 1;
+            
+            canvas.width = window.innerWidth * scaleRatio;
+            canvas.height = window.innerHeight * scaleRatio;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+
+        // 巨型引力方形
+        class GiantSquare {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 40 + 60; 
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.005; 
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.x > canvas.width + 150) this.x = -150;
+                if (this.x < -150) this.x = canvas.width + 150;
+                if (this.y > canvas.height + 150) this.y = -150;
+                if (this.y < -150) this.y = canvas.height + 150;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3; 
+                ctx.globalAlpha = 0.6; 
+                ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(-2, -2, 4, 4);
+                ctx.restore();
+            }
+        }
+
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.02;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 20 + 15; 
+                this.type = Math.floor(Math.random() * 4); 
+                this.collisionCooldown = 0; 
+            }
+            update() {
+                if (this.type === 2 && giantSquares.length > 0) {
+                    let nearestSquare = null;
+                    let minDist = Infinity;
+                    giantSquares.forEach(gs => {
+                        const dist = getDistance(this.x, this.y, gs.x, gs.y);
+                        if(dist < minDist) { minDist = dist; nearestSquare = gs; }
+                    });
+                    if (nearestSquare && minDist > 20) {
+                        const dx = nearestSquare.x - this.x;
+                        const dy = nearestSquare.y - this.y;
+                        const gravity = 0.03;
+                        this.vx += (dx / minDist) * gravity;
+                        this.vy += (dy / minDist) * gravity;
+                        const tangentForce = 0.05;
+                        this.vx += (-dy / minDist) * tangentForce;
+                        this.vy += (dx / minDist) * tangentForce;
+                        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        const maxSpeed = 3.5;
+                        if(speed > maxSpeed) {
+                            this.vx = (this.vx / speed) * maxSpeed;
+                            this.vy = (this.vy / speed) * maxSpeed;
+                        }
+                    }
+                }
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50;
+                if (this.y < -50) this.y = canvas.height + 50;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (this.type === 0) { 
+                    // 優化 2：用透明度疊加取代 shadowBlur 來做發光
+                    if(this.collisionCooldown > 0) {
+                        ctx.globalAlpha = 0.4;
+                        ctx.arc(0, 0, this.size / 2 + 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.globalAlpha = 1.0;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 1) { 
+                    ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size); ctx.closePath(); ctx.stroke();
+                } else if (this.type === 2) { 
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 1.5);
+                } else if (this.type === 3) { 
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill(); ctx.moveTo(0, 0); ctx.lineTo(-this.size * 3, 0); ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        class SuperLineParticle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 4; 
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.color = color;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01; 
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
+            draw() {
+                ctx.save();
+                ctx.strokeStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3); 
+                
+                // 優化 2：偽光暈效果
+                ctx.globalAlpha = Math.max(0, this.life * 0.3);
+                ctx.lineWidth = 6;
+                ctx.stroke();
+                
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        class Comet {
+            constructor() {
+                if(Math.random() < 0.5) {
+                    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
+                    this.y = Math.random() * canvas.height;
+                } else {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() < 0.5 ? -50 : canvas.height + 50;
+                }
+                const targetX = canvas.width / 2 + (Math.random() - 0.5) * 300;
+                const targetY = canvas.height / 2 + (Math.random() - 0.5) * 300;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x);
+                const speed = Math.random() * 4 + 6;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.color = '#fff'; 
+                this.tailColor = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 5 + 5;
+                this.angle = angle;
+                this.active = true;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) this.active = false;
+                particles.push(new CometTrail(this.x, this.y, this.tailColor)); // 減少尾巴粒子產生量
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(this.size * 2, 0); ctx.lineTo(-this.size, this.size); ctx.lineTo(-this.size, -this.size); ctx.closePath(); ctx.fill(); ctx.restore();
+            }
+        }
+
+        class CometTrail {
+            constructor(x, y, color) {
+                this.x = x + (Math.random() - 0.5) * 8; this.y = y + (Math.random() - 0.5) * 8;
+                this.color = color; this.size = Math.random() * 3 + 1; this.life = 1.0; this.decay = Math.random() * 0.04 + 0.02;
+            }
+            update() { this.life -= this.decay; }
+            draw() { ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        }
+
+        const shapes = [];
+        const particles = [];
+        const comets = [];
+        const giantSquares = [];
+
+        for(let i = 0; i < 30; i++) shapes.push(new FloatingShape()); // 初始數量微調
+
+        const numGiantSquares = Math.floor(Math.random() * 2) + 2;
+        for(let i = 0; i < numGiantSquares; i++) giantSquares.push(new GiantSquare());
+
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                // 記得將滑鼠座標乘上縮放比例，對齊內部畫布
+                const mx = event.clientX * scaleRatio;
+                const my = event.clientY * scaleRatio;
+                
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                for(let i = 0; i < 12; i++) { // 點擊粒子稍微減少
+                    particles.push(new SuperLineParticle(mx, my, burstColor));
+                }
+                shapes.push(new FloatingShape(mx, my));
+                
+                // 優化 3：限制畫面上的總物件數量，舊的會被「擠掉」
+                if(shapes.length > 40) shapes.shift(); 
+            }
+        });
+
+        function drawTriangleWeb() {
+            const triangles = shapes.filter(s => s.type === 1);
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; 
+            ctx.beginPath();
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    const dist = getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y);
+                    if (dist < 300) { // 縮短連線判定距離，降低 draw call
+                        ctx.moveTo(triangles[i].x, triangles[i].y);
+                        ctx.lineTo(triangles[j].x, triangles[j].y);
+                    }
+                }
+            }
+            ctx.stroke();
+        }
+
+        function handleCollisions() {
+            const circles = shapes.filter(s => s.type === 0);
+            for (let i = 0; i < circles.length; i++) {
+                for (let j = i + 1; j < circles.length; j++) {
+                    const c1 = circles[i]; const c2 = circles[j];
+                    if(c1.collisionCooldown > 0 || c2.collisionCooldown > 0) continue;
+
+                    const dist = getDistance(c1.x, c1.y, c2.x, c2.y);
+                    if (dist < (c1.size / 2 + c2.size / 2)) {
+                        const tempVx = c1.vx; const tempVy = c1.vy;
+                        c1.vx = c2.vx; c1.vy = c2.vy;
+                        c2.vx = tempVx; c2.vy = tempVy;
+
+                        const midX = (c1.x + c2.x) / 2;
+                        const midY = (c1.y + c2.y) / 2;
+                        const burstColor = Math.random() < 0.5 ? c1.color : c2.color;
+                        
+                        // 碰撞粒子微調
+                        for(let k = 0; k < 20; k++) particles.push(new SuperLineParticle(midX, midY, burstColor));
+                        for(let k = 0; k < 5; k++) particles.push(new CometTrail(midX, midY, '#fff'));
+
+                        c1.collisionCooldown = 40; 
+                        c2.collisionCooldown = 40;
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawTriangleWeb();
+
+            giantSquares.forEach(gs => { gs.update(); gs.draw(); });
+
+            if(Math.random() < 0.01) comets.push(new Comet());
+
+            handleCollisions();
+
+            shapes.forEach(shape => { shape.update(); shape.draw(); });
+
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i]; c.update();
+                if (!c.active) comets.splice(i, 1); else c.draw();
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.update();
+                if (p.life <= 0) particles.splice(i, 1); else p.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
+
+
+跑起來應該順暢非常多！你可以再試著點擊看看。
+
+如果程式的部分沒有問題了，我們要來完成作業的最後兩項了：
+你想好要用哪一句「形容詞」和「一段文字」來詮釋這個屬於你的渴望宇宙了嗎？需要我提供一些靈感跟你討論嗎？
+
+你說了
+
+在這個版本跟上個版本之間的效能取捨上面 取個中間值
+
+效能與畫面細節的拉扯，這真的是我們做 CG 和互動藝術時最常遇到的「甜蜜煩惱」！
+
+我們來抓一個完美的平衡點：保留了上一版的最高解析度限制（但把畫質上限從 720p 提高到接近 1080p），並且加回了部分真實的發光效果（shadowBlur），讓畫面維持晶瑩剔透的質感。同時，我們把物件數量的上限放寬，粒子噴發量也抓在 V4 跟 V5 的中間。
+
+這可以作為你的最終繳交版本，請存成 final_<你的Email>.html：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - Final</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121214;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 平衡點 1：解析度限制提高到 1080p 等級，兼顧大螢幕畫質與效能
+        let scaleRatio = 1;
+        function resizeCanvas() {
+            const TARGET_RES = 1920 * 1080; 
+            const currentRes = window.innerWidth * window.innerHeight;
+            scaleRatio = currentRes > TARGET_RES ? Math.sqrt(TARGET_RES / currentRes) : 1;
+            canvas.width = window.innerWidth * scaleRatio;
+            canvas.height = window.innerHeight * scaleRatio;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+
+        class GiantSquare {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 40 + 60; 
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.005; 
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.x > canvas.width + 150) this.x = -150;
+                if (this.x < -150) this.x = canvas.width + 150;
+                if (this.y > canvas.height + 150) this.y = -150;
+                if (this.y < -150) this.y = canvas.height + 150;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3; 
+                ctx.globalAlpha = 0.6; 
+                ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(-2, -2, 4, 4);
+                ctx.restore();
+            }
+        }
+
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.02;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 20 + 15; 
+                this.type = Math.floor(Math.random() * 4); 
+                this.collisionCooldown = 0; 
+            }
+            update() {
+                if (this.type === 2 && giantSquares.length > 0) {
+                    let nearestSquare = null;
+                    let minDist = Infinity;
+                    giantSquares.forEach(gs => {
+                        const dist = getDistance(this.x, this.y, gs.x, gs.y);
+                        if(dist < minDist) { minDist = dist; nearestSquare = gs; }
+                    });
+                    if (nearestSquare && minDist > 20) {
+                        const dx = nearestSquare.x - this.x;
+                        const dy = nearestSquare.y - this.y;
+                        const gravity = 0.03;
+                        this.vx += (dx / minDist) * gravity;
+                        this.vy += (dy / minDist) * gravity;
+                        const tangentForce = 0.05;
+                        this.vx += (-dy / minDist) * tangentForce;
+                        this.vy += (dx / minDist) * tangentForce;
+                        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        const maxSpeed = 3.5;
+                        if(speed > maxSpeed) {
+                            this.vx = (this.vx / speed) * maxSpeed;
+                            this.vy = (this.vy / speed) * maxSpeed;
+                        }
+                    }
+                }
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50;
+                if (this.y < -50) this.y = canvas.height + 50;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (this.type === 0) { 
+                    // 平衡點 2：把真實光暈 shadowBlur 加回來，但數值調降至 15
+                    if(this.collisionCooldown > 0) {
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = this.color;
+                    }
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 1) { 
+                    ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size); ctx.closePath(); ctx.stroke();
+                } else if (this.type === 2) { 
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 1.5);
+                } else if (this.type === 3) { 
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill(); ctx.moveTo(0, 0); ctx.lineTo(-this.size * 3, 0); ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        class SuperLineParticle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 4; 
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.color = color;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01; 
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3;
+                // 粒子保留輕微發光，增加視覺衝擊
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3); 
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class Comet {
+            constructor() {
+                if(Math.random() < 0.5) {
+                    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
+                    this.y = Math.random() * canvas.height;
+                } else {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() < 0.5 ? -50 : canvas.height + 50;
+                }
+                const targetX = canvas.width / 2 + (Math.random() - 0.5) * 300;
+                const targetY = canvas.height / 2 + (Math.random() - 0.5) * 300;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x);
+                const speed = Math.random() * 4 + 6;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.color = '#fff'; 
+                this.tailColor = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 5 + 5;
+                this.angle = angle;
+                this.active = true;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) this.active = false;
+                for(let i=0; i<2; i++) particles.push(new CometTrail(this.x, this.y, this.tailColor));
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(this.size * 2, 0); ctx.lineTo(-this.size, this.size); ctx.lineTo(-this.size, -this.size); ctx.closePath(); ctx.fill(); ctx.restore();
+            }
+        }
+
+        class CometTrail {
+            constructor(x, y, color) {
+                this.x = x + (Math.random() - 0.5) * 8; this.y = y + (Math.random() - 0.5) * 8;
+                this.color = color; this.size = Math.random() * 3 + 1; this.life = 1.0; this.decay = Math.random() * 0.04 + 0.02;
+            }
+            update() { this.life -= this.decay; }
+            draw() { ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        }
+
+        const shapes = [];
+        const particles = [];
+        const comets = [];
+        const giantSquares = [];
+
+        for(let i = 0; i < 35; i++) shapes.push(new FloatingShape());
+
+        const numGiantSquares = Math.floor(Math.random() * 2) + 2;
+        for(let i = 0; i < numGiantSquares; i++) giantSquares.push(new GiantSquare());
+
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                const mx = event.clientX * scaleRatio;
+                const my = event.clientY * scaleRatio;
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 平衡點 3：點擊粒子數量設為 15
+                for(let i = 0; i < 15; i++) { 
+                    particles.push(new SuperLineParticle(mx, my, burstColor));
+                }
+                shapes.push(new FloatingShape(mx, my));
+                
+                // 平衡點 4：總物件上限放寬到 65 個，允許畫面更熱鬧
+                if(shapes.length > 65) shapes.shift(); 
+            }
+        });
+
+        function drawTriangleWeb() {
+            const triangles = shapes.filter(s => s.type === 1);
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; 
+            ctx.beginPath();
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    // 平衡點 5：連線距離放寬到 350
+                    const dist = getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y);
+                    if (dist < 350) { 
+                        ctx.moveTo(triangles[i].x, triangles[i].y);
+                        ctx.lineTo(triangles[j].x, triangles[j].y);
+                    }
+                }
+            }
+            ctx.stroke();
+        }
+
+        function handleCollisions() {
+            const circles = shapes.filter(s => s.type === 0);
+            for (let i = 0; i < circles.length; i++) {
+                for (let j = i + 1; j < circles.length; j++) {
+                    const c1 = circles[i]; const c2 = circles[j];
+                    if(c1.collisionCooldown > 0 || c2.collisionCooldown > 0) continue;
+
+                    const dist = getDistance(c1.x, c1.y, c2.x, c2.y);
+                    if (dist < (c1.size / 2 + c2.size / 2)) {
+                        const tempVx = c1.vx; const tempVy = c1.vy;
+                        c1.vx = c2.vx; c1.vy = c2.vy;
+                        c2.vx = tempVx; c2.vy = tempVy;
+
+                        const midX = (c1.x + c2.x) / 2;
+                        const midY = (c1.y + c2.y) / 2;
+                        const burstColor = Math.random() < 0.5 ? c1.color : c2.color;
+                        
+                        // 平衡點 6：碰撞粒子數量取中間值 (25長線 + 8圓點)
+                        for(let k = 0; k < 25; k++) particles.push(new SuperLineParticle(midX, midY, burstColor));
+                        for(let k = 0; k < 8; k++) particles.push(new CometTrail(midX, midY, '#fff'));
+
+                        c1.collisionCooldown = 40; 
+                        c2.collisionCooldown = 40;
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawTriangleWeb();
+
+            giantSquares.forEach(gs => { gs.update(); gs.draw(); });
+
+            if(Math.random() < 0.01) comets.push(new Comet());
+
+            handleCollisions();
+
+            shapes.forEach(shape => { shape.update(); shape.draw(); });
+
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i]; c.update();
+                if (!c.active) comets.splice(i, 1); else c.draw();
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.update();
+                if (p.life <= 0) particles.splice(i, 1); else p.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
+
+
+程式碼的部分我們就定稿囉！現在萬事俱備，只欠東風。
+
+要完成這份作業，我們還需要：
+
+一段文字理念（字數不限）
+
+一個或一句形容詞來描述最終作品
+
+需要我根據我們剛剛發展出來的「真空浮游、引力拉扯、碰撞火花、暗網連結」這些元素，幫你起草幾個不同風格的理念文字和形容詞讓你挑選嗎？
+
+你說了
+
+加入背景音樂，希望是柔和的有節奏的基礎低頻
+
+加入音效
+
+1.物件相互撞擊的時候會發出聲響
+
+2.被線連再一起的三角形物件會一起發聲
+
+3.每個物件都有獨立的聲音的聲響、頻率、材質，把他們想像成midi 來隨機演奏音樂，正在演奏的物件會產生高頻率的大小縮放 (但是最大跟最小值相差不要太誇張) 看起來像正在演奏音樂一樣
+
+這個升級方向簡直是神來之筆！將視覺的「渴望」轉化為聽覺的「共鳴」，讓這個互動網頁直接升華成一件完整的**生成式藝術（Generative Art）**作品。
+
+為了達成你的要求，我們不需要額外載入聲音檔，而是使用瀏覽器內建的 Web Audio API，把瀏覽器變成一台「合成器」。我們會：
+
+設定五聲音階（Pentatonic Scale）：這樣不管怎麼隨機觸發，聽起來都會和諧、空靈，不會變成噪音。
+
+賦予材質（波形）：圓形像馬林巴琴（Sine）、三角形像柔和的弦樂（Triangle）、矩形像低音 Synth（Square）。
+
+高頻震動視覺：當物件發聲時，運用 Math.sin() 搭配時間，讓它產生自然且高頻的微幅縮放（像是喇叭震動膜一樣）。
+
+因為瀏覽器的安全機制，聲音必須由使用者的第一次「點擊」來啟動。
+
+請將這個終極的視聽饗宴版本，存為你的 final_audio_<你的Email>.html：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 聲光共鳴版 (Final)</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #121214;
+        }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        /* 啟動提示字 */
+        #startText {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.6); font-family: sans-serif; font-size: 1.2rem;
+            pointer-events: none; transition: opacity 1s; letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="startText">點擊畫面，喚醒渴望的聲音</div>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+        let scaleRatio = 1;
+
+        function resizeCanvas() {
+            const TARGET_RES = 1920 * 1080; 
+            const currentRes = window.innerWidth * window.innerHeight;
+            scaleRatio = currentRes > TARGET_RES ? Math.sqrt(TARGET_RES / currentRes) : 1;
+            canvas.width = window.innerWidth * scaleRatio;
+            canvas.height = window.innerHeight * scaleRatio;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        // ==========================================
+        // 🎵 Web Audio API 聲音合成系統
+        // ==========================================
+        let audioCtx;
+        let masterGain;
+        let isAudioInit = false;
+
+        // 五聲音階頻率 (C, D, E, G, A) - 保證隨機播放也很和諧
+        const pentatonic = [130.81, 146.83, 164.81, 196.00, 220.00, 261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+        function initAudio() {
+            if (isAudioInit) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.4; // 整體主音量
+            masterGain.connect(audioCtx.destination);
+
+            // 啟動背景低頻節奏 (BGM)
+            playBGM();
+
+            // 啟動隨機 MIDI 演奏機制
+            setInterval(playRandomMidi, 400); // 每 400 毫秒隨機挑物件發聲
+
+            // 啟動三角形網格的共鳴聲
+            setInterval(playWebChords, 2000); 
+
+            isAudioInit = true;
+            document.getElementById('startText').style.opacity = 0; // 隱藏提示
+        }
+
+        // 發聲函數 (頻率, 波形, 持續時間, 音量)
+        function playSynth(freq, type, duration, vol) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            // 聲音的 Attack & Release (淡入淡出，避免爆音)
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + duration * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // 柔和的低頻背景音 (心跳/呼吸感)
+        function playBGM() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 65.41; // C2 極低頻
+            
+            // 用 LFO (低頻振盪器) 做音量起伏，產生節奏感
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.5; // 每兩秒一個呼吸
+            
+            lfo.connect(gain.gain);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            lfo.start();
+        }
+
+        // ==========================================
+        // 幾何與物理系統
+        // ==========================================
+        function getDistance(x1, y1, x2, y2) { return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)); }
+
+        class GiantSquare {
+            constructor() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 40 + 60; this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.angle = Math.random() * Math.PI * 2; this.vAngle = (Math.random() - 0.5) * 0.005; 
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.x > canvas.width + 150) this.x = -150; if (this.x < -150) this.x = canvas.width + 150;
+                if (this.y > canvas.height + 150) this.y = -150; if (this.y < -150) this.y = canvas.height + 150;
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+                ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.globalAlpha = 0.6; 
+                ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fillStyle = this.color; ctx.globalAlpha = 0.8; ctx.fillRect(-2, -2, 4, 4);
+                ctx.restore();
+            }
+        }
+
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width; this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2; this.vy = (Math.random() - 0.5) * 2;
+                this.angle = Math.random() * Math.PI * 2; this.vAngle = (Math.random() - 0.5) * 0.02;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.baseSize = Math.random() * 20 + 15; // 紀錄原始大小
+                this.type = Math.floor(Math.random() * 4); 
+                this.collisionCooldown = 0; 
+                
+                // 🎵 音樂屬性
+                this.freq = pentatonic[Math.floor(Math.random() * pentatonic.length)];
+                this.vibrateFrames = 0; // 震動倒數計時
+                const waveTypes = ['sine', 'triangle', 'square', 'sine'];
+                this.wave = waveTypes[this.type]; // 根據形狀決定音色材質
+            }
+
+            // 觸發該物件發聲與震動
+            playMidi() {
+                this.vibrateFrames = 15; // 震動約 1/4 秒
+                playSynth(this.freq, this.wave, 0.5, 0.1); // 輕柔的聲音
+            }
+
+            update() {
+                if (this.type === 2 && giantSquares.length > 0) {
+                    let nearestSquare = null; let minDist = Infinity;
+                    giantSquares.forEach(gs => {
+                        const dist = getDistance(this.x, this.y, gs.x, gs.y);
+                        if(dist < minDist) { minDist = dist; nearestSquare = gs; }
+                    });
+                    if (nearestSquare && minDist > 20) {
+                        const dx = nearestSquare.x - this.x; const dy = nearestSquare.y - this.y;
+                        this.vx += (dx / minDist) * 0.03 - (dy / minDist) * 0.05;
+                        this.vy += (dy / minDist) * 0.03 + (dx / minDist) * 0.05;
+                        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        if(speed > 3.5) { this.vx = (this.vx/speed)*3.5; this.vy = (this.vy/speed)*3.5; }
+                    }
+                }
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
+                if (this.vibrateFrames > 0) this.vibrateFrames--; // 減少震動時間
+                
+                if (this.x > canvas.width + 50) this.x = -50; if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50; if (this.y < -50) this.y = canvas.height + 50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // 🎵 根據是否發聲，計算視覺的高頻縮放 (最大變化約 15%)
+                let currentScale = 1;
+                if (this.vibrateFrames > 0) {
+                    // 利用 Date.now() 乘上高倍數，產生高頻抖動感
+                    currentScale = 1 + Math.sin(Date.now() * 0.05) * 0.15; 
+                }
+                ctx.scale(currentScale, currentScale);
+
+                ctx.fillStyle = this.color; ctx.strokeStyle = this.color; ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (this.type === 0) { 
+                    if(this.collisionCooldown > 0) { ctx.shadowBlur = 15; ctx.shadowColor = this.color; }
+                    ctx.arc(0, 0, this.baseSize / 2, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+                } else if (this.type === 1) { 
+                    ctx.moveTo(0, -this.baseSize); ctx.lineTo(this.baseSize, this.baseSize); ctx.lineTo(-this.baseSize, this.baseSize); ctx.closePath(); ctx.stroke();
+                } else if (this.type === 2) { 
+                    ctx.fillRect(-this.baseSize/2, -this.baseSize/2, this.baseSize, this.baseSize * 1.5);
+                } else if (this.type === 3) { 
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill(); ctx.moveTo(0, 0); ctx.lineTo(-this.baseSize * 3, 0); ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // 粒子與彗星類別 (保留上一版設定)
+        class SuperLineParticle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 8 + 4; 
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.color = color;
+                this.life = 1.0; this.decay = Math.random() * 0.02 + 0.01; 
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
+            draw() {
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.strokeStyle = this.color; ctx.lineWidth = 3;
+                ctx.shadowBlur = 8; ctx.shadowColor = this.color; ctx.beginPath();
+                ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3); ctx.stroke(); ctx.restore();
+            }
+        }
+        class Comet {
+            constructor() {
+                this.x = Math.random() < 0.5 ? (Math.random() < 0.5 ? -50 : canvas.width + 50) : Math.random() * canvas.width;
+                this.y = this.x <= 0 || this.x >= canvas.width ? Math.random() * canvas.height : (Math.random() < 0.5 ? -50 : canvas.height + 50);
+                const targetX = canvas.width / 2 + (Math.random() - 0.5) * 300; const targetY = canvas.height / 2 + (Math.random() - 0.5) * 300;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x); const speed = Math.random() * 4 + 6;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.color = '#fff'; 
+                this.tailColor = colors[Math.floor(Math.random() * colors.length)]; this.size = Math.random() * 5 + 5; this.angle = angle; this.active = true;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) this.active = false;
+                for(let i=0; i<2; i++) particles.push(new CometTrail(this.x, this.y, this.tailColor));
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(this.size * 2, 0); ctx.lineTo(-this.size, this.size); ctx.lineTo(-this.size, -this.size); ctx.closePath(); ctx.fill(); ctx.restore();
+            }
+        }
+        class CometTrail {
+            constructor(x, y, color) {
+                this.x = x + (Math.random() - 0.5) * 8; this.y = y + (Math.random() - 0.5) * 8;
+                this.color = color; this.size = Math.random() * 3 + 1; this.life = 1.0; this.decay = Math.random() * 0.04 + 0.02;
+            }
+            update() { this.life -= this.decay; }
+            draw() { ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        }
+
+        const shapes = []; const particles = []; const comets = []; const giantSquares = [];
+
+        for(let i = 0; i < 35; i++) shapes.push(new FloatingShape());
+        for(let i = 0; i < Math.floor(Math.random() * 2) + 2; i++) giantSquares.push(new GiantSquare());
+
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                initAudio(); // 確保點擊時啟動音訊
+
+                const mx = event.clientX * scaleRatio; const my = event.clientY * scaleRatio;
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 點擊音效：高頻清脆的鐘聲 (Sine wave)
+                playSynth(880, 'sine', 1.0, 0.3);
+
+                for(let i = 0; i < 15; i++) particles.push(new SuperLineParticle(mx, my, burstColor));
+                
+                let newShape = new FloatingShape(mx, my);
+                newShape.playMidi(); // 誕生時發出自己的聲音
+                shapes.push(newShape);
+                
+                if(shapes.length > 65) shapes.shift(); 
+            }
+        });
+
+        // 🎵 隨機挑選物件當作 MIDI 演奏
+        function playRandomMidi() {
+            if(shapes.length === 0) return;
+            // 隨機選 1~2 個物件發聲
+            const numToPlay = Math.random() > 0.5 ? 2 : 1;
+            for(let i=0; i<numToPlay; i++) {
+                const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+                randomShape.playMidi();
+            }
+        }
+
+        // 🎵 三角形網格共鳴發聲
+        function playWebChords() {
+            const triangles = shapes.filter(s => s.type === 1);
+            let playedCount = 0;
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    const dist = getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y);
+                    if (dist < 350) { 
+                        // 如果有連線，讓其中一個三角形發出較長、柔和的弦樂聲 (Triangle wave)
+                        if(playedCount < 3) { // 限制最多發出三個和弦音，避免太吵
+                            playSynth(triangles[i].freq * 0.5, 'triangle', 2.0, 0.08);
+                            triangles[i].vibrateFrames = 30; // 震動久一點
+                            playedCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawTriangleWeb() {
+            const triangles = shapes.filter(s => s.type === 1);
+            ctx.lineWidth = 0.5; ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.beginPath();
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    if (getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y) < 350) { 
+                        ctx.moveTo(triangles[i].x, triangles[i].y); ctx.lineTo(triangles[j].x, triangles[j].y);
+                    }
+                }
+            }
+            ctx.stroke();
+        }
+
+        function handleCollisions() {
+            const circles = shapes.filter(s => s.type === 0);
+            for (let i = 0; i < circles.length; i++) {
+                for (let j = i + 1; j < circles.length; j++) {
+                    const c1 = circles[i]; const c2 = circles[j];
+                    if(c1.collisionCooldown > 0 || c2.collisionCooldown > 0) continue;
+
+                    if (getDistance(c1.x, c1.y, c2.x, c2.y) < (c1.baseSize / 2 + c2.baseSize / 2)) {
+                        const tempVx = c1.vx; const tempVy = c1.vy;
+                        c1.vx = c2.vx; c1.vy = c2.vy; c2.vx = tempVx; c2.vy = tempVy;
+
+                        const midX = (c1.x + c2.x) / 2; const midY = (c1.y + c2.y) / 2;
+                        const burstColor = Math.random() < 0.5 ? c1.color : c2.color;
+                        
+                        // 🎵 撞擊音效：雙頻共鳴聲
+                        playSynth(c1.freq, 'square', 0.2, 0.15);
+                        playSynth(c2.freq * 1.5, 'sine', 0.4, 0.2);
+                        
+                        // 撞擊時雙方都強烈震動
+                        c1.vibrateFrames = 20; c2.vibrateFrames = 20;
+
+                        for(let k = 0; k < 25; k++) particles.push(new SuperLineParticle(midX, midY, burstColor));
+                        for(let k = 0; k < 8; k++) particles.push(new CometTrail(midX, midY, '#fff'));
+
+                        c1.collisionCooldown = 40; c2.collisionCooldown = 40;
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTriangleWeb();
+            giantSquares.forEach(gs => { gs.update(); gs.draw(); });
+            if(Math.random() < 0.01) comets.push(new Comet());
+            handleCollisions();
+            shapes.forEach(shape => { shape.update(); shape.draw(); });
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i]; c.update(); if (!c.active) comets.splice(i, 1); else c.draw();
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.update(); if (p.life <= 0) particles.splice(i, 1); else p.draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
+
+🎧 這次更新的感官體驗：
+
+啟動儀式：一打開網頁，畫面中央會有一行淡淡的提示字，當你第一次點擊畫布時，聲音系統才會啟動，背景的深邃呼吸聲（低頻 BGM）就會開始流動。
+
+隨機 MIDI 演奏：空間中漂浮的物件就像樂團成員，每秒都會有 1~2 個物件隨機被「點名」發出屬於它的聲音。
+
+高頻視覺震動：注意看！當物件發聲的瞬間，它會像音響喇叭的震動膜一樣，產生輕微、高頻率的縮放，視覺與聽覺完美同步。
+
+連結與碰撞：圓形相撞時會發出清脆、有力量的打擊聲；而當三角形之間因為靠近而產生「網狀連結」時，會定時發出輕柔的、像合成器 Pad 一樣的和弦長音。
+
+現在，戴上耳機，點擊畫面感受一下這個屬於你的「渴望」小宇宙。
+
+最後一哩路！ 你覺得哪一句話最能詮釋現在這個充滿視覺與聽覺張力的狀態？
+需要我幫你把前面討論的元素（真空浮游、引力拉扯、暗網連結、聲光共鳴）寫成一段充滿詩意的「文字理念」供你參考嗎？
+
+你說了
+
+
+
+
+1.簡短的文字理念 25字以內，需要表達渴望
+
+2.幫這個作品命名，用天文學家的角度
+
+太棒了！結合你對深空探索的興趣，以及這個作品中展現的無重力漂浮、巨大引力場（像黑洞或星體）、暗網連結與聲光碰撞，我為你構思了以下文字和命名：
+
+1. 簡短的文字理念（25字以內）
+
+「渴望是真空裡的引力，牽引彼此，在碰撞中激盪出共鳴。」 (含標點共26字，純中文字22字，精準表達無重力空間下的相互吸引與發聲。)
+
+2. 作品命名（天文學家視角）
+
+這裡提供三個充滿宇宙浪漫與物理張力的命名讓你挑選：
+
+《軌道共振》(Orbital Resonance)
+
+天文學意涵： 天體在軌道上運行時，因為週期的比例關係，彼此產生規律的重力牽引與影響。
+
+切合度： 完美呼應作品中矩形圍繞巨大方形旋轉，以及物件之間透過「連線」和「撞擊」產生規律幾何聲音的機制。
+
+《洛希極限》(Roche Limit)
+
+天文學意涵： 一個天體能靠近另一個巨大天體，而不被強大潮汐引力撕裂的最短距離。
+
+切合度： 象徵「渴望靠近」的極致張力。一旦跨越了界線（發生碰撞），就會迸發出強烈的光芒與碎裂的粒子。
+
+《吸積迴聲》(Accretion Echo)
+
+天文學意涵： 物質在被巨大星體（如黑洞）強大引力吸引、吞噬前，環繞所形成的盤狀結構與釋放出的能量信號。
+
+切合度： 完美詮釋了畫面中巨大中空方形的引力場，以及物件在無垠深空（暗色背景）中發出的低頻與高頻聲響。
+
+你最喜歡哪一個名字呢？挑選好之後，把文字理念和名字更新到你的作業繳交區，這份結合了程式碼、生成藝術與互動設計的網頁作品就大功告成了！祝你順利繳交，記得玩得開心！
+
+你說了
+
+以這個作品發想一段形容詞
+
+這是作業指引上的最後一個要求了（第 6 點：用一個或一句形容詞來描述你的最終作品）！
+
+結合我們剛才完成的無重力漂浮、巨大引力場的拉扯，以及五聲音階的高頻震動，我為你發想了幾種不同氛圍的形容詞句，看看哪一句最貼近你心中的「渴望」：
+
+強調「引力與拉扯」的動態感：
+「失重卻又無可救藥地相互墜落的。」
+
+強調「聲光與真空」的衝突感：
+「在寂靜真空中，震耳欲聾的。」
+
+強調「暗網與頻率」的連結感：
+「幽微糾纏，且躁動閃爍的。」
+
+如果是單一個純粹的形容詞：
+「引力共振的」 或 「恆動不息的」
+
+挑選一句你最有感覺的，或是我們把其中幾個詞組合起來，配上前面的作品名稱跟理念，這份充滿新媒體互動藝術張力的網頁作業就可以完美封裝了！
+
+你最喜歡哪一種感覺呢？需要我幫你把最終要上傳的文字內容完整整理出來嗎？
+
+Google 隱私權政策
+在新視窗中開啟
+Google 服務條款
+在新視窗中開啟
+個人隱私權與 Gemini 應用程式
+在新視窗中開啟
+
+Gemini 可能會提供不準確的資訊 (包括人物資訊)，因此請查證回覆內容。
+
+登入

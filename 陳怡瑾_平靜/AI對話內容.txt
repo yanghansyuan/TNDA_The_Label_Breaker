@@ -1,0 +1,3890 @@
+============================================================
+來源檔案: AI對話串網址.txt
+擷取之連結數: 1
+============================================================
+
+----------------------------------------
+[連結 1] https://gemini.google.com/share/768db09aa9ea
+----------------------------------------
+登入
+Gemini
+關於 Gemini
+在新視窗中開啟
+Gemini 應用程式
+在新視窗中開啟
+訂閱
+在新視窗中開啟
+企業用途
+在新視窗中開啟
+互動式水波紋網頁實作
+https://gemini.google.com/share/768db09aa9ea
+透過「Pro」建立 2026年2月19日 下午06:33
+發布時間：2026年2月19日 下午11:46
+你說了
+
+我想要作互動式網頁，要符合以下規範：
+
+
+
+
+- 自適應網頁
+
+- 用滑鼠左鍵點擊 > 產生水波紋
+
+- 用滑鼠移動 > 水波紋隨風飄逸的感覺
+
+這是一個非常棒的想法！你提供的這三張圖片（特別是第二張帶有波光粼粼感覺的圖片）非常適合作為水波紋效果的背景。
+
+為了達成你的需求（自適應、點擊產生水波、滑鼠移動產生飄逸感），最好的實作方式是使用 WebGL 技術來進行影像渲染，因為它可以提供非常順暢且逼真的水波折射效果。
+
+我們可以使用一個非常成熟且輕量級的開源套件 jQuery Ripples 來輕鬆達成。以下我為你準備了完整的程式碼：
+
+實作步驟
+
+在你的電腦上建立一個資料夾。
+
+將你喜歡的那張圖片（例如第二張水面圖）放進資料夾，並命名為 bg.jpg。
+
+在同一個資料夾內，建立一個名為 index.html 的檔案。
+
+將以下程式碼複製貼上到 index.html 中並存檔，然後用瀏覽器（如 Chrome 或是 Edge）打開它即可看到效果。
+
+完整程式碼 (index.html)
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式水波紋網頁</title>
+    <style>
+        /* 重置基本樣式，確保網頁填滿整個螢幕 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 隱藏捲軸 */
+        }
+
+        /* 水波紋容器設定（自適應網頁） */
+        #water-container {
+            width: 100vw;
+            height: 100vh;
+            /* 這裡替換成你的圖片檔名，例如 bg.jpg */
+            background-image: url('bg.jpg'); 
+            background-size: cover; /* 確保圖片按比例填滿畫面 */
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="water-container"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.ripples/0.5.3/jquery.ripples.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // 初始化水波紋效果
+            $('#water-container').ripples({
+                resolution: 512,        // 渲染解析度，數字越大越細緻但較耗效能 (預設 256)
+                dropRadius: 20,         // 滑鼠點擊或移動時，產生水波的半徑大小
+                perturbance: 0.04,      // 水波的折射程度 (擾動量)，數字越大波紋越深
+                interactive: true       // 開啟滑鼠互動 (點擊與移動)
+            });
+
+            // 增強「隨風飄逸」的感覺：
+            // 當滑鼠移動時，我們可以用程式稍微改變一點波紋的散佈，
+            // 套件本身已經內建滑鼠軌跡波紋，若你想自動產生微風吹拂的感覺，可以加上自動滴水效果：
+            setInterval(function() {
+                var $el = $('#water-container');
+                var x = Math.random() * $el.outerWidth();
+                var y = Math.random() * $el.outerHeight();
+                var dropRadius = 10;
+                var strength = 0.02 + Math.random() * 0.02;
+
+                // 偶爾在畫面上隨機產生小波紋，模擬微風吹拂水面的自然感
+                $el.ripples('drop', x, y, dropRadius, strength);
+            }, 2000); // 每 2 秒隨機產生一個微小波紋
+        });
+    </script>
+</body>
+</html>
+
+這段程式碼如何滿足你的需求？
+
+自適應網頁：CSS 中的 width: 100vw; height: 100vh; 與 background-size: cover; 確保了無論用手機或電腦螢幕開啟，畫面都會填滿且不會變形。
+
+滑鼠左鍵點擊產生水波紋：interactive: true 設定讓套件自動偵測滑鼠點擊，並在你點擊的位置觸發 dropRadius: 20 大小的水滴擴散效果。
+
+滑鼠移動產生隨風飄逸感：套件會自動追蹤滑鼠軌跡產生連貫的波紋。此外，我在程式碼底部加入了一個 setInterval 計時器，它會每隔兩秒在畫面上隨機產生微小的擾動，這樣即使滑鼠不動，畫面也會有微風吹過水面、波光粼粼的視覺效果。
+
+你可以透過調整 dropRadius (半徑) 和 perturbance (折射強度) 這兩個數字，來微調出你心中最完美的「水感」。
+
+需要我教你怎麼加上一些漂浮的文字（例如網頁標題）在水面上嗎？
+
+你說了
+
+網頁沒有畫面
+
+別擔心！這是一個非常常見的狀況。網頁變成一片空白，通常是因為瀏覽器的安全限制或是圖片路徑設定出了點小問題。
+
+我們來一步步檢查並解決它。最有可能的原因是以下第一點：
+
+原因一：瀏覽器的「本地檔案安全限制」（最有可能）
+
+這個水波紋特效使用的是 WebGL 技術。當你直接點擊兩下打開電腦裡的 HTML 檔案（網址列開頭會是 file:///...）時，瀏覽器基於安全考量，會阻止 WebGL 讀取你電腦裡的本地圖片，導致畫面一片空白。
+
+✅ 快速測試解法：改用網路圖片
+為了確認程式碼本身沒問題，我們可以先借用一張網路上的圖片來測試。請將你 index.html 裡面的 <style> 區段中，背景圖片的那一行改成下面這樣：
+
+CSS
+/* 將原本的 background-image: url('bg.jpg'); 替換成下面這行 */
+background-image: url('https://images.unsplash.com/photo-1488330890490-c291ecf62571?q=80&w=1920&auto=format&fit=crop');
+/* (這是一張免費圖庫的漂亮水面圖，支援跨網域讀取) */
+
+
+存檔後重新整理網頁，你應該就能立刻看到水波紋效果了！如果看到了，就代表你的程式碼完全正確，純粹是瀏覽器擋住了你的本地圖片。
+
+如果你想用「自己的圖片」該怎麼辦？
+
+既然確認了是瀏覽器限制的問題，要使用你自己下載的那張水面圖片，有兩個常見的做法：
+
+方法 A：使用編輯器的「本地伺服器」功能（推薦）
+如果你是用 VS Code (Visual Studio Code) 寫程式，強烈建議安裝一個叫做 Live Server 的擴充套件。
+
+安裝 Live Server 後，在你的 index.html 檔案上點擊滑鼠右鍵。
+
+選擇 "Open with Live Server"。
+
+它會幫你模擬一個真實的網站環境（網址列會變成 http://127.0.0.1...），這時候你的 bg.jpg 就能完美顯示並產生水波了！
+
+方法 B：將圖片轉成 Base64 格式（免裝軟體）
+如果你不想安裝任何軟體，可以把圖片轉成代碼。
+
+到網路上搜尋「圖片轉 Base64」(Image to Base64)。
+
+上傳你的圖片，轉換後會得到一串超級長的文字。
+
+把那串文字貼到程式碼裡：background-image: url('data:image/jpeg;base64,這裡貼上那一長串文字...');
+
+其他可能的小原因排查
+
+如果你換了網路圖片還是沒有畫面，請檢查以下兩點：
+
+有沒有連上網路？ 因為程式碼中引用了 jQuery 套件的網址，如果電腦沒連上網，套件載入失敗就不會有畫面。
+
+檔名有沒有打錯？ 如果你還是想用 url('bg.jpg')，請確認你的圖片副檔名真的是 .jpg，有時候它可能是 .jpeg 或是 .png（Windows 電腦預設會隱藏副檔名，建議打開檢查）。
+
+你可以先試試看把背景改成我提供的「網路圖片連結」測試一下。測試成功後，你需要我教你怎麼安裝 VS Code 的 Live Server 嗎？
+
+你說了
+
+可以不要用圖片改用程式碼運算嗎？
+
+這是一個非常棒且進階的想法！完全捨棄圖片，改用**純程式碼與數學運算（Procedural Generation）**來模擬水波，不僅可以徹底解決瀏覽器的讀取限制，還能讓網頁載入速度變得飛快。
+
+為了達成這個目標，我們可以使用 HTML5 的 <canvas> 元素，搭配 JavaScript 計算物理波浪方程式（Wave Equation），並用程式碼繪製出具有層次感的水藍色漸層來取代背景圖片。
+
+以下是為你量身打造的純程式碼水波紋實作。請將以下內容完全取代你剛才 index.html 裡面的程式碼：
+
+完整程式碼（純運算版）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>純程式碼運算 - 互動式水波紋</title>
+    <style>
+        /* 重置基本樣式，確保畫布填滿整個螢幕 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 隱藏捲軸 */
+            background-color: #000;
+        }
+
+        /* 透過 CSS 將畫布拉伸至全螢幕 (自適應) */
+        #waterCanvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // 【效能優化設定】
+        // 為了確保數學運算順暢，我們將內部解析度固定，再透過 CSS 放大至全螢幕。
+        // 這樣既能保持水波的平滑感，又不會讓電腦/手機跑到卡頓。
+        const width = 600;
+        const height = 400;
+        canvas.width = width;
+        canvas.height = height;
+
+        const halfWidth = width >> 1;
+        const halfHeight = height >> 1;
+        const size = width * (height + 2) * 2;
+
+        // 建立兩個陣列來記錄水波目前的狀態與前一幀的狀態 (物理模擬)
+        let rippleMap = new Int16Array(size);
+        let oldIdx = width;
+        let newIdx = width * (height + 3);
+        let ripple, texture;
+
+        // 1. 用程式碼畫出「漸層藍色」的水底背景 (取代圖片)
+        function drawWaterBackground() {
+            let gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#E0FFFF');   // 左上角：波光粼粼的淺藍色
+            gradient.addColorStop(0.5, '#87CEEB'); // 中間：清澈的水藍色
+            gradient.addColorStop(1, '#4682B4');   // 右下角：較深的海藍色
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // 將畫好的背景儲存成像素資料，以供後續折射運算使用
+            texture = ctx.getImageData(0, 0, width, height);
+            ripple = ctx.getImageData(0, 0, width, height);
+        }
+
+        // 2. 觸發水波的函數
+        function drop(dx, dy, radius, strength) {
+            // 將滑鼠的螢幕座標轉換為畫布的內部座標
+            dx = Math.floor(dx / window.innerWidth * width);
+            dy = Math.floor(dy / window.innerHeight * height);
+
+            for (let j = dy - radius; j < dy + radius; j++) {
+                for (let k = dx - radius; k < dx + radius; k++) {
+                    if (j >= 0 && j < height && k >= 0 && k < width) {
+                        rippleMap[oldIdx + (j * width) + k] += strength;
+                    }
+                }
+            }
+        }
+
+        // 3. 核心運算：計算波浪擴散與光學折射
+        function process() {
+            let i = oldIdx;
+            oldIdx = newIdx;
+            newIdx = i;
+
+            i = 0;
+            let mapIdx = oldIdx;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    // 物理波浪方程式：根據周圍水分子的高度計算當前高度
+                    let data = (
+                        rippleMap[mapIdx - width] +
+                        rippleMap[mapIdx + width] +
+                        rippleMap[mapIdx - 1] +
+                        rippleMap[mapIdx + 1]
+                    ) >> 1;
+                    data -= rippleMap[newIdx + i];
+                    data -= data >> 5; // 阻尼係數 (讓水波慢慢衰減平靜)
+
+                    rippleMap[newIdx + i] = data;
+
+                    // 光學折射效果 (利用波浪高度扭曲背景像素)
+                    data = 1024 - data;
+                    let a = ((x - halfWidth) * data / 1024) + halfWidth;
+                    let b = ((y - halfHeight) * data / 1024) + halfHeight;
+
+                    // 確保折射不會超出邊界
+                    if (a >= width) a = width - 1;
+                    if (a < 0) a = 0;
+                    if (b >= height) b = height - 1;
+                    if (b < 0) b = 0;
+
+                    let newPixel = (Math.floor(a) + (Math.floor(b) * width)) * 4;
+                    let curPixel = i * 4;
+
+                    // 將折射後的背景像素寫入當前畫面
+                    ripple.data[curPixel] = texture.data[newPixel];
+                    ripple.data[curPixel + 1] = texture.data[newPixel + 1];
+                    ripple.data[curPixel + 2] = texture.data[newPixel + 2];
+
+                    mapIdx++;
+                    i++;
+                }
+            }
+            // 將運算完的畫面渲染出來
+            ctx.putImageData(ripple, 0, 0);
+        }
+
+        // 4. 動畫迴圈
+        function loop() {
+            process();
+            requestAnimationFrame(loop);
+        }
+
+        // --- 初始化與事件綁定 ---
+        drawWaterBackground();
+
+        // 滑鼠移動：產生小漣漪 (隨風飄逸感)
+        canvas.addEventListener('mousemove', function(e) {
+            drop(e.clientX, e.clientY, 2, 300); // 半徑 2, 強度 300
+        });
+
+        // 滑鼠左鍵點擊：產生大水花
+        canvas.addEventListener('mousedown', function(e) {
+            drop(e.clientX, e.clientY, 8, 1200); // 半徑 8, 強度 1200
+        });
+
+        // 手機觸控支援
+        canvas.addEventListener('touchstart', function(e) {
+            drop(e.touches[0].clientX, e.touches[0].clientY, 8, 1200);
+        }, {passive: true});
+        canvas.addEventListener('touchmove', function(e) {
+            drop(e.touches[0].clientX, e.touches[0].clientY, 2, 300);
+        }, {passive: true});
+
+        // 模擬微風：每隔一段時間隨機在畫面上產生微小擾動
+        setInterval(() => {
+            drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 200);
+        }, 1200);
+
+        // 啟動動畫
+        loop();
+    </script>
+</body>
+</html>
+
+為什麼這個版本更好？
+
+不需要任何外部圖片檔案：我們利用 ctx.createLinearGradient 用程式碼動態畫出了一層漂亮的深淺藍色漸層，徹底解決了網頁一片空白的權限問題。直接點擊檔案就能看見效果！
+
+真正的物理運算：這段程式碼建立了一個水波矩陣（rippleMap），利用波浪方程式來計算水分子的推擠與擴散，並針對像素點進行光學折射運算，這正是遊戲引擎裡模擬水面的基礎做法。
+
+效能優化（自適應）：我將內部的物理運算解析度固定在 600x400，然後用 CSS 的 100vw / 100vh 將其拉伸到全螢幕。這種做法不僅讓波浪看起來更柔和，還能確保在效能較差的手機或舊電腦上也能順暢保持 60 幀（FPS）。
+
+存檔後直接用瀏覽器點開它，你應該就能看到完美的藍色水波紋了！
+
+你覺得目前的漸層水藍色好看嗎？需不需要我教你怎麼調整色碼，讓它變成更有科技感的深藍色，或是夢幻的粉橘色夕陽水面呢？
+
+你說了
+
+可以有質感一點嗎？像圖片那樣
+
+然後我希望滑鼠點擊時水波可以特別一點 (有明顯光亮)
+
+這是一個非常有挑戰性的需求！要「完全不使用圖片」，僅靠程式碼運算來達到你提供的參考圖那種「有質感、有光影」的水面效果，我們必須升級我們的數學模型。
+
+原本的程式碼只有做「折射」（扭曲背景），新的版本我加入了兩個關鍵技術：
+
+程序化紋理生成 (Procedural Texture Generation)：為了模仿參考圖中那種深淺不一、類似大理石紋或墨水暈染的質感，我們不能只用單純的漸層。我在初始化時，用程式碼在畫布上繪製了數百個隨機大小、透明度的白色和淺藍色光暈，堆疊出一個具有有機深度的「水底」背景。
+
+類比光照反射 (Fake Specular Highlight)：這是讓點擊變「特別亮」的關鍵。在運算水波時，程式會去計算水波的「斜率」（波浪有多陡）。當我們用力點擊時，波浪最陡峭的邊緣會被判定為「迎光面」，程式會強制在這些像素上疊加白光，製造出波光粼粼的效果。
+
+這是有史以來最複雜的純前端水波紋版本，請準備好接收這段程式碼：
+
+完整程式碼（高質感光影運算版）
+
+請將這段程式碼完全替換掉你原本的 index.html 內容：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高質感純運算水波紋</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; }
+        #waterCanvas { width: 100vw; height: 100vh; display: block; cursor: crosshair; }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // --- 設定參數 ---
+        // 解析度：降低解析度可提升效能，但畫面較粗糙；提高則反之。
+        // 建議維持在 500-800 之間，再透過 CSS 拉伸至全螢幕。
+        const width = 700;
+        const height = 500;
+        canvas.width = width;
+        canvas.height = height;
+
+        // 物理模擬參數
+        const damping = 0.98; // 波紋衰減速度 (越小消失越快)
+        const lightStrength = 40; // 點擊時的光亮強度
+
+        const size = width * height;
+        let rippleMap = new Int16Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+        let rippleData, textureData;
+
+        // --- 1. 程序化生成「有質感」的水底背景 ---
+        function generateTexture() {
+            // 先填滿一個基礎的深藍色漸層
+            let gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#a7d3ed');   // 參考圖的淺藍
+            gradient.addColorStop(0.5, '#82c2e6');
+            gradient.addColorStop(1, '#5aabd6');   // 參考圖的深藍
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // 【關鍵步驟】利用隨機堆疊的透明光暈，製造出類似墨水暈染的有機質感
+            ctx.globalCompositeOperation = 'overlay'; // 使用疊加模式讓顏色融合
+            for (let i = 0; i < 600; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const radius = Math.random() * 100 + 20;
+                const alpha = Math.random() * 0.15;
+                
+                // 隨機繪製白色或更淺藍色的柔和圓形
+                let radialGrad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                if (Math.random() > 0.5) {
+                     radialGrad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+                } else {
+                     radialGrad.addColorStop(0, `rgba(200, 240, 255, ${alpha})`);
+                }
+                radialGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = radialGrad;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // 恢復正常繪圖模式
+            ctx.globalCompositeOperation = 'source-over';
+
+            // 將生成好的背景材質儲存起來
+            textureData = ctx.getImageData(0, 0, width, height);
+            rippleData = ctx.createImageData(width, height);
+        }
+
+        // --- 2. 觸發波紋函數 ---
+        function drop(x, y, radius, strength) {
+            // 座標轉換
+            const cx = Math.floor(x / window.innerWidth * width);
+            const cy = Math.floor(y / window.innerHeight * height);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < height && k >= 0 && k < width) {
+                        // 產生圓形波紋
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            // 根據距離中心點給予不同的強度，讓波形更圓潤
+                            const power = (1 - distSq / rSq) * strength;
+                            rippleMap[oldIdx + (j * width) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 3. 核心物理與光影運算 ---
+        function process() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            const pixelData = rippleData.data;
+            const baseData = textureData.data;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    // 邊界檢查
+                    if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+                         rippleMap[newIdx + i] = 0;
+                         mapIdx++; i++; continue;
+                    }
+
+                    // 物理波浪公式：計算周圍高度平均值
+                    let data = (
+                        rippleMap[mapIdx - width] +
+                        rippleMap[mapIdx + width] +
+                        rippleMap[mapIdx - 1] +
+                        rippleMap[mapIdx + 1]
+                    ) >> 1;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping; // 衰減
+                    rippleMap[newIdx + i] = data;
+
+                    // --- 計算光影與折射 ---
+                    // 計算波浪的「斜率」(Slope)，用來判斷哪裡是迎光面
+                    const xoffset = (rippleMap[mapIdx - 1] - rippleMap[mapIdx + 1]);
+                    const yoffset = (rippleMap[mapIdx - width] - rippleMap[mapIdx + width]);
+
+                    // 計算高光 (Specular Highlight)：斜率越陡，光越亮
+                    // 這裡簡化計算，將 X 和 Y 的斜率絕對值相加
+                    let highlight = (Math.abs(xoffset) + Math.abs(yoffset)) * lightStrength;
+                    // 限制亮度不要爆掉
+                    if (highlight > 200) highlight = 200;
+                    if (highlight < 20) highlight = 0; // 太平緩的地方不要有光
+
+                    // 計算折射後的背景座標
+                    let newX = x + xoffset * 0.05; // 0.05 是折射強度係數
+                    let newY = y + yoffset * 0.05;
+                    // 防止折射超出畫面
+                    if (newX >= width) newX = width - 1; else if (newX < 0) newX = 0;
+                    if (newY >= height) newY = height - 1; else if (newY < 0) newY = 0;
+
+                    const newPixelIdx = (Math.floor(newY) * width + Math.floor(newX)) * 4;
+                    const curPixelIdx = i * 4;
+
+                    // 【最終著色】 背景顏色 + 高光亮度
+                    pixelData[curPixelIdx] = baseData[newPixelIdx] + highlight;     // R
+                    pixelData[curPixelIdx + 1] = baseData[newPixelIdx + 1] + highlight; // G
+                    pixelData[curPixelIdx + 2] = baseData[newPixelIdx + 2] + highlight; // B
+                    pixelData[curPixelIdx + 3] = 255; // Alpha
+
+                    mapIdx++;
+                    i++;
+                }
+            }
+            ctx.putImageData(rippleData, 0, 0);
+            requestAnimationFrame(process);
+        }
+
+        // --- 初始化與事件 ---
+        generateTexture();
+        process();
+
+        // 滑鼠移動：小而頻繁的波紋 (隨風感)
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            // 限制觸發頻率，讓波紋比較乾淨
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 3, 150);
+                lastMove = now;
+            }
+        });
+
+        // 滑鼠點擊：大而強烈的波紋 (會觸發明顯光亮)
+        canvas.addEventListener('mousedown', function(e) {
+            // 強度設為 2000，這會產生很陡的斜率，進而觸發強烈高光
+            drop(e.clientX, e.clientY, 12, 2000); 
+        });
+
+        // 手機支援
+        canvas.addEventListener('touchstart', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 12, 2000), {passive: true});
+        canvas.addEventListener('touchmove', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 3, 150), {passive: true});
+
+        // 自動隨機波紋 (微風效果)
+        setInterval(() => {
+            if (Math.random() > 0.7) { // 偶爾發生
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 2, 100);
+            }
+        }, 800);
+
+    </script>
+</body>
+</html>
+
+新版本亮點說明
+
+質感背景 (Texture Generation)：
+請看程式碼中 generateTexture() 這個函數。我不再只是畫一個簡單的漸層，而是像畫水彩一樣，在畫布上隨機疊加了 600 個不同大小、不同透明度的白色與淺藍色光暈。這創造出了你想要的圖片中那種不均勻、有深度的「大理石紋」或「水墨」質感。
+
+點擊時的強烈光感 (Specular Highlight)：
+請看 process() 函數中間的註解 // --- 計算光影與折射 ---。
+
+我計算了每個像素點波浪的「斜率」（xoffset 和 yoffset）。
+
+當你用滑鼠點擊時（mousedown 事件），我給了一個非常大的強度值 2000，這會製造出非常陡峭的波浪。
+
+程式偵測到陡峭的斜率，就會在 highlight 變數中加入亮度值。
+
+最後著色時：pixelData[...] = baseData[...] + highlight;，背景色加上亮度，就形成了那種水面反光的效果。
+
+現在試試看，滑鼠滑過時是柔和的波紋，而用力點擊時，波浪邊緣是不是會閃爍出明亮的白光了呢？
+
+你說了
+
+滑鼠點擊有點太生硬了，背景可以加上一些點點表現明暗嗎
+
+這兩個建議都非常棒！它們能顯著提升互動體驗的真實感和視覺豐富度。
+
+我們來針對你的需求進行兩大升級：
+
+升級一：讓滑鼠點擊更「Q 彈」柔和
+
+你提到的「生硬」是因為原本的程式碼在點擊瞬間，只觸發了一次非常強烈的波浪運算（強度 2000）。這就像是用硬梆梆的鐵鎚敲打水面，波浪會瞬間產生尖銳的邊緣。
+
+解決方案： 我們要模擬真實物體（例如一顆石頭）落入水中的物理過程。石頭入水不是一瞬間完成的，而是會在極短的時間內持續推開水面。
+
+我將原本單次的 drop 改成了一個**「連續觸發機制」**。當你點擊滑鼠時，程式會啟動一個極短暫的計時器，在接下來的幾毫秒內，連續觸發 5-6 次強度遞減的波浪。這樣產生的波紋中心會比較圓潤，擴散出去時也會有更自然的起伏感。
+
+升級二：背景加入明暗點點（波光與雜質）
+
+為了增加質感，我們不能只有大範圍的顏色暈染。真實的水體中會有懸浮微粒、氣泡，以及水面細微凹凸捕捉到的強烈光點。
+
+解決方案： 在 generateTexture（生成背景材質）的階段，我在原本的雲霧效果之上，再疊加了一層**「高頻細節層」**。
+
+我用程式碼隨機撒下了約 2000 個極小的點。
+
+其中約 30% 是高亮度的白色（模擬水面閃爍的波光）。
+
+另外 70% 是深藍色的暗點（模擬水底深處的雜質或陰影）。
+這些點點在靜止時提供了豐富的細節，而當水波經過並產生折射時，它們的晃動會讓畫面看起來更有「水感」。
+
+完整升級版程式碼
+
+請使用這段最新的程式碼替換舊的內容。請特別留意滑鼠點擊時的柔和感，以及背景中新增的細緻光點。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柔和點擊與高質感光點水波</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; }
+        #waterCanvas { width: 100vw; height: 100vh; display: block; cursor: crosshair; }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // --- 設定參數 ---
+        // 解析度設定 (寬高比建議接近螢幕比例，這裡設為 3:2)
+        const width = 750;
+        const height = 500;
+        canvas.width = width;
+        canvas.height = height;
+
+        // 物理模擬參數
+        const damping = 0.985; // 稍微提高一點阻尼，讓波紋傳遞更遠但也更柔順
+        const lightStrength = 35; // 光影折射強度
+
+        const size = width * height;
+        let rippleMap = new Int16Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+        let rippleData, textureData;
+
+        // --- 1. 程序化生成高質感背景 (加入明暗點點) ---
+        function generateTexture() {
+            // A. 基礎漸層
+            let gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#a7d3ed');
+            gradient.addColorStop(0.5, '#82c2e6');
+            gradient.addColorStop(1, '#5aabd6');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // B. 雲霧狀的大氣氛暈染 (使用疊加模式)
+            ctx.globalCompositeOperation = 'overlay';
+            for (let i = 0; i < 500; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const radius = Math.random() * 120 + 30;
+                const alpha = Math.random() * 0.1;
+                
+                let radialGrad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                // 隨機產生亮部暈染與暗部暈染
+                if(Math.random() > 0.4) {
+                     radialGrad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+                } else {
+                     radialGrad.addColorStop(0, `rgba(0, 50, 100, ${alpha * 1.5})`);
+                }
+                radialGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = radialGrad;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // C. 【新增】高頻細節：明暗點點 (波光與雜質)
+            // 使用 'source-over' 正常覆蓋模式，讓點點清晰可見
+            ctx.globalCompositeOperation = 'source-over';
+            for (let i = 0; i < 2500; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                // 點點非常小
+                const r = Math.random() * 1.5 + 0.5; 
+                
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+
+                // 30% 機率是高亮的白色波光點
+                if (Math.random() > 0.7) {
+                    // 透明度隨機，製造閃爍感
+                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.7 + 0.3})`;
+                } 
+                // 70% 機率是深色的雜質點
+                else {
+                    ctx.fillStyle = `rgba(0, 40, 80, ${Math.random() * 0.3 + 0.1})`;
+                }
+                ctx.fill();
+            }
+            
+            // 儲存生成的背景
+            textureData = ctx.getImageData(0, 0, width, height);
+            rippleData = ctx.createImageData(width, height);
+        }
+
+        // --- 2. 觸發波紋函數 ---
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * width);
+            const cy = Math.floor(y / window.innerHeight * height);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < height && k >= 0 && k < width) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            // 使用 cosine 函數讓波峰更圓潤自然
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * width) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 3. 核心物理與光影運算 ---
+        function process() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            const pixelData = rippleData.data;
+            const baseData = textureData.data;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+
+                    let data = (
+                        rippleMap[mapIdx - width] + rippleMap[mapIdx + width] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) >> 1;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+
+                    // 計算折射與光影
+                    const xoffset = (rippleMap[mapIdx - 1] - rippleMap[mapIdx + 1]);
+                    const yoffset = (rippleMap[mapIdx - width] - rippleMap[mapIdx + width]);
+
+                    // 計算高光亮點
+                    let highlight = (Math.abs(xoffset) + Math.abs(yoffset)) * lightStrength;
+                    if (highlight > 180) highlight = 180; // 限制最大亮度
+                    if (highlight < 15) highlight = 0;   // 去除雜訊
+
+                    let newX = x + xoffset * 0.04; 
+                    let newY = y + yoffset * 0.04;
+                    if (newX >= width) newX = width - 1; else if (newX < 0) newX = 0;
+                    if (newY >= height) newY = height - 1; else if (newY < 0) newY = 0;
+
+                    const newPixelIdx = (Math.floor(newY) * width + Math.floor(newX)) * 4;
+                    const curPixelIdx = i * 4;
+
+                    pixelData[curPixelIdx] = baseData[newPixelIdx] + highlight;     // R
+                    pixelData[curPixelIdx + 1] = baseData[newPixelIdx + 1] + highlight; // G
+                    pixelData[curPixelIdx + 2] = baseData[newPixelIdx + 2] + highlight; // B
+                    pixelData[curPixelIdx + 3] = 255; // A
+
+                    mapIdx++; i++;
+                }
+            }
+            ctx.putImageData(rippleData, 0, 0);
+            requestAnimationFrame(process);
+        }
+
+        // --- 初始化與事件 ---
+        generateTexture();
+        process();
+
+        // 滑鼠移動：保持隨風飄逸的小波紋
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            if (now - lastMove > 40) { 
+                drop(e.clientX, e.clientY, 3, 100);
+                lastMove = now;
+            }
+        });
+
+        // 【改進】滑鼠點擊：柔和的連續觸發機制
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 500; // 初始強度不用太大
+            const radius = 12;
+            
+            // 使用計時器在接下來的幾幀中連續產生波紋
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 80; // 強度遞減
+                count++;
+                if (count > 5 || strength <= 0) {
+                    clearInterval(interval); // 停止觸發
+                }
+            }, 30); // 每 30ms 觸發一次
+        }
+
+        canvas.addEventListener('mousedown', function(e) {
+            softDrop(e.clientX, e.clientY);
+        });
+
+        // 手機觸控支援改為柔和版
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 3, 100), {passive: true});
+
+        // 自動隨機波紋
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 2, 80);
+            }
+        }, 1000);
+
+    </script>
+</body>
+</html>
+
+你說了
+
+我的點點是想要構成水波而不是背景
+
+這是一個非常有趣的轉折！將「連續的水面」改成由「無數個點點」構成的粒子系統，視覺效果會從「寫實風格」轉變為更具「科技感」或是「抽象藝術感」的數位水波。
+
+這需要對程式碼核心進行大手術。我們將保留原本的物理運算引擎（計算波浪起伏），但完全捨棄掉原本的背景圖片和折射繪圖機制。取而代之的是，我們將在畫布上繪製一個「點陣列」，並讓這些點的大小、亮度和顏色隨著波浪的高度而變化。
+
+新版核心概念：粒子點陣列
+
+物理層（看不見）： 底層依然運行著高解析度的波浪運算，計算每個位置的水面高度。
+
+表現層（看得見）： 我們不再畫像素，而是每隔幾筆像素畫一個圓點。
+
+互動機制：
+
+當波浪隆起（波峰）經過某個點時，該點會變大、變亮、變白（模擬反光）。
+
+當波浪凹陷（波谷）經過時，該點會變小、變暗、變深藍。
+
+平靜時，就是一片均勻的藍色點陣。
+
+這能完美達成你想要的「由點點構成水波」且保有「質感與光亮」的需求。
+
+完整程式碼（點陣粒子水波版）
+
+請替換原本的內容：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>點陣粒子水波紋</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* 背景改為深色，讓發光的點點更突出 */
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #051626; }
+        #waterCanvas { width: 100vw; height: 100vh; display: block; cursor: crosshair; }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); // 關閉 alpha 通道以提升效能
+
+        // --- 設定參數 ---
+        // 物理運算解析度 (越高波形越細緻，但較吃效能)
+        const physicsWidth = 600;
+        const physicsHeight = 400;
+        
+        // 【關鍵設定】點點的密度與大小
+        const dotSpacing = 10;  // 每隔 10px 畫一個點 (數值越小點越密)
+        const baseRadius = 2.5; // 點點的基本半徑
+        
+        // 物理模擬參數
+        const damping = 0.98; 
+        
+        // 初始化畫布與物理資料結構
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2); // 使用 Float32 讓波形更平滑
+        let oldIdx = size;
+        let newIdx = 0;
+
+        // --- 1. 觸發波紋函數 (物理層) ---
+        // 這部分負責在看不見的數據層中製造波浪
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 2. 核心運算與繪製迴圈 ---
+        function loop() {
+            // A. 物理運算階段 (計算波浪起伏)
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2; // 使用 Float32 改用除法
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            // B. 繪製階段 (用點點表現波浪)
+            // 清空畫面
+            ctx.fillStyle = '#051626'; // 深海藍背景
+            ctx.fillRect(0, 0, physicsWidth, physicsHeight);
+
+            // 遍歷網格來畫點
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    // 取得該位置的波浪高度
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+
+                    // --- 視覺化核心：將高度映射到點點的屬性 ---
+                    
+                    // 1. 計算半徑：波峰(正值)變大，波谷(負值)變小
+                    // waveHeight 通常在 -500 到 500 之間跳動，我們將其縮小比例
+                    let radius = baseRadius + (waveHeight / 80); 
+                    if (radius < 0.8) radius = 0.8; // 最小尺寸
+                    if (radius > 7) radius = 7;     // 最大尺寸
+
+                    // 2. 計算顏色與亮度：波峰趨近白色，波谷趨近深藍
+                    let r, g, b, a;
+                    // 亮度基於高度 (越高越亮)
+                    let brightness = (waveHeight + 100) / 200; // 歸一化到 0~1 之間
+                    if (brightness < 0) brightness = 0;
+                    if (brightness > 1) brightness = 1;
+
+                    // 顏色插值：從深藍 -> 青藍 -> 亮白
+                    // 使用 exponential 讓亮部更集中在最高點
+                    const sharpBrightness = Math.pow(brightness, 3); 
+
+                    r = Math.floor(50 + sharpBrightness * 205);  // 偏藍的基底 -> 白
+                    g = Math.floor(150 + sharpBrightness * 105); // 青色基底 -> 白
+                    b = Math.floor(200 + sharpBrightness * 55);  // 亮藍基底 -> 白
+                    a = 0.4 + sharpBrightness * 0.6; // 越亮越不透明
+
+                    // 繪製圓點
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+                    ctx.fill();
+                }
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- 初始化與事件 ---
+        loop();
+
+        // 滑鼠移動：小波紋
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            if (now - lastMove > 30) { 
+                // 強度降低，讓移動時的點點變化比較柔和
+                drop(e.clientX, e.clientY, 4, 100);
+                lastMove = now;
+            }
+        });
+
+        // 滑鼠點擊：柔和的連續觸發
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 800; // 較強的初始波浪
+            const radius = 15;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 150;
+                count++;
+                if (count > 4 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100), {passive: true});
+
+        // 自動隨機波紋
+        setInterval(() => {
+            if (Math.random() > 0.5) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 80);
+            }
+        }, 1200);
+
+    </script>
+</body>
+</html>
+
+程式碼變更重點說明
+
+繪圖方式的根本改變：
+原本的 putImageData (像素操作) 被移除了。現在的繪圖迴圈中，我們使用兩個 for 迴圈，以 dotSpacing (例如 10px) 為間隔遍歷畫面，在每個網格點上使用 ctx.arc() 畫圓。
+
+高度映射到視覺 (Visualization Mapping)：
+這是在註解 // --- 視覺化核心 --- 下方的新程式碼。我們讀取物理引擎計算出的 waveHeight，然後做兩件事：
+
+改變半徑 (radius)：波浪越高，點越大。這創造了波峰隆起的視覺感。
+
+改變顏色 (fillStyle)：我寫了一個簡單的顏色插值算法。
+
+平靜或凹陷時，點點是半透明的深青藍色。
+
+當波峰升起時，顏色會迅速向白色靠攏，並且變得不透明。
+
+使用了 Math.pow(brightness, 3) 這種數學技巧，讓只有波浪最高、最尖端的地方才會變成純白色，完美模擬了你想要的「特別明顯光亮」的效果。
+
+現在，整個水面是由成千上萬個會呼吸、會變色的光點所組成的。當你點擊時，會有一圈明亮的白色光點擴散開來，非常有科技感與質感。
+
+你說了
+
+可以亮色的底嗎？
+
+只有水波紋經過的地方才由點點組成
+
+並且想要如附圖的底色
+
+你說了
+
+顏色可以淡一點，並且我要程式碼
+
+這是一個非常精緻的需求！將背景設定為靜態的「淡水彩紙質感」，而前景則是互動的、僅在波紋經過時才顯現的「發光點點」，這能創造出非常有藝術感且夢幻的效果。
+
+為了達成這個目標，我們將採取複合式的作法：
+
+背景（CSS）：使用 CSS 的多重漸層功能，模擬出淡水藍色的水彩紙暈染效果。這樣不需要外部圖片，且能自由調整色調。
+
+波紋（Canvas）：延續之前的物理運算核心，但大幅修改繪圖邏輯。現在，只有當某個位置的「波浪高度」超過一定數值時，我們才在那裡畫一個半透明的白色發光點。波浪越高，點點越亮、越大。
+
+這就是你所要求的「淡色水彩底 + 純粹由光點構成的水波紋」的完整程式碼：
+
+完整程式碼 (HTML + CSS + JS)
+
+請將以下代碼保存為 index.html 並用瀏覽器打開：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>淡水彩光點水波紋</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* --- 背景設定 --- */
+            /* 使用多重 CSS 漸層來模擬淡水彩紙的暈染質感 */
+            background-color: #e0f7fa; /* 最底層的淡水藍色 */
+            background-image: 
+                /* 一層淡淡的白色雲霧紋理 */
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 40%),
+                /* 一層稍微深一點點的藍色暈染 */
+                radial-gradient(circle at 50% 50%, rgba(178, 235, 242, 0.5) 0%, rgba(128, 222, 234, 0) 60%),
+                /* 模擬紙張紋理的細微雜色 (噪點) */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; /* 混合模式讓紋理更自然 */
+        }
+        /* Canvas 背景透明，疊加在 CSS 背景之上 */
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); // 不需要關閉 alpha，我們需要透明度
+
+        // --- 設定參數 ---
+        const physicsWidth = 500;  // 物理運算解析度
+        const physicsHeight = 350;
+        
+        // 【關鍵設定】點點的密度與外觀
+        const dotSpacing = 8;   // 點點間距 (越小越密)
+        const maxRadius = 6;    // 波峰時點點的最大半徑
+        const colorStrength = 1.5; // 控制亮度的增益係數
+
+        // 物理模擬參數 (讓波紋傳遞得慢一點、遠一點)
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        // --- 1. 物理層：製造波浪數據 ---
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 2. 視覺層：運算並繪製光點 ---
+        function loop() {
+            // A. 物理運算
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            // B. 繪製階段
+            // 【關鍵】每幀清空畫布，露出底下的 CSS 水彩背景
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 遍歷網格畫點
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+
+                    // --- 視覺化核心：將高度轉換為光點的亮度和大小 ---
+                    
+                    // 取波浪高度的絕對值，無論是波峰還是波谷都讓它發光
+                    let intensity = Math.abs(waveHeight);
+
+                    // 設定一個閾值，過小的波動不繪製，保持背景乾淨
+                    if (intensity < 10) continue; 
+                    
+                    // 計算亮度 (Alpha值)：歸一化並加上增益
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.9) alpha = 0.9; // 限制最大透明度，保留一點通透感
+                    if (alpha < 0) alpha = 0;
+
+                    // 計算半徑：波浪越大點越大
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 1) radius = 1; // 最小半徑
+                    if (radius > maxRadius) radius = maxRadius;
+
+                    // 繪製純白色的發光點
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    // 使用純白色，透明度由波浪決定
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // --- 初始化與事件 ---
+        loop();
+
+        // 滑鼠移動
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 5, 120); // 半徑與強度
+                lastMove = now;
+            }
+        });
+
+        // 滑鼠點擊：柔和的連續觸發
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 700; 
+            const radius = 18;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 120;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 5, 120), {passive: true});
+
+        // 自動隨機波紋 (偶爾觸發)
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 4, 100);
+            }
+        }, 1500);
+
+    </script>
+</body>
+</html>
+
+程式碼修改重點
+
+淡水彩背景 (CSS)：
+在 <style> 標籤裡，body 的背景不再是單一顏色，而是使用了多個 radial-gradient（放射狀漸層）來模擬水彩在紙上暈開的效果，底色是淡水藍色 (#e0f7fa)。我還加入了一個 SVG 的噪點濾鏡 (url("data:image/svg..."))，讓背景有一點點紙張的粗糙紋理感。
+
+透明畫布 (Canvas)：
+#waterCanvas 的背景色被移除了，在 JS 的繪圖迴圈中，我們使用 ctx.clearRect(0, 0, ...) 來清空每一幀。這確保了 Canvas 本身是透明的，只有我們畫上去的點點會顯示出來，底下的 CSS 背景得以顯現。
+
+只在波紋處畫點 (JS)：
+請看 JS 代碼中註解 // --- 視覺化核心 --- 的部分。
+我們新增了一個判斷 if (intensity < 10) continue;。這意味著如果某個地方的波浪起伏非常微小（小於 10），程式就會直接跳過，不繪製任何東西。只有當波浪經過時，intensity 變大，我們才根據它的強度計算出一個純白色的、半透明的圓點畫上去。
+
+現在，畫面平靜時就是一張淡雅的水彩紙，當你互動時，潔白發亮的光點才會隨著水波湧現。
+
+你說了
+
+有幾個要修改的：
+
+
+
+
+- 顏色可以深一點點嗎？現在有點太亮了
+
+- 水波紋的點點太大了可以小一點嗎？
+
+這兩個調整方向非常好！把底色調深一點，搭配更細緻、更小的光點，可以讓整體的視覺質感大幅提升，看起來會更像精緻的數位藝術品。
+
+我已經為你調整了以下幾個設定：
+
+底色調深：將原本偏白、過亮的淺藍色，改為稍微深一點的「寧靜天藍色」，並調整了雲霧漸層的透明度，讓背景看起來更沉穩。
+
+點點縮小且變密：將點點的最大半徑從 6 縮小到了 2.5，同時稍微縮小了點與點之間的間隔（從 8 變成 6），這樣波紋經過時，光點會顯得非常細緻且柔和。
+
+光暈微調：降低了點點的最高透明度，讓發光感不會顯得太刺眼。
+
+請用這段新的程式碼替換原有的內容：
+
+完整程式碼（深色細緻點點版）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>細緻光點水波紋</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* --- 背景設定調整 --- */
+            /* 將底色換成深一點點、更有質感的天藍色 */
+            background-color: #9cd0e8; 
+            background-image: 
+                /* 降低白色雲霧的亮度，避免過於刺眼 */
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%),
+                /* 加入一層淡淡的深海藍色漸層，增加水底的深度感 */
+                radial-gradient(circle at 50% 50%, rgba(70, 130, 180, 0.2) 0%, rgba(70, 130, 180, 0) 65%),
+                /* 保留紙張紋理噪點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            background-blend-mode: normal;
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        // --- 設定參數 ---
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        // 【關鍵調整】點點變小、變精緻
+        const dotSpacing = 6;    // 讓點點排列更緊密一點 (原本是 8)
+        const maxRadius = 2.5;   // 波峰時點點的最大半徑大幅縮小 (原本是 6)
+        const colorStrength = 1.2; // 稍微降低光芒的刺眼程度
+
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+
+                    let intensity = Math.abs(waveHeight);
+                    
+                    // 波動小於 8 就直接隱藏，維持背景的乾淨度
+                    if (intensity < 8) continue; 
+                    
+                    let alpha = (intensity / 200) * colorStrength;
+                    // 最高透明度限制在 0.75，讓發光更柔和不刺眼
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+
+                    let radius = (intensity / 150) * maxRadius;
+                    // 最小半徑設定為 0.5，讓細微的波紋有如星塵般點綴
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100), {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+
+    </script>
+</body>
+</html>
+
+
+存檔並重新整理後，你應該會看到整體色調變得更柔和舒服，而且點擊滑鼠時出現的水波，會是由非常細小且緻密的光點構成的，看起來會精緻很多！
+
+現在的深淺度和點點大小符合你心目中的樣子嗎？需不需要再幫你微調任何細節（例如光點消失的速度）？
+
+你說了
+
+可以加一個功能嗎？
+
+就是掉下花，讓整體像在湖畔的那樣悠閒平靜
+
+掉下了花一樣隨著滑鼠的方向移動
+
+這個想法太有詩意了！加入落花與湖畔微風的互動，會讓整個網頁從單純的「特效」昇華成一件充滿禪意的「數位藝術品」。
+
+為了達成這種「悠閒平靜」且「花瓣隨滑鼠方向飄動」的感覺，我為程式碼加入了一個**「花瓣粒子系統 (Petal Particle System)」**。
+
+這次升級的亮點：
+
+櫻色落花：用程式碼繪製了半透明的粉色花瓣，它們會自帶非常緩慢的旋轉與漂浮感，模擬落在水面上隨波逐流的樣子。
+
+微風跟隨系統：當你的滑鼠移動時，程式碼會計算滑鼠的「移動方向」與「速度」，並在滑鼠周圍產生一股無形的「微風」。這股風會輕柔地推動附近的花瓣，讓花瓣順著你滑鼠揮舞的方向飄逸。
+
+請用這段最新的程式碼替換你原本的 index.html：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>湖畔落花水波紋</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 寧靜天藍色水彩底色 */
+            background-color: #9cd0e8; 
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 50% 50%, rgba(70, 130, 180, 0.2) 0%, rgba(70, 130, 180, 0) 65%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            background-blend-mode: normal;
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        // --- 設定參數 ---
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        // 水波紋點點設定
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        // --- 新增：滑鼠軌跡與風力追蹤 ---
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; // 滑鼠X軸速度 (風力)
+        let mouseVy = 0; // 滑鼠Y軸速度 (風力)
+
+        // --- 新增：花瓣粒子系統 ---
+        class Petal {
+            constructor() {
+                // 隨機散佈在畫布上
+                this.x = Math.random() * physicsWidth;
+                this.y = Math.random() * physicsHeight;
+                // 基礎微風漂浮速度 (往右下角緩慢飄)
+                this.vx = Math.random() * 0.2 + 0.1;
+                this.vy = Math.random() * 0.2 + 0.1;
+                this.size = Math.random() * 3 + 4; // 花瓣大小
+                this.angle = Math.random() * Math.PI * 2; // 初始旋轉角度
+                this.spin = (Math.random() - 0.5) * 0.02; // 自身旋轉速度
+                // 粉嫩的花瓣顏色
+                const r = 255;
+                const g = Math.floor(180 + Math.random() * 40);
+                const b = Math.floor(200 + Math.random() * 30);
+                this.color = `rgba(${r}, ${g}, ${b}, 0.85)`;
+            }
+
+            update() {
+                // 1. 計算滑鼠產生的風力推動
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { // 如果滑鼠靠近花瓣 (半徑 60 內)
+                    let force = (60 - dist) / 60; // 越靠近力量越大
+                    // 將滑鼠的移動速度轉化為推動花瓣的風力
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                // 2. 水面摩擦力 (讓被推動的花瓣慢慢停下來)
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                // 3. 基礎微風牽引 (即使不動滑鼠，也會有微微的自然漂流)
+                this.vx += 0.005; 
+                this.vy += 0.005;
+
+                // 4. 更新位置與旋轉
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                // 5. 邊界循環 (飄出畫面後從另一邊回來)
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+                if (this.y > physicsHeight + 20) this.y = -20;
+                if (this.y < -20) this.y = physicsHeight + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                // 繪製水滴狀的花瓣
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 產生 20 片花瓣 (數量可以自己調整)
+        const petals = [];
+        for (let i = 0; i < 20; i++) {
+            petals.push(new Petal());
+        }
+
+        // --- 核心運算 ---
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            // 水波物理運算
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 繪製水波點點
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    
+                    if (intensity < 8) continue; 
+                    
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            // --- 新增：更新與繪製花瓣 ---
+            petals.forEach(petal => {
+                petal.update();
+                petal.draw(ctx);
+            });
+
+            // 風力衰減 (當滑鼠停止移動時，風力慢慢平息)
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        // --- 事件綁定 ---
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            
+            // 計算滑鼠在畫布中的座標
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            
+            // 計算滑鼠移動的速度 (風力)
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            
+            // 更新滑鼠位置
+            mouseX = currentMx;
+            mouseY = currentMy;
+
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        // 點擊觸發較大的水波
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        // 隨機微風波紋
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+
+    </script>
+</body>
+</html>
+
+試玩看看：
+
+輕輕揮動滑鼠：你會發現花瓣會順著你滑過的方向，像被風吹動一樣散開。
+
+靜靜看著：即便你不動滑鼠，花瓣也會有一種微風徐徐的感覺，從左上慢慢飄落到右下。
+
+點擊湖面：光點水波還是會在水面下輕柔地擴散開來。
+
+目前的落花數量我設定在 20片，保持畫面乾淨。如果覺得太少或太多，你可以找到程式碼中的 for (let i = 0; i < 20; i++) 將數字進行修改。
+
+這個效果有帶給你那種坐在平靜湖畔的愜意感了嗎？
+
+你說了
+
+有幾個想要修正：
+
+
+
+
+- 背景顏色可以篇青綠色嗎？想要有點小日式的感覺
+
+- 掉落的花瓣可以累積在螢幕下面嗎？
+
+這個調整方向非常有品味！將背景改為「青綠色」（類似日本傳統色中的「青磁色」或「水浅葱」），搭配粉色的櫻花花瓣，會瞬間營造出日式庭園裡錦鯉池畔的禪意。
+
+同時，我為花瓣加入了**「物理堆積系統」**。現在花瓣不再只是無盡地掉出畫面，而是會像真實世界一樣，慢慢飄落並堆疊積累在畫面的最下方（池邊）。為了保持網頁順暢，我設定最多會在底部累積 200 片花瓣，超過時最舊的花瓣會悄悄消失。
+
+請使用這段全新充滿日式氛圍的程式碼：
+
+完整程式碼（日式青綠底色 + 花瓣堆積效果）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日式湖畔落花水波紋</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* --- 調整為日式青綠色 (青磁色系) --- */
+            background-color: #94c8b8; 
+            background-image: 
+                /* 柔和的雲霧光暈 */
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 40%),
+                /* 深一點的翠綠色暈染，增加池水深度 */
+                radial-gradient(circle at 50% 50%, rgba(60, 140, 120, 0.25) 0%, rgba(60, 140, 120, 0) 65%),
+                /* 保留水彩紙張紋理噪點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            background-blend-mode: normal;
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        // 水波紋點點設定
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        // 滑鼠軌跡與風力追蹤
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        // --- 新增：花瓣陣列分類 (飄落中 vs 已落地) ---
+        const activePetals = []; // 正在飄落的花瓣
+        const fallenPetals = []; // 已經累積在底部的花瓣
+
+        class Petal {
+            // isNew 決定它是從最上面新生出來的，還是初始隨機散佈的
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                // 新花瓣從畫面上方外側掉落，舊花瓣初始隨機散佈
+                this.y = isNew ? -20 : Math.random() * physicsHeight;
+                
+                this.vx = Math.random() * 0.2 + 0.1;
+                // 增加一點向下的重力，讓花瓣確實能掉到底部
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                // 粉色櫻花色
+                const r = 255;
+                const g = Math.floor(180 + Math.random() * 40);
+                const b = Math.floor(200 + Math.random() * 30);
+                this.color = `rgba(${r}, ${g}, ${b}, 0.85)`;
+
+                // 決定這片花瓣最終會降落在哪個高度 (畫面最底部，帶有一點隨機高低差)
+                this.targetY = physicsHeight - Math.random() * 35 - this.size;
+            }
+
+            update(index, array) {
+                // 1. 計算風力
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                // 2. 物理摩擦力與基礎風向
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; // 微微向右吹
+                this.vy += 0.015; // 微微向下的重力
+
+                // 3. 更新位置
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                // X軸循環 (飄出左右兩側會從另一側回來)
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                // 4. 【關鍵】：觸底判定，累積在底部
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    // 從「飄落中」的陣列移除，加入「已落地」的陣列
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    
+                    // 限制底部花瓣最大數量，避免堆積太多導致卡頓
+                    if (fallenPetals.length > 200) {
+                        fallenPetals.shift(); // 移除最舊的
+                    }
+                    
+                    // 觸發一片全新的花瓣從頂部掉落，生生不息
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 初始產生 15 片飄落中的花瓣
+        for (let i = 0; i < 15; i++) {
+            activePetals.push(new Petal());
+        }
+
+        // --- 核心運算 ---
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            // 水波物理運算
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 繪製水波光點
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    
+                    if (intensity < 8) continue; 
+                    
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            // 繪製已經累積在底部的花瓣
+            fallenPetals.forEach(petal => petal.draw(ctx));
+
+            // 更新並繪製正在飄落的花瓣 (使用倒序迴圈以確保移除陣列元素時不會出錯)
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].update(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            // 風力衰減
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        // --- 事件綁定 ---
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+
+    </script>
+</body>
+</html>
+
+這次的細節巧思
+
+日系青瓷色：不再是純藍色，而是帶有一點綠色調的青瓷色 (#94c8b8)，視覺上非常寧靜溫柔。
+
+生生不息的落花：當一片花瓣落到畫面底部停下時，程式會自動在畫面最上方隨機生成一片「新花瓣」，這確保了不管你掛機看多久，天空永遠都會有花瓣緩緩飄落，而底部會越積越漂亮。
+
+現在打開網頁，稍微等待個十幾秒，你就會看到畫面下方慢慢鋪滿了一層淡淡的櫻花花瓣！這樣是不是非常有日式禪意的感覺呢？
+
+你說了
+
+有幾個要修改的：
+
+- 可以有點黃綠色嗎？並加上日本紙質的感覺
+
+- 加上光線照耀的一道光
+
+- 累積的花瓣希望也可以隨風飄動
+
+這三個修改需求都充滿了畫面感！
+
+黃綠色與日本紙質：我將背景色調成了溫暖的「抹茶色」或「黃鶸色」，並增強了雜點濾鏡的能見度，讓紙張纖維的質感更明顯。
+
+一道光照耀：利用 CSS 的線性漸層，在畫面中加入了一道從左上斜射向右下的柔和光束，營造出陽光穿透樹梢灑落湖面的感覺。
+
+累積花瓣隨風飄動：這是最複雜也最有趣的物理互動更新。我改寫了程式碼，現在即使是已經「落地」在畫面底部的花瓣，也不再是靜止的。當你的滑鼠（風）經過底部時，這些累積的花瓣會受到擾動而滑行、稍微飛起並重新排列，看起來更有生命力。
+
+請體驗這段全新的程式碼：
+
+完整程式碼（黃綠紙質 + 聖光 + 全動態花瓣系統）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日式黃綠紙質光影水波</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* --- 1. 修改背景為日式黃綠色 (抹茶/黃鶸色調) --- */
+            background-color: #d4e8a6; 
+            background-image: 
+                /* --- 2. 新增：一道從左上射向右下的柔和光束 --- */
+                linear-gradient(135deg, rgba(255,255,245,0) 0%, rgba(255,255,245,0.5) 40%, rgba(255,255,245,0.5) 60%, rgba(255,255,245,0) 100%),
+                /* 暖色調的雲霧光暈 */
+                radial-gradient(circle at 20% 30%, rgba(255,255,250,0.5) 0%, rgba(255,255,250,0) 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,240,0.3) 0%, rgba(255,255,240,0) 50%),
+                /* 增加紙張質感的雜點 (稍微提高不透明度) */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; /* 使用 overlay 讓光線與顏色融合 */
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        // 水波紋點點設定
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        const activePetals = []; // 正在飄落的花瓣
+        const fallenPetals = []; // 已經累積在底部的花瓣
+
+        class Petal {
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                this.y = isNew ? -20 : Math.random() * physicsHeight * 0.8; // 初始分佈在上方區域
+                
+                this.vx = Math.random() * 0.2 - 0.1;
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                // 稍微調暖一點的粉色，配合背景
+                const r = 255;
+                const g = Math.floor(190 + Math.random() * 30);
+                const b = Math.floor(210 + Math.random() * 20);
+                this.color = `rgba(${r}, ${g}, ${b}, 0.85)`;
+
+                // 觸底目標高度
+                this.targetY = physicsHeight - Math.random() * 40 - this.size;
+                this.isFallen = false; // 標記是否已落地
+            }
+
+            // --- 更新狀態：飄落中 ---
+            updateFalling(index, array) {
+                // 風力影響
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; // 微風向右
+                this.vy += 0.015; // 重力向下
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                // 觸底判定
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    this.isFallen = true;
+                    this.vx = 0; // 落地瞬間速度歸零
+                    this.vy = 0;
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    if (fallenPetals.length > 250) fallenPetals.shift();
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            // --- 【新功能】更新狀態：已落地 (隨風滑動) ---
+            updateFallen() {
+                // 地面風力影響範圍較大，但力量較小
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 80) { 
+                    let force = (80 - dist) / 80; 
+                    // 主要受水平風力影響在地面滑動，垂直受力較小
+                    this.vx += mouseVx * force * 0.06;
+                    this.vy += mouseVy * force * 0.03;
+                }
+
+                // 地面摩擦力很大，很快就會停下來
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                // 落地後旋轉變慢
+                this.angle += this.spin * 0.5 + this.vx * 0.1; 
+
+                // 地面邊界限制
+                // 不讓它飛太高離開地面區域
+                if (this.y < this.targetY - 30) {
+                     this.y = this.targetY - 30;
+                     this.vy += 0.5; // 加一點重力讓它掉回地面
+                }
+                // 不讓它掉出畫面底部
+                if (this.y > physicsHeight + 10) this.y = physicsHeight + 10;
+
+                // 地面左右循環
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 初始產生花瓣
+        for (let i = 0; i < 18; i++) {
+            activePetals.push(new Petal());
+        }
+
+        // --- 核心運算 ---
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 繪製水波光點
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    if (intensity < 8) continue; 
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            // 【更新並繪製落地花瓣】
+            fallenPetals.forEach(petal => {
+                petal.updateFallen(); // 呼叫新的地面物理方法
+                petal.draw(ctx);
+            });
+
+            // 【更新並繪製飄落中花瓣】
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].updateFalling(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        // --- 事件綁定 ---
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
+
+互動提示：
+
+試著把滑鼠移到畫面最下方，快速地左右滑動。你會看到累積在那裡的花瓣被你的「風」吹得滑動、旋轉，甚至稍微飄起來一點點，然後又慢慢沉回水底，互動感非常真實！
+
+你說了
+
+光的感覺我希望隨水波滑鼠點擊產生
+
+這個改動會讓互動感大幅提升！將「靜態的光線」改成「隨著點擊與水波同步綻放的動態光暈」，不僅更符合物理直覺，也會讓每次點擊都像是在湖面施放了小小的光之魔法。
+
+為了達成這個效果，我做了以下調整：
+
+移除靜態光線：把 CSS 背景中那道固定不動的斜向光束去掉了，保持乾淨的黃綠色和紙張紋理。
+
+新增動態光暈系統：寫了一個專門處理「點擊光芒」的陣列。當你點擊滑鼠（或觸控）時，程式會在你點擊的座標生成一個帶有溫暖黃白色的「放射狀漸層光暈」。
+
+與水波同步擴散：這個光暈會隨著時間向外擴散，並且漸漸變透明消失，完美貼合底下水波紋向外擴散的節奏。
+
+請用這段最新的程式碼覆蓋原本的內容，來試試看這神奇的光影效果：
+
+完整程式碼（點擊動態綻放光芒版）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日式動態光影水波落花</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 日式黃綠色 (抹茶/黃鶸色調) 底色 */
+            background-color: #d4e8a6; 
+            background-image: 
+                /* 移除了原本固定的斜向光束，保留柔和的雲霧光暈 */
+                radial-gradient(circle at 20% 30%, rgba(255,255,250,0.5) 0%, rgba(255,255,250,0) 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,240,0.3) 0%, rgba(255,255,240,0) 50%),
+                /* 紙張質感的雜點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; 
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        // 水波紋點點設定
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        const activePetals = []; 
+        const fallenPetals = []; 
+        
+        // --- 新增：存放點擊產生的光暈 ---
+        const clickLights = [];
+
+        class Petal {
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                this.y = isNew ? -20 : Math.random() * physicsHeight * 0.8; 
+                this.vx = Math.random() * 0.2 - 0.1;
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                const r = 255;
+                const g = Math.floor(190 + Math.random() * 30);
+                const b = Math.floor(210 + Math.random() * 20);
+                this.color = `rgba(${r}, ${g}, ${b}, 0.85)`;
+
+                this.targetY = physicsHeight - Math.random() * 40 - this.size;
+                this.isFallen = false; 
+            }
+
+            updateFalling(index, array) {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; 
+                this.vy += 0.015; 
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    this.isFallen = true;
+                    this.vx = 0; 
+                    this.vy = 0;
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    if (fallenPetals.length > 250) fallenPetals.shift();
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            updateFallen() {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 80) { 
+                    let force = (80 - dist) / 80; 
+                    this.vx += mouseVx * force * 0.06;
+                    this.vy += mouseVy * force * 0.03;
+                }
+
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin * 0.5 + this.vx * 0.1; 
+
+                if (this.y < this.targetY - 30) {
+                     this.y = this.targetY - 30;
+                     this.vy += 0.5; 
+                }
+                if (this.y > physicsHeight + 10) this.y = physicsHeight + 10;
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 18; i++) {
+            activePetals.push(new Petal());
+        }
+
+        // --- 核心運算 ---
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            // 運算水波物理
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 【新增：繪製動態光暈】
+            for (let j = clickLights.length - 1; j >= 0; j--) {
+                let light = clickLights[j];
+                // 光暈隨著時間變大、變透明
+                light.radius += 2; 
+                light.alpha -= 0.015; 
+
+                if (light.alpha <= 0) {
+                    clickLights.splice(j, 1);
+                    continue;
+                }
+
+                ctx.save();
+                // 創造柔和的放射狀漸層光
+                let gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+                gradient.addColorStop(0, `rgba(255, 255, 230, ${light.alpha})`);      // 中心點最亮
+                gradient.addColorStop(0.4, `rgba(255, 255, 200, ${light.alpha * 0.5})`); // 中間微黃
+                gradient.addColorStop(1, `rgba(255, 255, 180, 0)`);                   // 邊緣透明消失
+
+                ctx.globalCompositeOperation = 'lighter'; // 使用「濾色」疊加模式讓光線看起來更亮
+                ctx.beginPath();
+                ctx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 繪製水波光點
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    if (intensity < 8) continue; 
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            // 繪製落地花瓣
+            fallenPetals.forEach(petal => {
+                petal.updateFallen(); 
+                petal.draw(ctx);
+            });
+
+            // 繪製飄落中花瓣
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].updateFalling(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        // --- 事件綁定 ---
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        // 柔和點擊與觸發光暈
+        function softDrop(x, y) {
+            // 【新增：將這一次點擊加入光暈陣列中】
+            const cx = x / window.innerWidth * physicsWidth;
+            const cy = y / window.innerHeight * physicsHeight;
+            clickLights.push({
+                x: cx,
+                y: cy,
+                radius: 5,   // 光暈初始大小
+                alpha: 0.8   // 光暈初始亮度
+            });
+
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        // 偶爾自動產生微小波紋 (不觸發強光，保持安靜氛圍)
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
+
+
+點擊看看畫面！現在當你點擊滑鼠時，不只會有純白點點構成的水波散開，中心還會綻放出一圈溫暖的黃白色漸層光芒，就像水面瞬間反射了陽光一樣。你覺得擴散的速度和亮度合適嗎？
+
+你說了
+
+光的感覺可以明顯一點嗎？
+
+沒問題！我們來把這個「光之魔法」的能量調大。
+
+為了讓光的感覺更明顯、更強烈，我做了以下四個關鍵調整：
+
+初始亮度提升：光暈一出現時就是最亮的狀態 (不透明度 1.0)。
+
+顏色更熾熱：將光暈中心的顏色改成純白色，中段改成更飽和的金黃色，讓它在黃綠色的背景上更跳脫出來。
+
+擴散速度加快：讓光暈炸開的速度變快，更有衝擊感。
+
+持續時間延長：稍微減慢了光暈消失的速度，讓它在畫面上停留久一點點。
+
+現在，每一次點擊都會伴隨著一團強烈、溫暖的金白色光芒綻放！
+
+完整程式碼（強力光感版）
+
+請使用這段程式碼替換原有的內容：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日式強力光影水波落花</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #d4e8a6; 
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,250,0.5) 0%, rgba(255,255,250,0) 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,240,0.3) 0%, rgba(255,255,240,0) 50%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; 
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        const activePetals = []; 
+        const fallenPetals = []; 
+        const clickLights = [];
+
+        class Petal {
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                this.y = isNew ? -20 : Math.random() * physicsHeight * 0.8; 
+                this.vx = Math.random() * 0.2 - 0.1;
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                const r = 255;
+                const g = Math.floor(190 + Math.random() * 30);
+                const b = Math.floor(210 + Math.random() * 20);
+                this.color = `rgba(${r}, ${g}, ${b}, 0.85)`;
+
+                this.targetY = physicsHeight - Math.random() * 40 - this.size;
+                this.isFallen = false; 
+            }
+
+            updateFalling(index, array) {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; 
+                this.vy += 0.015; 
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    this.isFallen = true;
+                    this.vx = 0; 
+                    this.vy = 0;
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    if (fallenPetals.length > 250) fallenPetals.shift();
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            updateFallen() {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 80) { 
+                    let force = (80 - dist) / 80; 
+                    this.vx += mouseVx * force * 0.06;
+                    this.vy += mouseVy * force * 0.03;
+                }
+
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin * 0.5 + this.vx * 0.1; 
+
+                if (this.y < this.targetY - 30) {
+                     this.y = this.targetY - 30;
+                     this.vy += 0.5; 
+                }
+                if (this.y > physicsHeight + 10) this.y = physicsHeight + 10;
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 18; i++) {
+            activePetals.push(new Petal());
+        }
+
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 【加強版：繪製動態光暈】
+            for (let j = clickLights.length - 1; j >= 0; j--) {
+                let light = clickLights[j];
+                // 讓光暈擴散更快 (原本是 +2)
+                light.radius += 3.5; 
+                // 讓光暈消失得慢一點 (原本是 -0.015)
+                light.alpha -= 0.01; 
+
+                if (light.alpha <= 0) {
+                    clickLights.splice(j, 1);
+                    continue;
+                }
+
+                ctx.save();
+                let gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+                // 中心改為純白色，亮度更高
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${light.alpha})`);      
+                // 中間改為更飽和的金黃色
+                gradient.addColorStop(0.3, `rgba(255, 230, 100, ${light.alpha * 0.6})`); 
+                gradient.addColorStop(1, `rgba(255, 200, 50, 0)`);                   
+
+                ctx.globalCompositeOperation = 'lighter'; 
+                ctx.beginPath();
+                ctx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    if (intensity < 8) continue; 
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            fallenPetals.forEach(petal => {
+                petal.updateFallen(); 
+                petal.draw(ctx);
+            });
+
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].updateFalling(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            const cx = x / window.innerWidth * physicsWidth;
+            const cy = y / window.innerHeight * physicsHeight;
+            // 【調整】初始光暈更大，且一開始就最亮
+            clickLights.push({
+                x: cx,
+                y: cy,
+                radius: 10,   // 初始半徑變大
+                alpha: 1.0    // 初始亮度全開
+            });
+
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
+
+你說了
+
+有幾個細節想要調整：
+
+
+
+
+- 點擊的光暈可以改成同色系嗎？
+
+- 櫻花的顏色可以深一點嗎？先在有點被吃掉了
+
+這兩個細節的調整非常有品味！
+
+同色系的光暈：我將原本偏金黃色的點擊光芒，改成了帶有**「明亮嫩綠色」**的同色系漸層。這樣點擊時，光芒會和黃綠色的抹茶底色完美融合，看起來更自然且具有仙氣。
+
+更深邃的櫻花色：我大幅降低了花瓣顏色中的綠色與藍色數值，並提高不透明度，將原本淡淡的粉色改為**「較深的重瓣櫻花色（緋櫻色）」**。這樣花瓣在黃綠色的紙質背景上會有非常漂亮的對比度，絕對不會再被背景吃掉了！
+
+請試試看這段更新後的完整程式碼：
+
+完整程式碼（同色系光芒 + 緋櫻深色花瓣）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日式同色光影與深色落花</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 日式黃綠色 (抹茶/黃鶸色調) 底色 */
+            background-color: #d4e8a6; 
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,250,0.5) 0%, rgba(255,255,250,0) 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,240,0.3) 0%, rgba(255,255,240,0) 50%),
+                /* 紙張質感的雜點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; 
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        const activePetals = []; 
+        const fallenPetals = []; 
+        const clickLights = [];
+
+        class Petal {
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                this.y = isNew ? -20 : Math.random() * physicsHeight * 0.8; 
+                this.vx = Math.random() * 0.2 - 0.1;
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                // 【調整】：改為更深、更飽和的緋櫻色 (深粉紅)，確保不會被綠色背景吃掉
+                const r = Math.floor(200 + Math.random() * 40); // 偏紅
+                const g = Math.floor(70 + Math.random() * 30);  // 降低綠色
+                const b = Math.floor(100 + Math.random() * 30); // 降低藍色
+                this.color = `rgba(${r}, ${g}, ${b}, 0.95)`;    // 提高不透明度到 0.95
+
+                this.targetY = physicsHeight - Math.random() * 40 - this.size;
+                this.isFallen = false; 
+            }
+
+            updateFalling(index, array) {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; 
+                this.vy += 0.015; 
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    this.isFallen = true;
+                    this.vx = 0; 
+                    this.vy = 0;
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    if (fallenPetals.length > 250) fallenPetals.shift();
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            updateFallen() {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 80) { 
+                    let force = (80 - dist) / 80; 
+                    this.vx += mouseVx * force * 0.06;
+                    this.vy += mouseVy * force * 0.03;
+                }
+
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin * 0.5 + this.vx * 0.1; 
+
+                if (this.y < this.targetY - 30) {
+                     this.y = this.targetY - 30;
+                     this.vy += 0.5; 
+                }
+                if (this.y > physicsHeight + 10) this.y = physicsHeight + 10;
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 18; i++) {
+            activePetals.push(new Petal());
+        }
+
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 繪製動態光暈
+            for (let j = clickLights.length - 1; j >= 0; j--) {
+                let light = clickLights[j];
+                light.radius += 3.5; 
+                light.alpha -= 0.01; 
+
+                if (light.alpha <= 0) {
+                    clickLights.splice(j, 1);
+                    continue;
+                }
+
+                ctx.save();
+                let gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+                
+                // 【調整】：改為同色系 (嫩綠色) 的漸層光芒
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${light.alpha})`);      // 核心依舊是高亮白
+                gradient.addColorStop(0.3, `rgba(200, 240, 160, ${light.alpha * 0.7})`); // 中段改為明亮的嫩綠色
+                gradient.addColorStop(1, `rgba(150, 210, 120, 0)`);                   // 邊緣以綠色透明消失
+
+                ctx.globalCompositeOperation = 'lighter'; 
+                ctx.beginPath();
+                ctx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    if (intensity < 8) continue; 
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            fallenPetals.forEach(petal => {
+                petal.updateFallen(); 
+                petal.draw(ctx);
+            });
+
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].updateFalling(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            const cx = x / window.innerWidth * physicsWidth;
+            const cy = y / window.innerHeight * physicsHeight;
+            clickLights.push({
+                x: cx,
+                y: cy,
+                radius: 10,   
+                alpha: 1.0    
+            });
+
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
+
+
+現在點擊畫面時，綻放的光芒會是柔和的亮綠色，且花瓣的顏色變得更深邃、更有對比度了！看看這樣的色調是不是更符合你心中那種靜謐的日系美感？
+
+你說了
+
+最後一個想要微調的：櫻花的顏色兩個可以再淺一點嗎？兩者顏色有一點差異
+
+這真是畫龍點睛的需求！細微的色彩差異能讓整個畫面更有層次感和生命力。
+
+我已經針對你的需求完成了調整：
+
+整體變淺：我大幅提高了 RGB 的數值，讓花瓣從原本深沉的「緋櫻色」變成了粉嫩、輕盈的「淡櫻色」，在黃綠色的背景上會顯得更柔和雅緻。
+
+新舊差異：我在程式碼中區分了「新生花瓣」（從天飄落）和「舊有花瓣」（初始分佈或已落地）。
+
+新生花瓣：顏色最淺、最粉嫩、稍微不透明一點，彷彿剛從樹上落下。
+
+舊有花瓣：顏色稍微深一點點、帶一點點水氣濕潤的感覺，透明度也稍微高一些，模擬泡在水裡一段時間的樣子。
+
+這細微的差別會讓畫面看起來更豐富真實。請使用這段最終版的程式碼：
+
+完整程式碼（淺色櫻花 + 新舊色彩差異版）
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日式淺櫻光影水波</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 日式黃綠色 (抹茶/黃鶸色調) 底色 */
+            background-color: #d4e8a6; 
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,250,0.5) 0%, rgba(255,255,250,0) 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,240,0.3) 0%, rgba(255,255,240,0) 50%),
+                /* 紙張質感的雜點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; 
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        const activePetals = []; 
+        const fallenPetals = []; 
+        const clickLights = [];
+
+        class Petal {
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                this.y = isNew ? -20 : Math.random() * physicsHeight * 0.8; 
+                this.vx = Math.random() * 0.2 - 0.1;
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                // 【調整重點】：整體變淺，並區分新舊差異
+                let r, g, b, a;
+                if (isNew) {
+                    // 新生花瓣：最淺、最粉嫩、稍微不透明 (看起來較新鮮)
+                    r = Math.floor(245 + Math.random() * 10); 
+                    g = Math.floor(200 + Math.random() * 30); 
+                    b = Math.floor(220 + Math.random() * 30); 
+                    a = 0.92; 
+                } else {
+                    // 初始/落地花瓣：稍微深一點點、帶點濕潤感、稍微透明一點
+                    r = Math.floor(230 + Math.random() * 20); 
+                    g = Math.floor(180 + Math.random() * 30); 
+                    b = Math.floor(200 + Math.random() * 30); 
+                    a = 0.88;
+                }
+                this.color = `rgba(${r}, ${g}, ${b}, ${a})`;
+
+                this.targetY = physicsHeight - Math.random() * 40 - this.size;
+                this.isFallen = false; 
+            }
+
+            updateFalling(index, array) {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; 
+                this.vy += 0.015; 
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    this.isFallen = true;
+                    this.vx = 0; 
+                    this.vy = 0;
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    if (fallenPetals.length > 250) fallenPetals.shift();
+                    // 確保新生成的是帶有「新顏色」的花瓣
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            updateFallen() {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 80) { 
+                    let force = (80 - dist) / 80; 
+                    this.vx += mouseVx * force * 0.06;
+                    this.vy += mouseVy * force * 0.03;
+                }
+
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin * 0.5 + this.vx * 0.1; 
+
+                if (this.y < this.targetY - 30) {
+                     this.y = this.targetY - 30;
+                     this.vy += 0.5; 
+                }
+                if (this.y > physicsHeight + 10) this.y = physicsHeight + 10;
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 初始產生的花瓣 (使用舊顏色)
+        for (let i = 0; i < 18; i++) {
+            activePetals.push(new Petal(false));
+        }
+
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 繪製動態光暈 (同色系嫩綠)
+            for (let j = clickLights.length - 1; j >= 0; j--) {
+                let light = clickLights[j];
+                light.radius += 3.5; 
+                light.alpha -= 0.01; 
+
+                if (light.alpha <= 0) {
+                    clickLights.splice(j, 1);
+                    continue;
+                }
+
+                ctx.save();
+                let gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+                
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${light.alpha})`);      
+                gradient.addColorStop(0.3, `rgba(200, 240, 160, ${light.alpha * 0.7})`); 
+                gradient.addColorStop(1, `rgba(150, 210, 120, 0)`);                   
+
+                ctx.globalCompositeOperation = 'lighter'; 
+                ctx.beginPath();
+                ctx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    if (intensity < 8) continue; 
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            fallenPetals.forEach(petal => {
+                petal.updateFallen(); 
+                petal.draw(ctx);
+            });
+
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].updateFalling(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            const cx = x / window.innerWidth * physicsWidth;
+            const cy = y / window.innerHeight * physicsHeight;
+            clickLights.push({
+                x: cx,
+                y: cy,
+                radius: 10,   
+                alpha: 1.0    
+            });
+
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
+
+Google 隱私權政策
+在新視窗中開啟
+Google 服務條款
+在新視窗中開啟
+個人隱私權與 Gemini 應用程式
+在新視窗中開啟
+
+Gemini 可能會提供不準確的資訊 (包括人物資訊)，因此請查證回覆內容。
+
+登入

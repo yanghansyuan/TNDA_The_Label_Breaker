@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Final Design</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #181a1f; /* 更深的背景色 */
+    cursor: none; /* 隱藏默認鼠標 */
+    user-select: none; /* 禁止文本選擇 */
+}
+
+canvas {
+    display: block;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let W, H; // 窗口寬高
+
+function resize(){
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+}
+window.addEventListener("resize", resize);
+resize();
+
+// --- 參數 ---
+const config = {
+    // 圓 (中心塌陷橢圓)
+    mainCircle: {
+        baseX: W / 2,
+        baseY: H * 0.6, // 重心偏下
+        baseRadius: Math.min(W, H) * 0.15,
+        rotationSpeed: 0.0005, // 緩慢自轉
+        shrinkAmount: 0.0002, // 靠近時收縮速度
+        wobbleAmount: 0.5, // 邊緣抖動幅度
+        wobbleSpeed: 0.05, // 邊緣抖動速度
+        color: 'rgba(60, 70, 85, 0.7)', // 基礎顏色
+        innerColor: 'rgba(40, 50, 65, 0.9)', // 內部顏色
+        darkenOnHeavyClick: 0.05, // 狂點時變暗程度
+        maxDarken: 0.8 // 最大暗度
+    },
+    // 下沉點 (上方稀疏)
+    droplets: {
+        count: 80,
+        baseSpeed: 0.15, // 緩慢滑落
+        speedVariation: 0.1,
+        size: 2.5,
+        color: 'rgba(160, 170, 190, 0.5)',
+        stickinessRadius: 150, // 靠近圓時的黏滯範圍
+        stickinessFactor: 0.05, // 黏滯程度
+        condenseColor: 'rgba(120, 130, 150, 0.7)' // 濕氣凝結時顏色
+    },
+    // 下方濃密灰面 (深潭)
+    deepPool: {
+        heightFactor: 0.4, // 佔畫面高度的比例
+        baseColor: 'rgba(30, 40, 50, 0.9)' // 深潭基礎顏色
+    },
+    // 垂直細線
+    verticalLine: {
+        opacity: 0.05, // 幾乎看不見
+        width: 1
+    },
+    // 殘影 (高黏度)
+    trail: {
+        alphaDecay: 0.01, // 透明度衰減速度
+        maxTrailLength: 150, // 追蹤點的最大數量
+        color: 'rgba(70, 80, 100, 0.3)' // 殘影顏色
+    },
+    // 霧層
+    fog: {
+        gradient: null // 稍後生成
+    },
+    // 重力感 (圓變扁)
+    gravity: {
+        flattenFactor: 0.00005, // 變扁速度
+        maxFlatten: 0.5, // 最大扁平程度
+        driftSpeed: 0.02 // 長時間不動時的漂移速度
+    },
+    // 點擊吸收
+    absorption: {
+        effectRadius: 100, // 吸收範圍
+        maxDepth: 0.4, // 最大內部深度
+        depthIncreaseRate: 0.005 // 深度增加速度
+    }
+};
+
+let mouse = { x: -100, y: -100, radius: 50 }; // 鼠標追蹤，用於抗拒和殘影
+let ripples = []; // 這裡改為吸收點
+let droplets = [];
+let mainCircle = { ...config.mainCircle }; // 實例化主圓
+let currentFlatten = 0; // 當前扁平程度
+let lastInteractionTime = Date.now();
+let heavyClickCount = 0; // 記錄狂點次數
+let mainCircleDarken = 0; // 記錄主圓變暗程度
+
+// --- 類別定義 ---
+
+// 點（用於雨點、吸收點、殘影）
+class Particle {
+    constructor(x, y, size, color, speed, type = 'normal') {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.color = color;
+        this.speed = speed;
+        this.type = type; // 'droplet', 'absorbed', 'trail'
+        this.vx = (Math.random() - 0.5) * this.speed * 2; // 初始隨機水平速度
+        this.vy = this.speed; // 初始垂直速度
+        this.alpha = 1;
+        this.lifespan = 1; // 0-1
+        this.isStuck = false;
+        this.originalColor = color;
+    }
+
+    draw(context) {
+        context.save();
+        context.globalAlpha = this.alpha * (this.type === 'trail' ? 0.5 : 1); // 殘影透明度稍低
+        context.fillStyle = this.color;
+        context.beginPath();
+        context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+
+    update(context, cx, cy, cRadius, cColor) {
+        if (this.type === 'droplet') {
+            // 模擬重力、風力
+            this.vx *= 0.99; // 緩慢減速水平移動
+            this.vy += config.gravity.flattenFactor * 50; // 模擬重力加速度
+
+            // 黏滯行為
+            const distToCenter = Math.hypot(this.x - cx, this.y - cy);
+            if (distToCenter < config.droplets.stickinessRadius && !this.isStuck) {
+                if (distToCenter < cRadius * 0.8) { // 越靠近圓，越容易被吸入
+                    this.isStuck = true;
+                    this.vx = 0;
+                    this.vy = 0;
+                    this.color = config.droplets.condenseColor;
+                    return; // 黏住了，停止更新位置
+                } else {
+                    // 緩慢被吸向圓心
+                    const angle = Math.atan2(cy - this.y, cx - this.x);
+                    this.vx += Math.cos(angle) * config.droplets.stickinessFactor;
+                    this.vy += Math.sin(angle) * config.droplets.stickinessFactor;
+                }
+            }
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // 邊界檢查
+            if (this.y > H + this.size * 2) {
+                this.reset(); // 重設到頂部
+            }
+            if (this.x < -this.size || this.x > W + this.size) {
+                this.x = Math.random() * W; // 隨機出現在邊界
+                this.y = -this.size;
+                this.vx = (Math.random() - 0.5) * this.speed * 2;
+                this.vy = this.speed;
+            }
+        } else if (this.type === 'absorbed') {
+            // 被吸入的點
+            const angle = Math.atan2(cy - this.y, cx - this.x);
+            this.vx = Math.cos(angle) * config.absorption.depthIncreaseRate * 5;
+            this.vy = Math.sin(angle) * config.absorption.depthIncreaseRate * 5;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.size *= 0.98; // 逐漸變小
+            this.alpha *= 0.97; // 逐漸消失
+            if (this.size < 0.5) {
+                this.remove = true;
+            }
+        }
+        this.draw(context);
+    }
+
+    reset() {
+        this.y = -this.size * 2;
+        this.x = Math.random() * W;
+        this.vx = (Math.random() - 0.5) * config.droplets.speedVariation;
+        this.vy = config.droplets.baseSpeed + Math.random() * config.droplets.speedVariation;
+        this.alpha = 1;
+        this.lifespan = 1;
+        this.isStuck = false;
+        this.color = this.originalColor;
+    }
+}
+
+// --- 初始生成 ---
+
+function initializeParticles() {
+    droplets.length = 0;
+    for (let i = 0; i < config.droplets.count; i++) {
+        droplets.push(new Particle(
+            Math.random() * W,
+            Math.random() * H * 0.5, // 初始分佈在上半部
+            config.droplets.size,
+            config.droplets.color,
+            config.droplets.baseSpeed,
+            'droplet'
+        ));
+    }
+}
+initializeParticles();
+
+// --- 鼠標事件 ---
+canvas.addEventListener("mousemove", (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    lastInteractionTime = Date.now(); // 記錄最近一次互動時間
+    heavyClickCount = 0; // 鼠標移動則重置狂點計數
+});
+
+canvas.addEventListener("mouseout", () => {
+    mouse.x = -100; // 移出時移到畫面外
+    mouse.y = -100;
+});
+
+canvas.addEventListener("click", (e) => {
+    lastInteractionTime = Date.now();
+    // 實現吸收效果
+    const clickX = e.clientX;
+    const clickY = e.clientY;
+
+    // 檢查是否點擊在主圓內部（大概區域）
+    const distToMainCircleCenter = Math.hypot(clickX - mainCircle.baseX, clickY - mainCircle.baseY);
+    if (distToMainCircleCenter < mainCircle.baseRadius * 1.5) {
+        heavyClickCount++; // 狂點計數
+        // 產生被吸收的粒子
+        const numAbsorbed = 5 + Math.random() * 5;
+        for (let i = 0; i < numAbsorbed; i++) {
+            ripples.push(new Particle(
+                clickX + (Math.random() - 0.5) * 20, // 點擊處附近
+                clickY + (Math.random() - 0.5) * 20,
+                Math.random() * 4 + 1,
+                'rgba(80, 90, 110, 0.8)', // 吸收點的顏色
+                0,
+                'absorbed'
+            ));
+        }
+    } else {
+        heavyClickCount = 0; // 點擊在外面則重置
+    }
+});
+
+// --- 霧層生成 ---
+function createFogGradient(context) {
+    const gradient = context.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H));
+    gradient.addColorStop(0, "rgba(0,0,0,0.03)"); // 中心極淡
+    gradient.addColorStop(1, "rgba(0,0,0,0.15)"); // 外圍稍濃
+    return gradient;
+}
+
+// --- 繪製主圓 (橢圓) ---
+function drawMainCircle(context, cx, cy, radius, rotation, flatten, wobble, darken) {
+    context.save();
+
+    context.translate(cx, cy);
+    context.rotate(rotation); // 自轉
+
+    const scaleY = 1 / (1 + flatten); // 扁平效果
+    const scaleX = 1 + flatten;
+
+    // 邊緣抖動 (模擬)
+    const wobbleEffect = (angle) => {
+        const wobbleValue = Math.sin(angle * config.mainCircle.wobbleSpeed + Date.now() * 0.001) * config.mainCircle.wobbleAmount;
+        return radius + wobbleValue;
+    };
+
+    // 繪製兩層半透明邊緣
+    const edgeColor = config.mainCircle.color;
+    const innerColor = config.mainCircle.innerColor;
+    const baseStrokeWidth = 2;
+
+    // 模擬清晰度降低和濕布感
+    const edgeBlurRadius = 5;
+    context.shadowColor = 'rgba(0,0,0,0.3)';
+    context.shadowBlur = edgeBlurRadius;
+
+    // 第一層邊緣 (外層模糊)
+    context.strokeStyle = edgeColor.replace('0.7', '0.4'); // 更淡
+    context.lineWidth = baseStrokeWidth + 3;
+    context.beginPath();
+    context.ellipse(0, 0, radius * scaleX, radius * scaleY, 0, 0, Math.PI * 2);
+    context.stroke();
+
+    // 第二層邊緣 (內層較實)
+    context.shadowBlur = edgeBlurRadius / 2;
+    context.strokeStyle = edgeColor.replace('0.7', '0.7'); // 基礎透明度
+    context.lineWidth = baseStrokeWidth;
+    context.beginPath();
+    context.ellipse(0, 0, radius * scaleX, radius * scaleY, 0, 0, Math.PI * 2);
+    context.stroke();
+
+
+    // 內部填充 (深潭)
+    context.fillStyle = innerColor.replace('0.9', (0.9 + darken).toFixed(2).slice(0, 4)); // 根據點擊次數加深
+    context.shadowBlur = 0; // 內部填充不加陰影
+    context.beginPath();
+    context.ellipse(0, 0, radius * 0.95 * scaleX, radius * 0.95 * scaleY, 0, 0, Math.PI * 2);
+    context.fill();
+
+
+    // 模擬內部下沉的面 (簡化)
+    const innerDistortRadius = radius * 0.7;
+    context.fillStyle = 'rgba(20, 30, 40, 0.5)';
+    context.beginPath();
+    for (let i = 0; i < 10; i++) { // 幾條不規則的線
+        const angle = (i / 10) * Math.PI * 2;
+        const currentRadius = innerDistortRadius * (0.8 + Math.random() * 0.4);
+        const x = Math.cos(angle) * currentRadius * scaleX;
+        const y = Math.sin(angle) * currentRadius * scaleY;
+        if (i === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+    }
+    context.closePath();
+    context.fill();
+
+
+    context.restore();
+}
+
+// --- 繪製垂直細線 ---
+function drawVerticalLine(context) {
+    context.save();
+    context.strokeStyle = `rgba(10, 10, 10, ${config.verticalLine.opacity})`;
+    context.lineWidth = config.verticalLine.width;
+    context.beginPath();
+    context.moveTo(W / 2, 0);
+    context.lineTo(W / 2, H);
+    context.stroke();
+    context.restore();
+}
+
+// --- 繪製下方濃密灰面 ---
+function drawDeepPool(context) {
+    const poolHeight = H * config.deepPool.heightFactor;
+    context.fillStyle = config.deepPool.baseColor;
+    context.fillRect(0, H - poolHeight, W, poolHeight);
+}
+
+
+// --- 動畫循環 ---
+let rotation = 0;
+let lastMouseX = mouse.x, lastMouseY = mouse.y;
+let trails = []; // 儲存軌跡點
+
+function animate() {
+    // 1. 緩慢清除畫布，製造殘影拖曳感 (不是完全清除)
+    ctx.fillStyle = `rgba(24, 26, 31, ${1 - config.trail.alphaDecay})`; // 背景色，帶一點透明度
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. 繪製霧層
+    if (!config.fog.gradient) {
+        config.fog.gradient = createFogGradient(ctx);
+    }
+    ctx.fillStyle = config.fog.gradient;
+    ctx.fillRect(0, 0, W, H);
+
+    // 3. 模擬重力感：長時間不動，圓會變扁並緩慢下沉
+    const timeSinceLastInteraction = Date.now() - lastInteractionTime;
+    if (timeSinceLastInteraction > 2000 && currentFlatten < config.gravity.maxFlatten) { // 2秒後開始變扁
+        currentFlatten += config.gravity.flattenFactor;
+        mainCircle.baseY += config.gravity.driftSpeed; // 緩慢下沉
+    } else if (timeSinceLastInteraction <= 2000 && currentFlatten > 0) { // 互動後恢復
+        currentFlatten = Math.max(0, currentFlatten - config.gravity.flattenFactor * 5);
+        mainCircle.baseY = H * 0.6; // 回到初始位置
+    }
+     if (mainCircle.baseY > H * 0.8) mainCircle.baseY = H * 0.8; // 防止下沉過多
+
+
+    // 4. 鼠標追蹤與抗拒
+    const distToMouse = Math.hypot(mouse.x - mainCircle.baseX, mouse.y - mainCircle.baseY);
+    let currentWobble = 0;
+    let currentShrink = 0;
+    let currentRotationSpeed = config.mainCircle.rotationSpeed;
+
+    if (distToMouse < mouse.radius) { // 鼠標在圓的影響範圍內
+        currentShrink = config.mainCircle.shrinkAmount * (1 - distToMouse / mouse.radius);
+        currentWobble = config.mainCircle.wobbleAmount * (1 - distToMouse / mouse.radius);
+        currentRotationSpeed *= 1.5; // 靠近時轉速加快一點點
+
+        // 模擬微微塌陷（通過改變中心點Y軸位置，或擴大y軸縮放）
+        // 這裡我們通過縮放效果來實現
+    } else {
+        currentShrink = 0;
+        currentWobble = 0;
+    }
+
+    // 5. 更新主圓的動態參數
+    rotation += currentRotationSpeed;
+    const effectiveRadius = mainCircle.baseRadius * (1 - currentShrink); // 收縮
+    const effectiveFlatten = currentFlatten + currentShrink * 0.5; // 疊加收縮帶來的扁平感
+
+    // 6. 繪製主圓 (橢圓)
+    drawMainCircle(ctx, mainCircle.baseX, mainCircle.baseY, effectiveRadius, rotation, effectiveFlatten, currentWobble, mainCircleDarken);
+
+    // 7. 繪製下方濃密灰面 (深潭)
+    drawDeepPool(ctx);
+
+    // 8. 繪製垂直細線
+    drawVerticalLine(ctx);
+
+    // 9. 繪製下沉點 (上方稀疏)
+    droplets.forEach(d => {
+        d.update(ctx, mainCircle.baseX, mainCircle.baseY, effectiveRadius, mainCircle.color);
+    });
+
+    // 10. 繪製被吸收的點 (來自點擊)
+    ripples.forEach((r, index) => {
+        r.update(ctx, mainCircle.baseX, mainCircle.baseY, effectiveRadius, mainCircle.color);
+        if (r.remove) {
+            ripples.splice(index, 1);
+        }
+    });
+
+    // 11. 殘影拖曳
+    // 紀錄當前鼠標位置，如果與上次不同，則添加一個軌跡點
+    if (mouse.x !== -100 && (mouse.x !== lastMouseX || mouse.y !== lastMouseY)) {
+        trails.push({ x: mouse.x, y: mouse.y, alpha: 1 });
+        lastMouseX = mouse.x;
+        lastMouseY = mouse.y;
+    }
+
+    // 繪製和更新殘影
+    for (let i = trails.length - 1; i >= 0; i--) {
+        const trail = trails[i];
+        ctx.save();
+        ctx.globalAlpha = trail.alpha;
+        ctx.fillStyle = config.trail.color;
+        ctx.beginPath();
+        ctx.arc(trail.x, trail.y, 5, 0, Math.PI * 2); // 軌跡點的大小
+        ctx.fill();
+        ctx.restore();
+
+        trail.alpha -= config.trail.alphaDecay;
+        if (trail.alpha <= 0) {
+            trails.splice(i, 1);
+        }
+    }
+    // 限制殘影數量
+    if (trails.length > config.trail.maxTrailLength) {
+        trails.shift(); // 移除最舊的
+    }
+
+
+    // 12. 更新主圓變暗程度（基於狂點計數）
+    const targetDarken = Math.min(heavyClickCount * config.mainCircle.darkenOnHeavyClick, config.mainCircle.maxDarken);
+    mainCircleDarken = mainCircleDarken * 0.9 + targetDarken * 0.1; // 平滑過渡
+
+    requestAnimationFrame(animate);
+}
+
+// 窗口縮放事件處理
+window.addEventListener("resize", () => {
+    resize(); // 更新 W, H
+    // 重新計算主圓的基礎位置和大小
+    mainCircle.baseX = W / 2;
+    mainCircle.baseY = H * 0.6;
+    mainCircle.baseRadius = Math.min(W, H) * 0.15;
+    // 重新生成下沉點，確保分佈在新尺寸下
+    initializeParticles();
+    // 重新創建霧層漸變
+    config.fog.gradient = null;
+});
+
+
+// 啟動動畫
+animate();
+
+</script>
+
+</body>
+</html>
+--- START OF FILE final_yourEmail@example.com.html ---
+--- END OF FILE final_yourEmail@example.com.html ---
+
+---

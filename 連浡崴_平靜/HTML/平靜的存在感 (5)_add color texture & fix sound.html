@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synesthetic Space | 感官共鳴</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #f0f0f0;
+            --glass-bg: rgba(20, 20, 20, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #a8dadc;
+            --danger: #ff6b6b;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* 3D Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            /* 讓背景有些微漸層，增加空間深度 */
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        }
+
+        /* 啟動遮罩 */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 1.5s ease;
+        }
+
+        .overlay-title {
+            font-size: 2rem;
+            font-weight: 100;
+            letter-spacing: 0.5em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #fff, #666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .overlay-sub {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            letter-spacing: 0.2em;
+            animation: pulse 2s infinite;
+        }
+
+        /* UI 控制面板 */
+        #ui-layer {
+            position: fixed;
+            bottom: 60px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease 0.5s;
+            pointer-events: none;
+        }
+
+        #ui-layer.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .control-bar {
+            pointer-events: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .mode-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+        }
+
+        .mode-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .mode-btn.active {
+            color: #000;
+            background: #fff;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        /* 靜音按鈕特殊樣式 */
+        .mode-btn[data-type="off"]:hover {
+            color: var(--danger);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+        .mode-btn[data-type="off"].active {
+            color: var(--danger);
+            background: rgba(40, 0, 0, 0.5);
+            border: 1px solid var(--danger);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+        }
+
+        /* 音量條 */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 1px solid rgba(255,255,255,0.1);
+            padding-left: 20px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 80px;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <div class="overlay-title">IMMERSION</div>
+        <div class="overlay-sub">CLICK TO ENTER</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="control-bar">
+            <div class="mode-group">
+                <button class="mode-btn active" data-type="focus">Focus</button>
+                <button class="mode-btn" data-type="rain">Rain</button>
+                <button class="mode-btn" data-type="deep">Deep</button>
+                <button class="mode-btn" data-type="off">Mute</button>
+            </div>
+            
+            <div class="volume-control">
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        /**
+         * PART 1: AUDIO ENGINE (Soundscapes)
+         * 包含間歇式雨聲邏輯與 LFO 調變
+         */
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.activeSource = null;
+                this.lfoNodes = []; // 儲存 LFO 相關節點以便清除
+                this.analyser = null;
+                this.volume = 0.5;
+                this.isMuted = false;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0;
+                this.masterGain.connect(this.ctx.destination);
+
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.analyser.smoothingTimeConstant = 0.8;
+                this.analyser.connect(this.masterGain);
+            }
+
+            // 基礎噪音生成 (White/Pink/Brown)
+            createNoiseBuffer() {
+                const bufferSize = 2 * this.ctx.sampleRate;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                let lastOut = 0;
+                // 使用混合算法，先生成基礎 Buffer，播放時再濾波
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    // 這裡只生成白噪音，特殊的顏色變化靠 Filter 處理
+                    data[i] = white;
+                }
+                return buffer;
+            }
+
+            stopCurrent() {
+                if (this.activeSource) {
+                    try { this.activeSource.stop(); } catch(e){}
+                    this.activeSource = null;
+                }
+                // 清除舊的 LFO 連接
+                this.lfoNodes.forEach(node => {
+                    try { node.stop(); node.disconnect(); } catch(e){}
+                });
+                this.lfoNodes = [];
+            }
+
+            play(type) {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                if (type === 'off') {
+                    this.mute();
+                    return;
+                }
+                
+                this.isMuted = false;
+                this.stopCurrent();
+
+                const buffer = this.createNoiseBuffer();
+                this.activeSource = this.ctx.createBufferSource();
+                this.activeSource.buffer = buffer;
+                this.activeSource.loop = true;
+
+                // --- 聲音塑形核心 ---
+                const filter = this.ctx.createBiquadFilter();
+                
+                // 1. FOCUS (White Noise 變體)
+                if (type === 'focus') {
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1200; // 稍微削減刺耳高頻
+                    this.activeSource.connect(filter);
+                } 
+                
+                // 2. RAIN (間歇式雨聲 - 核心修改)
+                else if (type === 'rain') {
+                    // 使用 Pink Noise 的濾波係數模擬
+                    // 但因為 Web Audio 原生沒有 Pink Noise，我們用白噪音 + 強力 LowShelf/LowPass 模擬
+                    const pinkFilter = this.ctx.createBiquadFilter();
+                    pinkFilter.type = 'lowshelf';
+                    pinkFilter.frequency.value = 400;
+                    pinkFilter.gain.value = -10;
+
+                    // 動態濾波器 (模擬風雨強弱)
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 600; // 基礎頻率
+
+                    // LFO (低頻振盪器) - 這是製造「間歇感」的關鍵
+                    const lfo = this.ctx.createOscillator();
+                    lfo.type = 'sine';
+                    lfo.frequency.value = 0.15; // 非常慢的頻率 (約 6.6 秒一個循環)
+                    
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.value = 400; // 頻率變化幅度 (+/- 400Hz)
+
+                    // 連接：LFO -> LFO Gain -> Filter Frequency
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    lfo.start();
+                    
+                    this.lfoNodes.push(lfo, lfoGain);
+
+                    // 串接路徑
+                    this.activeSource.connect(pinkFilter);
+                    pinkFilter.connect(filter);
+                } 
+                
+                // 3. DEEP (Brown Noise 變體)
+                else if (type === 'deep') {
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 250; // 極低頻，像深海或雷鳴
+                    this.activeSource.connect(filter);
+                }
+
+                // 統一輸出
+                filter.connect(this.analyser);
+                this.activeSource.start();
+
+                // 淡入
+                const now = this.ctx.currentTime;
+                this.masterGain.gain.cancelScheduledValues(now);
+                this.masterGain.gain.setValueAtTime(0, now);
+                this.masterGain.gain.linearRampToValueAtTime(this.volume, now + 2);
+            }
+
+            mute() {
+                if (!this.masterGain) return;
+                this.isMuted = true;
+                const now = this.ctx.currentTime;
+                // 優雅淡出
+                this.masterGain.gain.cancelScheduledValues(now);
+                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+                this.masterGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+                
+                setTimeout(() => {
+                    if (this.isMuted) this.stopCurrent();
+                }, 1600);
+            }
+
+            setVolume(val) {
+                this.volume = val;
+                if (!this.isMuted && this.masterGain) {
+                    this.masterGain.gain.setTargetAtTime(val, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            getEnergy() {
+                if (!this.analyser || this.isMuted) return 0;
+                const arr = new Uint8Array(this.analyser.frequencyBinCount);
+                this.analyser.getByteFrequencyData(arr);
+                let sum = 0;
+                for(let i=0; i<arr.length; i++) sum += arr[i];
+                return (sum / arr.length) / 255;
+            }
+        }
+
+        /**
+         * PART 2: VISUAL SYSTEM (Materials & Interaction)
+         */
+        class VisualSystem {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.materials = {};
+                this.mouseX = 0;
+                this.mouseY = 0;
+            }
+
+            init() {
+                // Scene
+                this.scene = new THREE.Scene();
+                // 使用更深的霧氣，配合深色背景
+                this.scene.fog = new THREE.FogExp2(0x0a0a0a, 0.025);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+                this.camera.position.set(0, 0, 10);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.outputEncoding = THREE.sRGBEncoding; // 更好的色彩處理
+                this.container.appendChild(this.renderer.domElement);
+
+                // --- 預先定義材質 (Material Presets) ---
+                this.initMaterials();
+
+                // Object (Core Sphere)
+                const geo = new THREE.IcosahedronGeometry(1.6, 2); // 降低細分，強調 Low Poly 鑽石感
+                this.sphere = new THREE.Mesh(geo, this.materials['focus']); // 預設 Focus 材質
+                this.sphere.castShadow = true;
+                this.sphere.receiveShadow = true;
+                this.scene.add(this.sphere);
+
+                // Floor
+                const planeGeo = new THREE.PlaneGeometry(100, 100);
+                const planeMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.8, metalness: 0.1 });
+                this.plane = new THREE.Mesh(planeGeo, planeMat);
+                this.plane.rotation.x = -Math.PI / 2;
+                this.plane.position.y = -3;
+                this.plane.receiveShadow = true;
+                this.scene.add(this.plane);
+
+                // Lights
+                this.ambientLight = new THREE.AmbientLight(0x222222);
+                this.scene.add(this.ambientLight);
+
+                this.mainLight = new THREE.PointLight(0xffffff, 1, 20);
+                this.mainLight.position.set(3, 5, 3);
+                this.mainLight.castShadow = true;
+                this.scene.add(this.mainLight);
+
+                this.subLight = new THREE.PointLight(0x4455ff, 0.8, 20);
+                this.subLight.position.set(-3, 0, 5);
+                this.scene.add(this.subLight);
+
+                // Events
+                window.addEventListener('resize', this.onResize.bind(this));
+                document.addEventListener('mousemove', this.onMouseMove.bind(this));
+            }
+
+            initMaterials() {
+                // 1. FOCUS: 液態銀 (Sharp, Metallic)
+                this.materials.focus = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    roughness: 0.15,
+                    metalness: 0.9,
+                    flatShading: true,
+                    emissive: 0x111111
+                });
+
+                // 2. RAIN: 深海冰晶 (Soft, Teal, Glossy)
+                this.materials.rain = new THREE.MeshStandardMaterial({
+                    color: 0x2ec4b6, // Teal
+                    roughness: 0.3,
+                    metalness: 0.2,
+                    flatShading: true,
+                    emissive: 0x002222
+                });
+
+                // 3. DEEP: 火山岩 (Dark, Matte, Rough)
+                this.materials.deep = new THREE.MeshStandardMaterial({
+                    color: 0x1a1a1a,
+                    roughness: 0.9, // 極粗糙
+                    metalness: 0.1,
+                    flatShading: true,
+                    emissive: 0x000000
+                });
+
+                // 4. MUTE: 虛空網格 (Wireframe)
+                this.materials.mute = new THREE.MeshBasicMaterial({
+                    color: 0x444444,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.3
+                });
+            }
+
+            setMode(mode) {
+                let mat;
+                if (mode === 'off') mat = this.materials.mute;
+                else mat = this.materials[mode] || this.materials.focus;
+
+                // 為了避免記憶體重新分配，我們直接指派
+                this.sphere.material = mat;
+
+                // 隨著模式改變燈光氛圍
+                if (mode === 'focus') {
+                    this.mainLight.color.setHex(0xffffff); // 白光
+                    this.subLight.color.setHex(0xa8dadc);
+                } else if (mode === 'rain') {
+                    this.mainLight.color.setHex(0xade8f4); // 淺藍光
+                    this.subLight.color.setHex(0x0077b6);  // 深藍光
+                } else if (mode === 'deep') {
+                    this.mainLight.color.setHex(0xffb703); // 暖黃昏暗光
+                    this.subLight.color.setHex(0x330000);  // 暗紅
+                } else {
+                    this.mainLight.color.setHex(0x333333); // 暗淡
+                    this.subLight.color.setHex(0x333333);
+                }
+            }
+
+            onMouseMove(e) {
+                // 正規化座標 -1 ~ 1
+                this.mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                this.mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            render(energy) {
+                const time = performance.now() * 0.001;
+
+                // 1. Camera Orbiting (滑鼠互動)
+                const targetX = Math.sin(this.mouseX * 0.6) * 12;
+                const targetZ = Math.cos(this.mouseX * 0.6) * 12;
+                const targetY = this.mouseY * 4;
+
+                this.camera.position.x += (targetX - this.camera.position.x) * 0.03;
+                this.camera.position.z += (targetZ - this.camera.position.z) * 0.03;
+                this.camera.position.y += (targetY - this.camera.position.y) * 0.03;
+                this.camera.lookAt(0, 0, 0);
+
+                // 2. Sphere Animation
+                // 呼吸效果
+                const scale = 1 + energy * 0.3;
+                this.sphere.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.1);
+
+                // 旋轉
+                this.sphere.rotation.y += 0.003;
+                this.sphere.rotation.x = Math.sin(time * 0.2) * 0.2;
+
+                // 聲音連動發光 (僅在非 Mute 模式下明顯)
+                if (this.sphere.material.emissive) {
+                    const baseEmit = 0.1;
+                    const dynamicEmit = energy * 0.8;
+                    this.sphere.material.emissiveIntensity = baseEmit + dynamicEmit;
+                }
+
+                // 3. Lights Movement
+                this.mainLight.position.x = Math.sin(time * 0.5) * 5;
+                this.mainLight.position.z = Math.cos(time * 0.5) * 5;
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        /**
+         * Main App Logic
+         */
+        const app = {
+            audio: new AudioEngine(),
+            visual: new VisualSystem(),
+            
+            init() {
+                this.visual.init();
+                this.bindUI();
+                this.animate();
+            },
+
+            bindUI() {
+                const overlay = document.getElementById('overlay');
+                const uiLayer = document.getElementById('ui-layer');
+                const btns = document.querySelectorAll('.mode-btn');
+                const volumeSlider = document.getElementById('volume');
+
+                overlay.addEventListener('click', () => {
+                    this.audio.play('focus'); // 預設開始
+                    overlay.style.opacity = 0;
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        uiLayer.classList.add('visible');
+                    }, 1000);
+                });
+
+                btns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        btns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+
+                        const type = e.target.dataset.type;
+                        
+                        // 同步觸發聲音與材質切換
+                        this.audio.play(type);
+                        this.visual.setMode(type);
+                    });
+                });
+
+                volumeSlider.addEventListener('input', (e) => {
+                    this.audio.setVolume(parseFloat(e.target.value));
+                });
+            },
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                const energy = this.audio.getEnergy();
+                this.visual.render(energy);
+            }
+        };
+
+        app.init();
+
+    </script>
+</body>
+</html>

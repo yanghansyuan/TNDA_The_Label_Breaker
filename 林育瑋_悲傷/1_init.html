@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>悲傷 — Sadness</title>
+  <meta name="description" content="以基本幾何形狀表達悲傷情緒的互動式網頁">
+  <style>
+    /* ========================================
+       1. RESET & BASE
+    ======================================== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      cursor: default;
+      font-family: sans-serif;
+    }
+
+    /* ========================================
+       2. BACKGROUND — 低彩度冷色漸層
+    ======================================== */
+    body {
+      background: linear-gradient(
+        180deg,
+        hsl(210, 15%, 18%) 0%,
+        hsl(215, 20%, 14%) 40%,
+        hsl(220, 22%, 10%) 100%
+      );
+    }
+
+    /* ========================================
+       3. CANVAS — 主畫布（雨 + 漣漪 + 幾何）
+    ======================================== */
+    #mainCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* ========================================
+       4. NOISE OVERLAY — 雜訊紋理
+    ======================================== */
+    .noise-overlay {
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.06;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+      animation: noiseShift 0.5s steps(3) infinite;
+    }
+
+    @keyframes noiseShift {
+      0%   { transform: translate(0, 0); }
+      33%  { transform: translate(-10px, -15px); }
+      66%  { transform: translate(5px, 10px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* ========================================
+       5. VIGNETTE — 暗角
+    ======================================== */
+    .vignette {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 40%,
+        rgba(5, 10, 20, 0.55) 80%,
+        rgba(2, 5, 12, 0.85) 100%
+      );
+    }
+
+    /* ========================================
+       6. FOG LAYERS — 霧 / 朦朧感
+    ======================================== */
+    .fog {
+      position: fixed;
+      top: 0;
+      left: -20%;
+      width: 140%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      animation: fogDrift linear infinite;
+    }
+
+    .fog-1 {
+      background: radial-gradient(
+        ellipse at 30% 60%,
+        rgba(160, 180, 200, 0.08) 0%,
+        transparent 70%
+      );
+      animation-duration: 25s;
+      animation-delay: 0s;
+      opacity: 0.7;
+    }
+
+    .fog-2 {
+      background: radial-gradient(
+        ellipse at 70% 40%,
+        rgba(140, 165, 195, 0.06) 0%,
+        transparent 60%
+      );
+      animation-duration: 35s;
+      animation-delay: -10s;
+      opacity: 0.5;
+    }
+
+    .fog-3 {
+      background: radial-gradient(
+        ellipse at 50% 80%,
+        rgba(130, 155, 185, 0.05) 0%,
+        transparent 55%
+      );
+      animation-duration: 45s;
+      animation-delay: -20s;
+      opacity: 0.6;
+    }
+
+    @keyframes fogDrift {
+      0%   { transform: translateX(0); }
+      50%  { transform: translateX(15%); }
+      100% { transform: translateX(0); }
+    }
+
+    /* ========================================
+       7. HINT TEXT — 提示文字
+    ======================================== */
+    .hint {
+      position: fixed;
+      bottom: 6vh;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      color: rgba(160, 180, 200, 0.25);
+      font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+      letter-spacing: 0.3em;
+      text-align: center;
+      pointer-events: none;
+      animation: hintFade 6s ease-in-out infinite;
+      user-select: none;
+    }
+
+    @keyframes hintFade {
+      0%, 100% { opacity: 0.25; }
+      50%      { opacity: 0.6; }
+    }
+
+    /* ========================================
+       8. RESPONSIVE FINE-TUNING
+    ======================================== */
+    @media (max-width: 600px) {
+      .hint {
+        font-size: 0.65rem;
+        bottom: 4vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 主畫布 -->
+  <canvas id="mainCanvas"></canvas>
+
+  <!-- 雜訊紋理 -->
+  <div class="noise-overlay"></div>
+
+  <!-- 暗角 -->
+  <div class="vignette"></div>
+
+  <!-- 霧氣層 -->
+  <div class="fog fog-1"></div>
+  <div class="fog fog-2"></div>
+  <div class="fog fog-3"></div>
+
+  <!-- 提示文字 -->
+  <div class="hint">點擊任意處 — 感受漣漪</div>
+
+  <script>
+    /* =====================================================================
+       悲傷 — Interactive Sadness Canvas
+       使用基本幾何形狀（點、線、面、圓、三角）表達情緒
+       ===================================================================== */
+
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ─── State ──────────────────────────────────────────────
+    let W, H;
+    const raindrops = [];
+    const ripples = [];
+    const floatingShapes = [];
+    const splashes = [];
+    let mouseX = -1000, mouseY = -1000;
+    let time = 0;
+
+    // ─── Resize ─────────────────────────────────────────────
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      initRain();
+      initFloatingShapes();
+    }
+    window.addEventListener('resize', resize);
+
+    // ─── Utility ────────────────────────────────────────────
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    /* =====================================================================
+       RAIN — 下雨特效（線段幾何）
+       ===================================================================== */
+    const RAIN_COUNT_BASE = 180;
+
+    function getRainCount() {
+      // 根據畫面大小自適應雨滴數量
+      return Math.floor(RAIN_COUNT_BASE * (W * H) / (1920 * 1080));
+    }
+
+    function createRaindrop() {
+      const speed = rand(4, 12);
+      return {
+        x: rand(-100, W + 100),
+        y: rand(-H, 0),
+        length: rand(15, 35),
+        speed: speed,
+        thickness: speed > 8 ? rand(1.2, 2) : rand(0.5, 1.2),
+        opacity: speed > 8 ? rand(0.15, 0.35) : rand(0.05, 0.18),
+        drift: rand(-0.3, 0.3),   // 微風飄移
+      };
+    }
+
+    function initRain() {
+      raindrops.length = 0;
+      const count = getRainCount();
+      for (let i = 0; i < count; i++) {
+        const drop = createRaindrop();
+        drop.y = rand(-H, H); // 初始散佈全畫面
+        raindrops.push(drop);
+      }
+    }
+
+    function updateRain() {
+      for (let i = 0; i < raindrops.length; i++) {
+        const d = raindrops[i];
+        d.y += d.speed;
+        d.x += d.drift;
+
+        if (d.y > H + 50) {
+          // 到達底部時產生小水花
+          if (d.speed > 7 && Math.random() < 0.3) {
+            createSplash(d.x, H - rand(0, 30));
+          }
+          Object.assign(d, createRaindrop());
+          d.y = rand(-100, -20);
+        }
+      }
+    }
+
+    function drawRain() {
+      for (const d of raindrops) {
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x + d.drift * 2, d.y + d.length);
+        ctx.strokeStyle = `rgba(170, 195, 220, ${d.opacity})`;
+        ctx.lineWidth = d.thickness;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+    }
+
+    /* =====================================================================
+       SPLASH — 雨滴濺起小水花（點＋短線）
+       ===================================================================== */
+    function createSplash(x, y) {
+      const count = Math.floor(rand(2, 5));
+      for (let i = 0; i < count; i++) {
+        splashes.push({
+          x: x,
+          y: y,
+          vx: rand(-1.5, 1.5),
+          vy: rand(-2.5, -0.5),
+          life: 1.0,
+          decay: rand(0.02, 0.05),
+          size: rand(1, 2.5),
+        });
+      }
+    }
+
+    function updateSplashes() {
+      for (let i = splashes.length - 1; i >= 0; i--) {
+        const s = splashes[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.08; // 重力
+        s.life -= s.decay;
+        if (s.life <= 0) splashes.splice(i, 1);
+      }
+    }
+
+    function drawSplashes() {
+      for (const s of splashes) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(180, 200, 220, ${s.life * 0.4})`;
+        ctx.fill();
+      }
+    }
+
+    /* =====================================================================
+       RIPPLE — 滑鼠點擊漣漪效果（同心圓幾何）
+       ===================================================================== */
+    function createRipple(x, y) {
+      const ringCount = Math.floor(rand(3, 6));
+      for (let i = 0; i < ringCount; i++) {
+        ripples.push({
+          x: x,
+          y: y,
+          radius: 2 + i * 3,
+          maxRadius: rand(80, 200) + i * 40,
+          speed: rand(1.2, 2.5),
+          life: 1.0,
+          decay: rand(0.005, 0.012),
+          lineWidth: rand(0.8, 2),
+        });
+      }
+    }
+
+    canvas.addEventListener('click', (e) => {
+      createRipple(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      createRipple(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    canvas.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function updateRipples() {
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.radius += r.speed;
+        r.life -= r.decay;
+        if (r.life <= 0 || r.radius >= r.maxRadius) {
+          ripples.splice(i, 1);
+        }
+      }
+    }
+
+    function drawRipples() {
+      for (const r of ripples) {
+        const alpha = r.life * 0.35;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(160, 190, 220, ${alpha})`;
+        ctx.lineWidth = r.lineWidth * r.life;
+        ctx.stroke();
+      }
+    }
+
+    /* =====================================================================
+       FLOATING SHAPES — 漂浮幾何形狀（三角、圓、點、小線段）
+       呈現孤單、漂泊的感覺
+       ===================================================================== */
+    const SHAPE_TYPES = ['triangle', 'circle', 'dot', 'line'];
+
+    function createFloatingShape() {
+      const type = SHAPE_TYPES[Math.floor(rand(0, SHAPE_TYPES.length))];
+      return {
+        type: type,
+        x: rand(0, W),
+        y: rand(0, H),
+        size: rand(3, type === 'dot' ? 5 : 18),
+        rotation: rand(0, Math.PI * 2),
+        rotSpeed: rand(-0.003, 0.003),
+        vx: rand(-0.15, 0.15),
+        vy: rand(-0.1, 0.25),          // 緩慢下沉感
+        opacity: rand(0.03, 0.12),
+        baseOpacity: 0,
+        phase: rand(0, Math.PI * 2),    // 呼吸閃爍
+      };
+    }
+
+    function initFloatingShapes() {
+      floatingShapes.length = 0;
+      const count = Math.floor(rand(12, 22) * (W * H) / (1920 * 1080));
+      for (let i = 0; i < count; i++) {
+        floatingShapes.push(createFloatingShape());
+      }
+    }
+
+    function updateFloatingShapes() {
+      for (const s of floatingShapes) {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.rotation += s.rotSpeed;
+        s.baseOpacity = s.opacity * (0.6 + 0.4 * Math.sin(time * 0.3 + s.phase));
+
+        // 滑鼠靠近時微微閃避（互動感）
+        const dx = s.x - mouseX;
+        const dy = s.y - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          const force = (120 - dist) / 120 * 0.15;
+          s.x += dx / dist * force;
+          s.y += dy / dist * force;
+        }
+
+        // 邊界重生
+        if (s.y > H + 30) { s.y = -30; s.x = rand(0, W); }
+        if (s.y < -30)    { s.y = H + 30; s.x = rand(0, W); }
+        if (s.x > W + 30) { s.x = -30; }
+        if (s.x < -30)    { s.x = W + 30; }
+      }
+    }
+
+    function drawFloatingShapes() {
+      for (const s of floatingShapes) {
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.rotation);
+        ctx.globalAlpha = s.baseOpacity;
+
+        const color = 'rgba(160, 185, 210, 1)';
+
+        switch (s.type) {
+          case 'triangle':
+            ctx.beginPath();
+            ctx.moveTo(0, -s.size);
+            ctx.lineTo(-s.size * 0.866, s.size * 0.5);
+            ctx.lineTo(s.size * 0.866, s.size * 0.5);
+            ctx.closePath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+            break;
+
+          case 'circle':
+            ctx.beginPath();
+            ctx.arc(0, 0, s.size, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+            break;
+
+          case 'dot':
+            ctx.beginPath();
+            ctx.arc(0, 0, s.size, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            break;
+
+          case 'line':
+            ctx.beginPath();
+            ctx.moveTo(-s.size, 0);
+            ctx.lineTo(s.size, 0);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+            break;
+        }
+
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+    }
+
+    /* =====================================================================
+       GROUND PUDDLE REFLECTIONS — 地面水窪反光（面幾何）
+       ===================================================================== */
+    function drawGroundPuddles() {
+      const puddleY = H - H * 0.08;
+      // 漸層橫向光帶 - 模擬地面反光
+      const grd = ctx.createLinearGradient(0, puddleY, 0, H);
+      grd.addColorStop(0, 'rgba(140, 165, 195, 0.0)');
+      grd.addColorStop(0.3, 'rgba(140, 165, 195, 0.015)');
+      grd.addColorStop(1, 'rgba(130, 155, 185, 0.03)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, puddleY, W, H - puddleY);
+
+      // 幾個小橢圓水窪
+      const puddleCount = Math.floor(W / 300);
+      for (let i = 0; i < puddleCount; i++) {
+        const px = W * (i + 0.5) / puddleCount + Math.sin(time * 0.1 + i) * 20;
+        const py = H - rand(10, 40);
+        const pw = rand(60, 140);
+        const ph = rand(3, 8);
+        const shimmer = 0.015 + 0.01 * Math.sin(time * 0.5 + i * 2);
+
+        ctx.beginPath();
+        ctx.ellipse(px, py, pw, ph, 0, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(160, 190, 220, ${shimmer})`;
+        ctx.fill();
+      }
+    }
+
+    /* =====================================================================
+       SOFT LIGHT SOURCE — 柔弱光源（圓形漸層）
+       ===================================================================== */
+    function drawSoftLight() {
+      // 畫面左上方微弱光源
+      const grd = ctx.createRadialGradient(
+        W * 0.25, H * 0.15, 0,
+        W * 0.25, H * 0.15, Math.max(W, H) * 0.5
+      );
+      grd.addColorStop(0, 'rgba(180, 200, 225, 0.04)');
+      grd.addColorStop(0.4, 'rgba(160, 185, 210, 0.015)');
+      grd.addColorStop(1, 'rgba(140, 160, 190, 0.0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    /* =====================================================================
+       ANIMATION LOOP
+       ===================================================================== */
+    function animate() {
+      time += 0.016; // ~60fps time step
+
+      // 清除畫面
+      ctx.clearRect(0, 0, W, H);
+
+      // 柔弱光源
+      drawSoftLight();
+
+      // 地面水窪
+      drawGroundPuddles();
+
+      // 漂浮幾何形狀
+      updateFloatingShapes();
+      drawFloatingShapes();
+
+      // 雨
+      updateRain();
+      drawRain();
+
+      // 水花
+      updateSplashes();
+      drawSplashes();
+
+      // 漣漪
+      updateRipples();
+      drawRipples();
+
+      requestAnimationFrame(animate);
+    }
+
+    // ─── Initialize ─────────────────────────────────────────
+    resize();
+    animate();
+  </script>
+</body>
+</html>

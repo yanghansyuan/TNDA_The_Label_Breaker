@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮漣漪實驗 v2</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: white;
+    }
+
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      background: radial-gradient(circle at 30% 20%, #222 0, #050505 60%, #000 100%);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform, opacity; /* 提示瀏覽器優化這兩個屬性 */
+      transform: scale(0.2);
+      opacity: 1;
+      /* 基本動畫，實際時間會用 JS 動態覆蓋 animation-duration / animation-delay */
+      animation-name: ripple-excited;
+      animation-timing-function: cubic-bezier(0.22, 0.9, 0.25, 1);
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes ripple-excited {
+      0% {
+        transform: translate(0, 0) scale(0.2);
+        filter: saturate(1.6) brightness(1.4);
+        opacity: 1;
+      }
+      25% {
+        /* 最興奮、抖得最厲害 */
+        transform: translate(var(--shake-x), var(--shake-y)) scale(0.9);
+        filter: saturate(2.1) brightness(1.5);
+        opacity: 0.95;
+      }
+      55% {
+        /* 開始往外散開、平靜一點 */
+        transform: translate(var(--spread-x), var(--spread-y)) scale(1.4);
+        filter: saturate(1) brightness(1.0);
+        opacity: 0.6;
+      }
+      100% {
+        /* 已經接近平靜，顏色去飽和、幾乎消失 */
+        transform: translate(var(--spread-x-final), var(--spread-y-final)) scale(2.1);
+        filter: saturate(0.35) brightness(0.8);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="hint">
+      <div>點擊畫布</div>
+      <div>一團興奮會先爆開、抖一下，然後像水波亂亂的散開後慢慢平靜</div>
+    </div>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+
+    const colors = [
+      "#FF1744", // 螢光紅
+      "#FFEA00", // 亮黃
+      "#00E5FF", // 電光藍
+      "#E040FB", // 螢光紫
+      "#76FF03"  // 螢光萊姆綠
+    ];
+
+    let colorIndex = 0;
+
+    stage.addEventListener("click", function (event) {
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      // 這裡把數量控制在合理範圍，減少卡頓
+      const waves = 3 + Math.floor(Math.random() * 2);        // 3~4 層
+      const circlesPerWave = 6 + Math.floor(Math.random() * 4); // 每層 6~9 顆
+
+      for (let w = 0; w < waves; w++) {
+        const baseDelay = w * 90; // 外圈稍微晚一點出現
+
+        for (let i = 0; i < circlesPerWave; i++) {
+          const angle = (Math.PI * 2 * i) / circlesPerWave;
+          const extraDelay = Math.random() * 80; // 每顆再加一些亂數延遲
+          createCircle(x, y, angle, w, baseDelay + extraDelay);
+        }
+      }
+    });
+
+    function createCircle(cx, cy, angle, waveIndex, delayMs) {
+      const circle = document.createElement("div");
+      circle.classList.add("circle");
+
+      // 動畫長度加一點亂數，避免全部一起停
+      const duration = 900 + Math.random() * 500; // 0.9s ~ 1.4s
+      circle.style.animationDuration = duration + "ms";
+      circle.style.animationDelay = delayMs + "ms";
+
+      // 大小：每一圈越外面越大，再加一點亂數
+      const baseSize = 18 + waveIndex * 12;
+      const size = baseSize + Math.random() * 18;
+      circle.style.width = size + "px";
+      circle.style.height = size + "px";
+
+      // 顏色輪流
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      circle.style.backgroundColor = baseColor;
+
+      // 抖動向量（興奮）
+      const shakeRadius = 10 + Math.random() * 10; // 10~20px 抖動
+      const shakeAngle = angle + (Math.random() - 0.5) * 0.9;
+      const shakeX = Math.cos(shakeAngle) * shakeRadius;
+      const shakeY = Math.sin(shakeAngle) * shakeRadius;
+
+      // 中後段水波散開的距離（較遠、也有亂數）
+      const spreadBase = 80 + waveIndex * 35;
+      const spreadRadius = spreadBase + Math.random() * 40;
+      const spreadAngle = angle + (Math.random() - 0.5) * 0.6;
+      const spreadX = Math.cos(spreadAngle) * spreadRadius;
+      const spreadY = Math.sin(spreadAngle) * spreadRadius;
+
+      // 最後再更遠一點點，讓波紋有「延伸感」
+      const spreadFinalRadius = spreadRadius + 25 + Math.random() * 30;
+      const spreadFinalX = Math.cos(spreadAngle) * spreadFinalRadius;
+      const spreadFinalY = Math.sin(spreadAngle) * spreadFinalRadius;
+
+      // 用 CSS 變數傳給 keyframes 裡的 translate
+      circle.style.setProperty("--shake-x", `${shakeX}px`);
+      circle.style.setProperty("--shake-y", `${shakeY}px`);
+      circle.style.setProperty("--spread-x", `${spreadX}px`);
+      circle.style.setProperty("--spread-y", `${spreadY}px`);
+      circle.style.setProperty("--spread-x-final", `${spreadFinalX}px`);
+      circle.style.setProperty("--spread-y-final", `${spreadFinalY}px`);
+
+      // 初始位置：在中心點附近一點點亂數偏移
+      const startOffset = 4 + Math.random() * 8;
+      const startAngle = angle + (Math.random() - 0.5) * 0.8;
+      const startX = Math.cos(startAngle) * startOffset;
+      const startY = Math.sin(startAngle) * startOffset;
+
+      circle.style.left = cx + startX - size / 2 + "px";
+      circle.style.top = cy + startY - size / 2 + "px";
+
+      stage.appendChild(circle);
+
+      circle.addEventListener("animationend", () => {
+        circle.remove();
+      });
+    }
+  </script>
+</body>
+</html>

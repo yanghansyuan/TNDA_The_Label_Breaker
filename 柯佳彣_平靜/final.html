@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>夢幻水面雨滴特效</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* 隱藏捲軸 */
+      background-color: #1e1c48; /* 預設背景色 */
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+// 在這裡貼入你提供的那段程式碼
+let ripples = [];
+let splashes = [];
+let drops = [];
+let autoDropTimer = 0;
+let noiseOffset = 0;
+let isDragging = false;
+let dragTimer = 0;
+
+let angle = 0;
+let timeScale = 1;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function updateTimeScale() {
+  angle += 0.015;
+  let raw = sin(angle);
+  if (raw < -0.7) {
+    timeScale = map(raw, -1, -0.7, -2, 0.5);
+  } else {
+    timeScale = map(raw, -0.7, 1, 1, 1);
+  }
+}
+
+function getDreamLevel() {
+  if (timeScale <= 0) return 1;
+  if (timeScale >= 1.5) return 0;
+  return map(timeScale, 0, 1.5, 0.8, 0);
+}
+
+function drawReflectedSky() {
+  let dreamLevel = getDreamLevel();
+  let colors = [
+    [30, 28, 72], [50, 45, 95], [92, 74, 126],
+    [140, 100, 130], [190, 140, 148], [210, 165, 160]
+  ];
+  let stops = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+  for (let y = 0; y < height; y++) {
+    let blend = y / height;
+    let r, g, b;
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (blend >= stops[i] && blend <= stops[i + 1]) {
+        let lt = map(blend, stops[i], stops[i + 1], 0, 1);
+        r = lerp(colors[i][0], colors[i + 1][0], lt);
+        g = lerp(colors[i][1], colors[i + 1][1], lt);
+        b = lerp(colors[i][2], colors[i + 1][2], lt);
+        break;
+      }
+    }
+    let satBoost = dreamLevel * 22;
+    stroke(r + satBoost * 0.5, g, b + satBoost);
+    line(0, y, width, y);
+  }
+  noStroke();
+}
+
+function drawWaterTexture() {
+  noiseOffset += 0.003 * max(timeScale, 0.05);
+  for (let i = 0; i < 8; i++) {
+    let nx = noise(i * 3.7, noiseOffset) * width;
+    let ny = noise(i * 3.7 + 50, noiseOffset) * height;
+    let size = noise(i * 3.7 + 100, noiseOffset) * 300 + 100;
+    let pRatio = getPerspectiveRatio(ny);
+    let t = ny / height;
+    fill(lerp(50, 180, t) + 15, lerp(45, 140, t) + 10, lerp(95, 150, t) + 10, 5);
+    ellipse(nx, ny, size, size * pRatio);
+  }
+}
+
+function getPerspectiveRatio(y) {
+  return lerp(0.22, 0.52, y / height);
+}
+
+function getSkyColorAt(t) {
+  t = constrain(t, 0, 1);
+  let colors = [
+    [30, 28, 72], [50, 45, 95], [92, 74, 126],
+    [140, 100, 130], [190, 140, 148], [210, 165, 160]
+  ];
+  let stops = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i] && t <= stops[i + 1]) {
+      let lt = map(t, stops[i], stops[i + 1], 0, 1);
+      return {
+        r: lerp(colors[i][0], colors[i + 1][0], lt),
+        g: lerp(colors[i][1], colors[i + 1][1], lt),
+        b: lerp(colors[i][2], colors[i + 1][2], lt)
+      };
+    }
+  }
+  return { r: 210, g: 165, b: 160 };
+}
+
+function getDreamColor(baseColor, intensity) {
+  let dreamLevel = getDreamLevel();
+  let ti = intensity * (1 + dreamLevel * 0.8);
+  return {
+    r: constrain(baseColor.r + ti * 73, 0, 255),
+    g: constrain(baseColor.g + ti * 18, 0, 255),
+    b: constrain(baseColor.b + ti * 100, 0, 255)
+  };
+}
+
+class Drop {
+  constructor(startX, startY) {
+    this.x = startX;
+    this.y = startY;
+    let isClose = random() < 0.2;
+    this.targetY = startY + (isClose ? random(80, 160) : random(35, 80));
+    this.baseSize = isClose ? random(5, 8) : random(3, 5);
+    this.speed = 1.0;
+    this.landed = false;
+    this.xDrift = random(-0.2, 0.2);
+    this.alpha = 230;
+    this.age = 0;
+  }
+
+  update() {
+    if (this.landed) return false;
+    this.age++;
+    let ts = max(timeScale, 0.2);
+    this.speed += 0.3 * ts;
+    this.y += this.speed * ts;
+    this.x += this.xDrift * ts;
+    if (this.y >= this.targetY) {
+      this.landed = true;
+      ripples.push(new Ripple(this.x, this.y));
+      splashes.push(new DropSplash(this.x, this.y));
+      return false;
+    }
+    return true;
+  }
+
+  draw() {
+    if (this.landed) return;
+    let t = this.y / height;
+    let col = getSkyColorAt(t);
+    let pRatio = getPerspectiveRatio(this.y);
+    let speedRatio = constrain(this.speed / 8, 0, 1);
+    let w = lerp(this.baseSize * 1.2, this.baseSize * 0.4, speedRatio);
+    let h = lerp(this.baseSize * 1.8, this.baseSize * 8, speedRatio);
+    push();
+    translate(this.x, this.y);
+    noStroke();
+    fill(min(col.r + 100, 255), min(col.g + 90, 255), min(col.b + 80, 255), this.alpha);
+    ellipse(0, 0, w, h * pRatio);
+    pop();
+  }
+}
+
+class Ripple {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 2;
+    this.maxRadius = random(90, 190);
+    this.speed = random(0.7, 1.3);
+    this.life = random(0.3, 1);
+    this.rings = floor(random(1.5, 3));
+    this.perspective = getPerspectiveRatio(y);
+    this.dreamIntensity = random(0.3, 0.7);
+    this.distA = random(3, 6);
+    this.distB = random(5, 9);
+    this.distPhase = random(TWO_PI);
+  }
+
+  update() {
+    this.radius += this.speed * timeScale;
+    this.radius = max(this.radius, 0);
+    if (this.radius >= this.maxRadius) return false;
+    this.life = this.radius <= 0 ? 1 : 1 - (this.radius / this.maxRadius);
+    return this.life > 0.003;
+  }
+
+  getDistort(a, i) {
+    return 1 + (
+      sin(a * this.distA + this.distPhase + i) * 0.025 +
+      sin(a * this.distB + this.distPhase * 1.7 + i * 0.5) * 0.02 +
+      sin(a * 2 + frameCount * 0.004 + this.radius * 0.006) * 0.015
+    );
+  }
+
+  draw() {
+    if (this.radius < 2) return;
+    let pRatio = this.perspective;
+    let baseT = this.y / height;
+    let baseColor = getSkyColorAt(baseT);
+    let dreamLevel = getDreamLevel();
+    let bloomEase = this.life * this.life;
+    let intensity = bloomEase * (this.dreamIntensity + dreamLevel * 0.4);
+    let dreamCol = getDreamColor(baseColor, intensity);
+
+    fill(dreamCol.r, dreamCol.g, dreamCol.b, bloomEase * (22 + dreamLevel * 20));
+    ellipse(this.x, this.y, this.radius * 2.4, this.radius * 2.4 * pRatio);
+
+    let steps = 36;
+    for (let i = 0; i < this.rings; i++) {
+      let r = this.radius - i * 18;
+      if (r < 3) continue;
+      let ringLife = this.life * (1 - i / this.rings);
+      stroke(255, ringLife * 50);
+      noFill();
+      push();
+      translate(this.x, this.y);
+      beginShape();
+      for (let s = 0; s <= steps; s++) {
+        let a = (s / steps) * TWO_PI;
+        let d = this.getDistort(a, i);
+        vertex(cos(a) * r * d, sin(a) * r * pRatio * d);
+      }
+      endShape(CLOSE);
+      pop();
+    }
+    noStroke();
+  }
+
+  drawShimmer() {
+    if (this.life < 0.25 || this.radius < 8) return;
+    fill(255, this.life * 20);
+    let pRatio = this.perspective;
+    for (let a = 0; a < TWO_PI; a += PI / 2) {
+      let ang = a + frameCount * 0.004;
+      let sx = this.x + cos(ang) * this.radius;
+      let sy = this.y + sin(ang) * this.radius * pRatio;
+      ellipse(sx, sy, 3 * this.life, 1.5 * this.life);
+    }
+  }
+}
+
+class DropSplash {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.frame = 0;
+    this.maxFrames = 25;
+    this.particles = [];
+    this.perspective = getPerspectiveRatio(y);
+    for (let i = 0; i < 5; i++) {
+      let a = random(TWO_PI);
+      this.particles.push({
+        x: x, y: y,
+        vx: cos(a) * random(1, 3),
+        vy: sin(a) * random(1, 3) * this.perspective - random(1, 3),
+        size: random(1, 3),
+        alpha: 200
+      });
+    }
+  }
+  update() {
+    this.frame++;
+    for (let p of this.particles) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.alpha *= 0.9;
+    }
+    return this.frame < this.maxFrames;
+  }
+  draw() {
+    noStroke();
+    for (let p of this.particles) {
+      fill(255, p.alpha);
+      ellipse(p.x, p.y, p.size);
+    }
+  }
+}
+
+function maybeAutoDrop() {
+  autoDropTimer += max(timeScale, 0.1);
+  if (autoDropTimer > random(5, 15)) {
+    autoDropTimer = 0;
+    drops.push(new Drop(random(width), random(height * 0.2, height * 0.8)));
+  }
+}
+
+function createDrop(mx, my) {
+  angle += 0.06;
+  drops.push(new Drop(mx, my));
+}
+
+function mousePressed() { isDragging = true; createDrop(mouseX, mouseY); }
+function mouseReleased() { isDragging = false; }
+function touchStarted() { isDragging = true; createDrop(mouseX, mouseY); return false; }
+function touchEnded() { isDragging = false; return false; }
+
+function draw() {
+  updateTimeScale();
+  drawReflectedSky();
+  drawWaterTexture();
+  maybeAutoDrop();
+
+  if (isDragging && frameCount % 8 === 0) {
+    createDrop(mouseX + random(-10, 10), mouseY + random(-10, 10));
+  }
+
+  for (let i = drops.length - 1; i >= 0; i--) {
+    if (!drops[i].update()) drops.splice(i, 1); else drops[i].draw();
+  }
+  for (let rip of ripples) rip.draw();
+  for (let rip of ripples) rip.drawShimmer();
+  for (let i = splashes.length - 1; i >= 0; i--) {
+    if (!splashes[i].update()) splashes.splice(i, 1); else splashes[i].draw();
+  }
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    if (!ripples[i].update()) ripples.splice(i, 1);
+  }
+  
+  if (ripples.length > 30) ripples.shift();
+}
+</script>
+
+</body>
+</html>

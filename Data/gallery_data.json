@@ -1,0 +1,1316 @@
+{
+  "entries": [
+    {
+      "folderName": "周昱翔_開心",
+      "studentName": "周昱翔",
+      "emotion": "開心",
+      "avgStars": 4.4,
+      "finalHtmlRel": "周昱翔_開心/7_final_v4_dark.html",
+      "scoreCsvRel": "周昱翔_開心/周昱翔_開心_評分表.csv",
+      "radarSvgRel": "周昱翔_開心/周昱翔_開心_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.4★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "從手繪草圖到「融球、流動、可拉動」的定義極其精準，能將「開心」轉譯為具體的物理與互動邏輯（點擊生成、真實融合、填滿螢幕後戳破），避開空泛形容。",
+          "「這是我的想法」「我希望一開始沒有任何一顆球，使用者可以按下左鍵來生成一顆新的球…球和球真的能被融合，直到最後填滿整個螢幕」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★",
+          "能明確提出色彩需求（RGB 調色盤、五彩斑斕粒子），並在迭代中約束視覺結果；較少引用跨領域學理名詞，但對「顏色隨拖曳變化」的想像具體。",
+          "「當球被拖曳時，顏色會像RGB調色盤移動那樣改變顏色」「粒子效果的顏色，我希望是五彩斑斕的」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★",
+          "能精準指出「這比較不是我想要的樣子」並給出替代方案（RGB 調色盤），修正拖曳中斷、融球效果怪等問題；迭代步數稍多，若一開始就區分點擊/拖曳與真實融合會更省時。",
+          "「這比較不是我想要的樣子，我想要的是當球被拖曳時，顏色會像RGB調色盤移動那樣改變顏色」「球體本身有點太模糊了，而且融球的效果好怪喔，然後還有就是當我拖曳球和球融合後，會被中斷拖曳」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★",
+          "具備產品思維：要求點擊與拖曳邏輯區分、球體不超出邊緣、背景改黑、移除左上角提示；程式中有觸控支援，環境適應力佳。",
+          "「注意請把點擊和拖曳的功能邏輯區分開來」「當球體被拖曳時，球體本身不能超出螢幕邊緣，然後左上角的提示可以刪掉嗎？」「或許把背景顏色用成黑色試試看」"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能從 AI 回覆中吸收並反饋技術概念（HSL、融球、雙層畫布、粒子），並用「漸變地改變顏色」「融合後會被中斷拖曳」等精準描述問題，學習與應用力強。",
+          "「球體顏色的變化怪怪的，應該要是一旦當球體有發生移動變化時就會像RGB調色盤移動那樣漸變地改變顏色」「融球的效果還是怪怪的」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 314,163 271,297 129,297 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"314\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">周昱翔_開心 (5-4-4-4-5)</text>\n</svg>",
+      "textConcept": "在構思主題時，我首先想到的是開心。在現在這個資訊爆炸的時代，許多事物能讓我們會心一笑，卻鮮少能夠有發自內心的開心。因此，我希望能打造一個具備互動感、且能讓使用者獲得純粹快樂的網頁。\n\n關於開心的具體形狀，起初我曾聯想到三角形，因為我不知道為什麼我想到了三明治，但後來我又想到了溜溜球、球池之類的。這種圓潤的球體結構不僅更貼合我對快樂的直覺，在技術上也比較好做，於是便定下了視覺基調。\n\n在效果呈現上，我選用點點作為粒子特效，並搭配不斷變化的色彩，因為顏色正是快樂最直接的視覺連結。最後，為了增加互動的趣味性，我加入了物理碰撞效果，讓球體能在螢幕邊緣彈跳，並結合融球的視覺表現，最終完成了整個網頁的構思。",
+      "adjectives": "五彩斑斕的球",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "周昱翔_開心/靈感紙.jpg"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/573732aeeffc"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "嚴文浩_渴望",
+      "studentName": "嚴文浩",
+      "emotion": "渴望",
+      "avgStars": 5.0,
+      "finalHtmlRel": "嚴文浩_渴望/html/7_final.html",
+      "scoreCsvRel": "嚴文浩_渴望/嚴文浩_渴望_評分表.csv",
+      "radarSvgRel": "嚴文浩_渴望/嚴文浩_渴望_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (5.0★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "上傳題目與情緒靈感圖，要求條列目標並引導逐步完成；抽象圖詮釋為「渴望」、橘色圓帶紅尾、向某方向追求延伸；第二輪提出 particles 散出、隨機新物件、點線面散落、浮游生物/真空世界，意圖從作業流程到互動敘事皆明確。",
+          "「我們來一起完成這個作業吧…幫我詳細讀完，並條列出來，確立目標，並引導我逐步完成」「抽象的那張是我的情緒的靈感，是一種渴望的感覺」；「我希望mouse click的時候有particles散出的效果，並隨機創造新的物件在該位置上…散落著許多點線面構成的物件…每個物件自行緩緩旋轉飛行…有點像是浮游生物或真空的世界」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "從草圖「帶紅色尾巴的橘色圓形、延伸線條、散落幾何」轉譯為點擊產生渴望之星、紅尾橘圓；升級版為動畫迴圈、浮游物件、隨機顏色與旋轉飛行、點擊迸發粒子，審美與渴望/真空感一致。",
+          "「帶有紅色尾巴的橘色圓形、延伸的線條，以及散落的幾何圖形」；「particles散出」「點線面…隨機配賦顏色…緩緩旋轉飛行」「浮游生物或真空的世界」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★★",
+          "首輪即獲作業清單、命名規則與 1_test.html 基礎版；第二輪具體描述 particles、隨機物件、浮游世界，AI 回覆 2_floating_world.html 與動畫迴圈說明，迭代有節奏。",
+          "「條列出來，確立目標，並引導我逐步完成」；「我希望mouse click的時候有particles散出的效果…」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★★",
+          "需求含左鍵互動、自適應、多版存檔（1_test, 2_add_shape…final_email）、繳交清單；AI 主動提醒命名與步驟，環境與交件情境完整。",
+          "「我們會有很多個版本的 .html 檔，請依序存檔並命名（例如：1_test.html, 2_add_shape.html…）」「最終繳交清單」"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能吸收「動畫迴圈」「自適應畫布」「過程保留」等概念，並以「浮游生物或真空的世界」「渴望靠近」反饋為具體互動需求，學習與應用表現優異。",
+          "「點擊滑鼠左鍵，釋放渴望」；「讓圖形自己動起來（比如圓形會慢慢往滑鼠的方向飄過去，表現渴望靠近的感覺）」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 112,321 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"112\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">嚴文浩_渴望 (5-5-5-5-5)</text>\n</svg>",
+      "textConcept": "文字理念\n「渴望是伏隱於真空裡的引力，牽引彼此，在碰撞中激盪出共鳴。」",
+      "adjectives": "形容詞 \n渴望之 是「失重卻又無可救藥地相互墜落的。」「在寂靜真空中，震耳欲聾的。」",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "嚴文浩_渴望/靈感紙.jpg"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/3940184d89b2"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "張哲瑜_平靜",
+      "studentName": "張哲瑜",
+      "emotion": "平靜",
+      "avgStars": 5.0,
+      "finalHtmlRel": "張哲瑜_平靜/HTML/final.html",
+      "scoreCsvRel": "張哲瑜_平靜/張哲瑜_平靜_評分表.csv",
+      "radarSvgRel": "張哲瑜_平靜/張哲瑜_平靜_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (5.0★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "明確要求 RWD、左鍵觸發不同效果、情緒主題平靜；風格為簡單線條延伸出不同顏色材質平面，並指定 Pantone Cloud Dancer（平靜）與 Marsala（激動）；動態為游標經過時雜訊般無章法、點擊後柔和直線或近直線曲線，意圖與色彩計畫精準。",
+          "「#背景…#目的…情緒主題是平靜…#風格…簡單的線條，一直延伸出不同顏色、材質的平面，平靜的顏色必須符合Pantone 11-4201 Cloud Dancer色系，激動的顏色必須符合PANTONE 18-1438 Marsala」「#動態構想…滑鼠游標經過時，動畫會是像雜訊一般，毫無章法，滑鼠左鍵點擊後，畫面的線條會是柔和的直線，或是接近直線的曲線」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "從雜訊／秩序、Pantone 雙色轉譯為背景 Marsala→Cloud Dancer 過渡、線條由隨機抖動至 Lerp 拉直、標題「從雜訊到平靜」與設計邏輯一致。",
+          "「平靜的顏色…Pantone 11-4201 Cloud Dancer」「激動的顏色…PANTONE 18-1438 Marsala」「雜訊一般，毫無章法」→「點擊後…柔和的直線，或是接近直線的曲線」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★★",
+          "以 #背景、#目的、#風格、#動態構想 分點給足，AI 回覆即含核心設計邏輯與完整源碼，溝通結構化且高效。",
+          "「＃背景…＃目的…＃風格…＃動態構想」分點列舉；Gemini 回覆「色彩計畫」「線條動態」與 Canvas 實作"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★★",
+          "需求含 RWD、左鍵、流暢過場、多裝置；實作含 resize、particles、isCalm 切換與 instruction 文案，環境適應力佳。",
+          "「網頁大小要遵循RWD設計，能夠自動調整視窗排版並適應不同的裝置」「滑鼠左鍵點擊功能，去觸發不同的效果」「整體動畫過場需要流暢」"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能運用「RWD」「Pantone」「雜訊」「柔和直線」等設計語彙，並以「混亂與秩序」對應激動與平靜，學習與應用表現優異。",
+          "「平靜的顏色必須符合Pantone 11-4201 Cloud Dancer」「激動的顏色必須符合PANTONE 18-1438 Marsala」「像雜訊一般，毫無章法」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 112,321 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"112\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">張哲瑜_平靜 (5-5-5-5-5)</text>\n</svg>",
+      "textConcept": "在一邊填寫表單，一邊聽著音樂時，試著完全將自己融入情境中，得到了平靜的感受，所以我就在思考，我通常在獲得平靜之前的情緒會是什麼？而我得到的答案是：「煩亂」、「不安」、「撥動」。\n\n這體現在我後來和 AI 創建的網頁上，從一開始的平穩的線條，在滑鼠經過後開始抖動，象徵著情緒被擾動，而滑鼠點擊後畫面隨即轉換到另一個畫布，一個平靜並且有星芒閃爍的漸層背景，而這些星芒會隨著滑鼠的位置位移，就像是心裡的那些小小的微光一直往心裡想去的方向前進一般。",
+      "adjectives": "混亂中的秩序",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "張哲瑜_平靜/靈感紙.HEIC"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/ebab91e3130c"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "戴抒瑜_渴望",
+      "studentName": "戴抒瑜",
+      "emotion": "渴望",
+      "avgStars": 4.6,
+      "finalHtmlRel": "戴抒瑜_渴望/html/final_dobetai22675043@gmail.com.html",
+      "scoreCsvRel": "戴抒瑜_渴望/戴抒瑜_渴望_評分表.csv",
+      "radarSvgRel": "戴抒瑜_渴望/戴抒瑜_渴望_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.6★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★★",
+          "以參考圖搭配文字精準描述：夜空深灰底、少量星星、黃色球體為游標、圓錐繞球自轉如行星環、點擊時橘黃金屬發光與周圍高度模糊毛玻璃，意圖與視覺規格極明確。",
+          "「請幫我製作一個html的互動網頁，1.要能用滑鼠左鍵跟網頁互動2.網頁大小要自適應。畫面參考這張圖，背景設定為夜空，深灰色底且有少量星星閃爍。非點擊時，滑鼠型態如圖中的黃色球體，滑鼠滑動時球體外有一圈圓錐會不斷繞球體自轉，如行星環狀態。當我點擊時，球體會變成橘黃色金屬質感且發光。而球體四周都會高度模糊變成毛玻璃質感。我未提及的圖像畫面不用製作於網頁中」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★★",
+          "從球體、行星環、金屬發光、毛玻璃轉譯為 Canvas 星星閃爍、漸層球體、圓錐自轉、backdrop-filter 霧化圈與按下態橘黃陰影，渴望/宇宙感與互動一致。",
+          "「黃色球體」「圓錐會不斷繞球體自轉，如行星環狀態」「橘黃色金屬質感且發光」「球體四周都會高度模糊變成毛玻璃質感」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★★★",
+          "一次給足互動條件、自適應、背景、游標形態、按下態與排除項（未提及不用做），AI 回覆即為單檔可跑實作，溝通效率極高。",
+          "完整一段描述涵蓋 1.2. 與畫面規格；「我未提及的圖像畫面不用製作於網頁中」明確範圍"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★",
+          "需求含左鍵狀態切換、游標跟隨、自適應與 retina；實作含 cursor:none、frost 跟隨滑鼠、resize 重算星星，環境適應力佳。",
+          "「要能用滑鼠左鍵跟網頁互動」「網頁大小要自適應」；ChatGPT 實作 DPR、resize、mousedown/mouseup"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★★",
+          "能使用「自適應」「行星環狀態」「金屬質感」「毛玻璃質感」等描述，並以「高度模糊」約束視覺，學習與設計語彙清楚。",
+          "「球體外有一圈圓錐會不斷繞球體自轉，如行星環狀態」「高度模糊變成毛玻璃質感」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 129,297 86,163\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"86\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">戴抒瑜_渴望 (5-5-5-4-4)</text>\n</svg>",
+      "textConcept": null,
+      "adjectives": null,
+      "adjectivesImageRel": "戴抒瑜_渴望/感受轉視覺.jpg",
+      "inspirationImageRels": [
+        "戴抒瑜_渴望/靈感圖.jpg"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/69936790-8060-8003-8c34-e34626ef85a8"
+      ],
+      "aiUsed": [
+        "ChatGPT"
+      ]
+    },
+    {
+      "folderName": "曾莉榛_快樂",
+      "studentName": "曾莉榛",
+      "emotion": "快樂",
+      "avgStars": 4.8,
+      "finalHtmlRel": "曾莉榛_快樂/HTML/final_(bet20030621@gmail.com).html",
+      "scoreCsvRel": "曾莉榛_快樂/曾莉榛_快樂_評分表.csv",
+      "radarSvgRel": "曾莉榛_快樂/曾莉榛_快樂_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.8★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "以手繪快樂靈感開場，明確要求「做成可打開的 HTML、滑鼠左鍵互動、網頁自適應」；後續依序追加「花朵變化再大、浮誇、大小變化多、點擊快速往上」「不規則放射狀圖形」「花朵存在久一點、不要衝出畫面」，意圖與視覺／互動邏輯一致。",
+          "「這是我對快樂的想法，幫我做成一個可以打開的HTML網頁，給我程式碼」「要能用滑鼠左鍵跟網頁互動、網頁大小可以自適應」；「點擊出來得花朵變化可以再大一點，浮誇一點，大小變化多一點，點擊出來時可以有個快速往上的動態」「背景顏色我想要#fff3c2」；「可以試著新增一些不規則放射狀的圖形嗎」；「我想要花朵可以存在畫面久一點，然後不要衝出畫面」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "從手稿的明亮黃、圓潤線條、動態起伏、心滿意足高漲轉譯為 Canvas Blob（圓潤多邊形）、Particle 放射小點、up & down 浮動、點擊綻放；第二輪浮誇與快速往上→半徑與波浪幅度加大、重力與初速度；第三輪不規則放射→Starburst 星芒（長短不一、手繪抖動、炸開消失）；第四輪邊界與存在久→padding、智慧跳躍力、60 朵上限，審美與快樂／療癒感對應強。",
+          "「明亮的黃色、圓潤的線條、動態的起伏」「心滿意足、高漲」「放射狀陽光花朵」；AI 實作 Blob/Particle/Starburst、#fff3c2、邊界防護與 v=sqrt(2gh) 智慧跳躍"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★★",
+          "首輪即得完整 HTML 與設計對應；第二輪一句列出浮誇、快速往上、背景色；第三輪一句「不規則放射狀」即獲 Starburst 類別與說明；第四輪「存在久、不衝出」即獲 60 朵上限與邊界／跳躍力，溝通集中高效。",
+          "「花朵變化可以再大一點，浮誇一點…快速往上的動態」「背景顏色我想要#fff3c2」；「可以試著新增一些不規則放射狀的圖形嗎」；「花朵可以存在畫面久一點，然後不要衝出畫面」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★",
+          "需求含左鍵互動、自適應、多輪迭代；實作具 resizeCanvas、mousedown、Blob/Particle/Starburst 三類元素、邊界 padding、智慧跳躍力與數量上限，環境與互動完整；技術多為逐步追加，故略扣一星。",
+          "「滑鼠左鍵跟網頁互動」「網頁大小可以自適應」；AI 實作 resize、Blob 邊界與 vy 計算、starbursts 陣列、blobs.length > 60"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能運用「浮誇」「放射狀」「自適應」「存在久一點」「不要衝出畫面」等語彙，並接受「心滿意足、高漲」「溫和、療癒」等描述；以短句精準約束視覺與行為，生字內化與演化清楚。",
+          "「浮誇一點，大小變化多一點」「不規則放射狀的圖形」；「花朵可以存在畫面久一點，然後不要衝出畫面」；AI 回「邊界安全距離」「智慧跳躍力」「更溫和、更療癒」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 129,297 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">曾莉榛_快樂 (5-5-5-4-5)</text>\n</svg>",
+      "textConcept": null,
+      "adjectives": null,
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "曾莉榛_快樂/靈感圖.jpg",
+        "曾莉榛_快樂/靈感文字.jpg"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/0874f4643a6e"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "林妤庭_渴望",
+      "studentName": "林妤庭",
+      "emotion": "渴望",
+      "avgStars": null,
+      "finalHtmlRel": "林妤庭_渴望/HTML/final.html",
+      "scoreCsvRel": null,
+      "radarSvgRel": null,
+      "scoreRows": [],
+      "radarSvgContent": null,
+      "textConcept": "渴望彈珠台  日記書寫 x 彈珠台互動機制\n日記可以記錄日常,也可以透過文字察覺日常隱藏的情緒。\n對於我而言「渴望」是最能感受自身價值的存在。它於心中是有重量的,它像是組成夢想的小分子,不需要有明確方向,而是由心中感受到一股熱忱與能量。\n而想到渴望我想到彈珠臺,渴望像是彈珠般的大小,而我總是於日常生活中蒐集大大小小的渴望....\n似乎在等待一個機會,\n或是累積到足夠信心? \n但常常想太多或是懶惰導致我不敢發射....\n或是總是忘了蓄力本身似乎需要時間的發酵,總是個性一急,手還沒蓄夠力量就發射,導致浪費彈珠...\n而等到終於一切都準備就緒,\n拉下拉桿,咻～ \n渴望往往會讓我們帶著自身想不到的速度自我突破與前進。\n但當彈珠滑落的時候,它未必照著你的方向。\n不一定能獲得理想分數,而跟夜市老闆說看板上你最想要的禮物,\n這個過程往往是一個體驗 、一個短暫的博弈,\n就如渴望的事情不一定會成功 ,你也不能控制其前進方向,\n但你可以記住渴望這種讓人充滿希望和熱忱的感覺,並把握每次機會勇往前行。\n\n所以基於上述理由我設計了結合「日記書寫」與「彈珠台互動機制」的網站,\n想讓大家更清楚自己的方向以及並聽到自己內在的聲音,\n最重要要積極實現不要只是空想!\n並且記住渴望於心中所產生的「重量」和「能量」。",
+      "adjectives": "有實際重量的、前進的",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "林妤庭_渴望/靈感紙.heic"
+      ],
+      "aiChatLinks": [],
+      "aiUsed": []
+    },
+    {
+      "folderName": "林曉萱_悲傷",
+      "studentName": "林曉萱",
+      "emotion": "悲傷",
+      "avgStars": 5.0,
+      "finalHtmlRel": "林曉萱_悲傷/html/final_xiaoxuanlin0209@gmail.com.html",
+      "scoreCsvRel": "林曉萱_悲傷/林曉萱_悲傷_評分表.csv",
+      "radarSvgRel": "林曉萱_悲傷/林曉萱_悲傷_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (5.0★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "明確要求 RWD、左鍵觸發不同動畫、流暢過場；情緒主題為悲傷，並具體定義風格（非完美圓、厚度與重量、邊緣破碎）、Pantone 主輔色、動態語彙（緩慢墜落、鉛球感、點擊顫動與震盪波、堆疊窒息），意圖與設計語言極精準。",
+          "「我要做一個跟情緒有關的互動式網頁…情緒主題是悲傷…滑鼠左鍵點擊觸發不同的情緒動畫…不是完美的、數學公式下的圓，帶有厚度與重量…邊緣不全然平滑、帶有些微的破碎感」「悲傷色彩的顏色必須去飽和化…主色：Pantone 433 C、輔色：Pantone 1817 C」「讓圓形緩慢地、帶著重力感從頂部墜落…像鉛球一樣…點擊時微小的、不規律的顫動…震盪波…金屬碰撞…窒息與無法逃脫」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "從 Pantone 色票、重量感、破碎圓、金屬共振轉譯為 Matter.js 物理引擎、多邊形模擬不完美圓、density/restitution、震盪波與顫動視覺；標題「沉重的餘震」與敘事空間一致。",
+          "「Pantone 433 C、1817 C、Cool Gray 3 C」「厚度與重量」「鉛球」「金屬碰撞時產生的那種令人不適的音頻與共振」「視覺上的窒息與無法逃脫」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★★",
+          "一次給足目的、風格、動態語彙與技術需求（RWD、左鍵、流暢）；AI 回覆即含設計構思、Matter.js 架構與完整程式碼，溝通集中高效。",
+          "「#目的…#風格…#動態語彙」分點列舉；Gemini 回覆「建構一個關於重量與心理擠壓的敘事空間」「Matter.js 物理引擎配合 HTML5 Canvas」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★★",
+          "需求含 RWD、左鍵、多裝置、流暢過場；實作含 resize、物理邊界更新、震盪波陣列、顫動衰減與數量上限，環境適應力佳。",
+          "「網頁大小要遵循RWD設計，能夠自動調整視窗排版並適應不同的裝置」「滑鼠左鍵點擊功能，去觸發不同的效果」「整體動畫過場需要流暢」"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能運用「RWD」「動態語彙」「去飽和化」「Pantone」「厚度與重量」「震盪波」等設計與技術語彙，並以「心理擠壓」「敘事空間」層次描述，學習與應用表現優異。",
+          "「帶有厚度與重量的幾何體」「金屬碰撞時產生的那種令人不適的音頻與共振」「視覺上的窒息與無法逃脫」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 112,321 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"112\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">林曉萱_悲傷 (5-5-5-5-5)</text>\n</svg>",
+      "textConcept": "這片由冷灰色調築起的數位荒原裡，無數破碎的幾何圓形正如被時間遺忘的生鐵，帶著無法言說的重量向下墜落。它們並非隨機，而是帶著一種近乎宿命的吸引力，在虛擬的長廊中尋找著彼此的撞擊。這些形狀並非完美的幾何，而是帶著眼窩與裂痕的殘軀，每一聲金屬碰撞的視覺共振，都是對過往遺產與集體記憶的沈重回響。\n當使用者的指尖觸碰這片空間，那抹轉瞬即逝的藍色漣漪，並非輕盈的互動，而是一次次冒失的驚擾，在鐵鏽與混凝土的冷冽中激起不和諧的餘震。隨著時間推移，這些形狀不再只是物件，它們相互擠壓、堆疊，將原本空曠的留白填滿至窒息。當一切崩潰至臨界點，空間會轉化為那種如乾涸血跡般的暗紅，那是悲傷從沈默中發出的最後一聲嘶吼，是重力對靈魂最溫柔也最殘酷的洗禮。",
+      "adjectives": "於鋼鐵的碰撞中，拾起破碎的寂靜",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "林曉萱_悲傷/靈感紙.JPG"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/ae956055e71f"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "林育瑋_悲傷",
+      "studentName": "林育瑋",
+      "emotion": "悲傷",
+      "avgStars": null,
+      "finalHtmlRel": "林育瑋_悲傷/final.html",
+      "scoreCsvRel": null,
+      "radarSvgRel": null,
+      "scoreRows": [],
+      "radarSvgContent": null,
+      "textConcept": null,
+      "adjectives": null,
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "林育瑋_悲傷/ai對話紀錄.png",
+        "林育瑋_悲傷/concept.jpg"
+      ],
+      "aiChatLinks": [],
+      "aiUsed": []
+    },
+    {
+      "folderName": "楊漢軒_興奮",
+      "studentName": "楊漢軒",
+      "emotion": "興奮",
+      "avgStars": 5.0,
+      "finalHtmlRel": "楊漢軒_興奮/final.html",
+      "scoreCsvRel": "楊漢軒_興奮/楊漢軒_興奮_評分表.csv",
+      "radarSvgRel": "楊漢軒_興奮/楊漢軒_興奮_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (5.0★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Claude",
+          "★★★★★",
+          "以「興奮」為主題，明確拆解為點擊爆發的粒子場（直線、三角形、星形、圓）、撞牆反彈與旋轉；後續追加康丁斯基畫作質感（粗細有別、水彩暈開／畫紙感）、線條撞牆縮短、手機觸控、黑底，意圖與視覺／互動邏輯一致。",
+          "貼康丁斯基畫作「可以把元素改為這種質感嗎？粗細有別，還有一點水彩暈開或是畫紙的質感」；「線條撞牆後縮短」；「有可能同時支援手機的點按觸控嗎？」；「背景還是改為黑的好了」；「好，請執行」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Claude",
+          "★★★★★",
+          "從螢光幾何粒子轉譯為康丁斯基風格：色票降飽和（暗紅、黃赭、灰藍、紫、綠、橙）、線條粗細離散層級、透明度疊色與暈染陰影、暖灰紙底後改黑底；「線條撞牆被吃短」與「幾何情緒在黑色空間裡爆開、撞牆、被牆吃掉再慢慢平靜」敘事明確，興奮感與節奏對應強。",
+          "「水彩暈開或是畫紙的質感」「粗細有別」；AI 實作 v6 淡暖灰紙色、離散厚度與尺寸、baseAlpha 疊色、box-shadow 暈染；v7「幾何情緒在黑色空間裡爆開、撞牆、被牆吃掉再慢慢平靜」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Claude",
+          "★★★★★",
+          "多輪迭代節奏清楚：v5（直線＋三角＋星＋圓、撞牆旋轉）→ v6（康丁斯基色與質感、線條撞牆縮短）→ v7（黑底＋觸控）；學生以短句逐項提出（貼圖改質感、支援觸控、背景改黑、請執行），AI 皆給出完整程式碼與說明，溝通集中高效。",
+          "「可以把元素改為這種質感嗎？」「線條撞牆後縮短」；「有可能同時支援手機的點按觸控嗎？」「背景還是改為黑的好了」；「好，請執行」"
+        ],
+        [
+          "環境預見與判斷",
+          "Claude",
+          "★★★★★",
+          "需求含點擊、觸控、多裝置；實作具 handleTap 共用、click＋touchstart（passive: false）、STAGE_SIZE 固定與 radial-gradient 黑底、線條 shrink/targetW、形狀離散尺寸與撞牆 spin，環境與互動完整。",
+          "「同時支援手機的點按觸控」；AI 實作 handleTap、touchstart + preventDefault、線條撞牆 shrink、康丁斯基色票與紙感"
+        ],
+        [
+          "生字內化與演化",
+          "Claude",
+          "★★★★★",
+          "能運用「康丁斯基」「水彩暈開」「畫紙質感」「粗細有別」「線條撞牆縮短」「觸控」等語彙，並接受「被牆吃掉」「幾何情緒爆開、撞牆、慢慢平靜」等比喻，生字內化與視覺演化清楚。",
+          "「粗細有別」「水彩暈開或是畫紙的質感」；「線條撞牆後縮短」；「同時支援手機的點按觸控」；「背景還是改為黑的好了」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 112,321 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"112\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">楊漢軒_興奮 (5-5-5-5-5)</text>\n</svg>",
+      "textConcept": null,
+      "adjectives": "如煙火般絢麗的",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "楊漢軒_興奮/靈感紙.jpg"
+      ],
+      "aiChatLinks": [],
+      "aiUsed": []
+    },
+    {
+      "folderName": "楊靜慧_悲傷",
+      "studentName": "楊靜慧",
+      "emotion": "悲傷",
+      "avgStars": 5.0,
+      "finalHtmlRel": "楊靜慧_悲傷/final_(c8106162007@gmail.com).html",
+      "scoreCsvRel": "楊靜慧_悲傷/楊靜慧_悲傷_評分表.csv",
+      "radarSvgRel": "楊靜慧_悲傷/楊靜慧_悲傷_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (5.0★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "將悲傷敘事拆解為多階段互動：雪地滑雪→樹木消失、方塊扁掉下沉→墨染滲透→左鍵淺藍淨化→包圍後重生、墨散去、雪地再現；時序與規則明確，意圖具強敘事與遊戲化結構。",
+          "「一個方塊在純淨的白色上滑雪…滑鼠滾輪…由左向右滑雪，滑過的地方要留下滑過的痕跡，按左鍵可以種三角形的樹…持續約30秒…樹都會消失，方塊停下扁掉…沉…黑藍色墨水滲透…左鍵變淺藍圓點蓋過墨染…包圍後方塊變回正方塊…墨停止、下沉消失…淺藍占滿…綠樹再現」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "簡約幾何、純色（白/黑/綠樹/墨藍/淺藍）、三階段視覺與音訊（Web Audio API、drone、melody）對應滑雪、沉沒墨染、重生，標語「Grief passes, scars remain」與設計一致。",
+          "「簡約、顏色純淨、簡單的幾何形」；三階段：雪地滑行、沉沒與墨染、重生；「墨水以滴入水中的呈現效果滲透」「淺藍圓點蓋過墨染過的地方」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★★",
+          "一次給足完整規格（內容 1. 長段落、2. 自適應、3. 視覺風格），AI 回覆即為整合單檔與設計理念對應，溝通效率極高。",
+          "「1. 內容（整段階段描述）2. 網頁大小要自適應不同的視窗大小。3. 視覺風格：簡約、顏色純淨、簡單的幾何形。」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★★",
+          "需求含滾輪與左鍵雙輸入、階段切換、時間與狀態邏輯、自適應；成品含 UI 提示、help hint、final message 與聲音引擎，環境與敘事邏輯完整。",
+          "「滑鼠滾輪」「滑鼠左鍵」「持續約30秒」「網頁大小要自適應」；Gemini 實作離屏 Canvas、SoundManager、階段切換"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能吸收並反饋多階段狀態機、墨水遮罩、淨化與重生等概念；規格描述具備產品與敘事思維，學習與應用力強。",
+          "「如果持續滾滑鼠滾輪持續約30秒…所有樹都會消失…墨浸透長方塊周圍後…用左鍵…讓他周圍全部變呈淺藍色…方塊會重新變回正方塊」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 112,321 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"112\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">楊靜慧_悲傷 (5-5-5-5-5)</text>\n</svg>",
+      "textConcept": "這是一個常規生活，收到衝擊，重新站起來的過程。\n初始的旅途伴隨著樹，樹代表生機或是生活周遭讓人心情愉悅的人事物，點擊種樹代表注入生機。\n之後在收到悲傷衝擊的瞬間，腦袋會是一片空白的，所以我希望是白畫面。\n隨著時間沉澱、悲傷浸染，痛才會慢慢湧上，並且如附骨之蛆無法甩脫。\n在吸收到足夠破除陰翳的能量與希望後，讓人得以重新站起來。\n即使重新克服悲傷後可能和以前不同了，但傷痛會伴著我們接續之後的人生，",
+      "adjectives": "傷痛感懷",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "楊靜慧_悲傷/靈感紙.jpg"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/34e944f6c7c8"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "王建勛_恐懼",
+      "studentName": "王建勛",
+      "emotion": "恐懼",
+      "avgStars": 3.8,
+      "finalHtmlRel": "王建勛_恐懼/final_a7459032@gmail.com .html",
+      "scoreCsvRel": "王建勛_恐懼/王建勛_恐懼_評分表.csv",
+      "radarSvgRel": "王建勛_恐懼/王建勛_恐懼_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (3.8★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★",
+          "以圖片與檔案上傳情緒靈感，簡短要求「幫我把我的情緒靈感做成html」；AI 解讀為「光照下的平靜裡帶一點壓力滲出」，以點/線/面、窗光、壓力泡泡下沉呈現，意圖依視覺傳達為主。",
+          "「Uploaded an image」「Uploaded a file」「幫我把我的情緒靈感做成html」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★★",
+          "AI 以點線面（圓、三角形、線段）、窗光光束、形狀漂浮與 hover 緊繃擴散變亮、點擊落下壓力泡泡、右側琥珀容器等，轉譯「平靜＋壓力滲出」；視覺層次與情緒對應強。",
+          "ChatGPT 描述：「點/線/面（圓、三角形、線段）」「背景有像窗光一樣的光束」「滑鼠靠近/滑過會讓形狀緊繃、擴散、變亮」「點一下會丟下一顆壓力泡泡往下沉」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★",
+          "學生指令極簡（一句話＋上傳），依賴 AI 解讀圖片與檔案；若後續有迭代可提升溝通分，目前為單輪產出。",
+          "「幫我把我的情緒靈感做成html」"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★",
+          "成品為單檔 HTML、含 viewport 自適應、hover 與點擊互動、舞台與 HUD 佈局，具基本使用情境；標題「看不見的色彩：光下的滲出」呼應情緒。",
+          "上傳圖片與檔案後 AI 產出「完整單檔作品」「存成 final_yourEmail.html 直接打開就能跑」"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★",
+          "對話中學生未主動使用技術或設計術語；能接受 AI 提供的 CSS 變數、mix-blend-mode、動畫等實作，學習多為被動接收。",
+          "僅「幫我把我的情緒靈感做成html」一句，其餘為上傳內容"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,80 343,154 253,273 129,297 114,172\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"80\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"253\" cy=\"273\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"114\" cy=\"172\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">王建勛_恐懼 (4-5-3-4-3)</text>\n</svg>",
+      "textConcept": "這是一個介於秩序與失控之間的情緒場域。\n\n畫面被切成兩半：左側是像素風的低解析世界，顆粒分明、節奏克制，像被壓縮後的情緒記憶；右側是流動的霓虹能量，色彩鮮豔、光影奔放，像被觸發後外溢的感受。\n\n當觀者以滑鼠點擊、拖曳、推動畫面時，情緒被生成、擴散、震動；放開的瞬間，能量收束、波紋反向回縮，一切歸於安靜。這個「生成—爆發—收束」的循環，對應著我們面對壓力與感受時的節奏——不是永遠張揚，也不是完全消失，而是在一次次互動中被看見、被釋放、被整理。\n\n像素與霓虹的對比，並非衝突，而是一種並存：\n理性與感性、壓抑與爆發、遊戲感與真實感，在同一個畫面中同時存在。\n\n這不是一個單純的視覺效果，而是一段可被觸發、可被結束的情緒過程。",
+      "adjectives": "外溢的壓力",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "王建勛_恐懼/靈感紙.dng"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/6995244c-128c-800e-913d-80b549277aa2"
+      ],
+      "aiUsed": [
+        "ChatGPT"
+      ]
+    },
+    {
+      "folderName": "王欣怡_悲傷",
+      "studentName": "王欣怡",
+      "emotion": "悲傷",
+      "avgStars": 4.6,
+      "finalHtmlRel": "王欣怡_悲傷/4_final.html",
+      "scoreCsvRel": "王欣怡_悲傷/王欣怡_悲傷_評分表.csv",
+      "radarSvgRel": "王欣怡_悲傷/王欣怡_悲傷_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.6★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★★",
+          "以專家角色開場，將情緒拆解為線條/視覺感、顏色、觸感、聲音與空間五類形容詞（波浪、流線、淺藍淺灰、薄紗、泡泡、弦樂落寞、無人公園），並對應「喜怒哀樂」判斷為惆悵/溫柔孤獨，意圖與隱喻極精準。",
+          "「接下來我要說明我覺得這個情緒所關聯到的形容詞和動態（1.線條和視覺感：波浪狀、流線型…2.顏色：淺藍色、淺灰色…3.觸感：像薄紗…4.聲音和情感：弦樂，盛大結尾後的落寞，5.空間：無人的公園…）你覺得在喜怒哀樂這四個情緒裡…會是哪個情緒呢？」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★★",
+          "從形容詞群轉譯為流動、循環、緩慢、輕柔、孤獨但美之 UX 原則；實作含水波、圖片 hover 放大陰影、漸層背景、低彩度、流動線條，並建議星空 parallax、泡泡循環、弦樂式 cubic-bezier，審美與情緒一致。",
+          "「波浪狀、流線型、捲曲的電話線、流動感、緩慢」「淺藍色、淺灰色、快速回溯的黑白回憶錄」「像薄紗…冰涼的雨滴…泡泡…弦樂，盛大結尾後的落寞」「無人的公園，只有星星和月亮」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★★",
+          "一次給足情緒描述與網頁要求（左鍵互動、按鈕、圖片放大陰影、響應式），AI 回覆即含情緒判斷、設計方向與完整 HTML/CSS/JS，並主動推薦進階動態，溝通集中高效。",
+          "「網頁必須達到的要求（1.能用滑鼠左鍵跟網頁互動（要有按鈕、滑動到圖片上的放大和陰影效果）2.要是響應式網頁…）這邊要先麻煩你依據情緒的說明和要求生成HTML，也可以推薦我還有什麼其他的動態感可以製作、添加。」"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★",
+          "需求明確含左鍵、按鈕、圖片 hover、響應式與多設備；AI 回覆考慮 ease-in-out、柔順過渡、避免強烈對比，具 UI/UX 與使用情境思維。",
+          "「能用滑鼠左鍵跟網頁互動（要有按鈕、滑動到圖片上的放大和陰影效果）」「要是響應式網頁，能夠符合使用者不同的設備使用」"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★★★",
+          "能運用「視覺設計和動線」「UI和UX的差異」「視覺引導」等術語，並以多維度形容詞（線條、顏色、觸感、聲音、空間）描述情緒，學習與設計語彙並進。",
+          "「你是一個專業的網頁設計師，精通HTML各種動畫與特效…也對視覺設計和動線非常了解，能知道UI和UX的差異」；五類形容詞與動態的完整列舉"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 271,297 129,297 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">王欣怡_悲傷 (5-5-4-4-5)</text>\n</svg>",
+      "textConcept": "悲傷的顏色是基於回憶，不同經歷帶來不同色彩、味道、傷痕，以及印象。\n在痕跡後能窺見當初的影像。",
+      "adjectives": "充滿希望卻帶有遲疑的",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "王欣怡_悲傷/靈感.jpg"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/699c6b3f-d04c-8010-a8ee-46c6dfb21b3b",
+        "https://gemini.google.com/share/96a2dc24357c"
+      ],
+      "aiUsed": [
+        "ChatGPT",
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "盧品安_恐懼",
+      "studentName": "盧品安",
+      "emotion": "恐懼",
+      "avgStars": 4.4,
+      "finalHtmlRel": "盧品安_恐懼/html/final.html",
+      "scoreCsvRel": "盧品安_恐懼/盧品安_恐懼_評分表.csv",
+      "radarSvgRel": "盧品安_恐懼/盧品安_恐懼_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.4★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "將「恐懼」明確拆解為粗糙質感、三角形、混亂線條、暗色系、雜音使人煩躁，並對應作業第三點（左鍵互動、自適應、html）；後續精準追加動態、殘影、閃避與「不夠混亂」「三角形加粗換白」，意圖與視覺邏輯一致。",
+          "「我選擇的是恐懼」「我想用粗糙的質感 三角形 混亂的線條 暗色系 可能還有雜音使人煩躁」「請幫我依照第三點的條件寫出html.的程式 不需要照片 請給我html.格式」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "從尖銳三角形、混亂線條、暗色系轉譯為雜點質感、白雜訊/低頻音效、點擊震動與殘影；第三輪要求「三角形更粗、白色、更明顯」「畫面上不夠混亂」即獲碎片化動態、視覺噪音與 Strobe 效果，審美與恐懼感對應強。",
+          "「粗糙的質感 三角形 混亂的線條 暗色系 可能還有雜音使人煩躁」；「滑鼠上的三角形可以在粗一點 明顯一點 可以換成白色 畫面上我覺得不夠混亂 一樣要html檔」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★",
+          "首輪即給 1-test.html（幾何、質感、左鍵、自適應、音效）；第二輪「點擊要動態、滑鼠移動殘影、三角形閃避、動態越多越好」獲 2_interactive_fear；第三輪一句話列出三角形與混亂度需求，迭代有節奏。",
+          "「點擊時 我想要讓他變成動態 而不是只有靜態 當滑鼠移動時 也會出現雜訊的殘影 背景是極為混亂的線條 滑鼠點擊時會自動閃避 動態越多越好」「滑鼠上的三角形可以在粗一點 明顯一點 可以換成白色 畫面上我覺得不夠混亂」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★",
+          "需求含左鍵互動、自適應、音訊（點擊後啟動）；成品具 cursor:none、自訂游標三角形、BiquadFilter 與 gain 隨互動變化、邊界反彈與閃避邏輯，環境與多層互動完整。",
+          "「依照第三點的條件」即左鍵互動、自適應、html；AI 實作 resize、initAudio、avoid()、chaosLines 殘影"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★",
+          "能吸收「白雜訊」「低頻雜訊」「閃避」「殘影」等描述並反饋「動態」「不夠混亂」；第三輪以「加粗、白色、明顯、不夠混亂」精準約束視覺，學習與應用清楚。",
+          "「可能還有雜音使人煩躁」；「點擊時會自動閃避」「滑鼠移動時也會出現雜訊的殘影」；「畫面上我覺得不夠混亂」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 271,297 129,297 86,163\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"86\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">盧品安_恐懼 (5-5-4-4-4)</text>\n</svg>",
+      "textConcept": "這件作品試圖捕捉一種**「失去控制前的緊繃感」**。恐懼往往不是靜止的，而是一種持續侵蝕感官的動態過程。\n​視覺符號的衝突：\n​三角形：採用尖銳的三角形作為核心語彙，代表防衛機制與不安的威脅。\n​純白與黑暗：滑鼠所操控的純白色粗線條三角形，在極黑暗的背景中顯得格外刺眼，象徵在恐懼中被迫集中的微弱意識，卻也因為過於明顯而顯得脆弱。\n​混亂與資訊過載：\n​畫面上不斷生成、跳動的粗糙線條與雜訊碎片，模擬了人在恐懼時大腦中混亂且碎片化的思考狀態。\n​這種「視覺噪音」故意造成感官負擔，讓觀者感受到心理上的壓迫與煩躁。",
+      "adjectives": "恐懼的 令人窒息的",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [],
+      "aiChatLinks": [
+        "https://g.co/gemini/share/758970511b24"
+      ],
+      "aiUsed": [
+        "其他"
+      ]
+    },
+    {
+      "folderName": "翁圓舒_快樂",
+      "studentName": "翁圓舒",
+      "emotion": "快樂",
+      "avgStars": 5.0,
+      "finalHtmlRel": "翁圓舒_快樂/html/final_wn01sophie@gmail.com.html",
+      "scoreCsvRel": "翁圓舒_快樂/翁圓舒_快樂_評分表.csv",
+      "radarSvgRel": "翁圓舒_快樂/翁圓舒_快樂_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (5.0★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★★",
+          "以專家角色與手繪快樂靈感開場，要求互動 HTML（左鍵、自適應）；後續主動升級為「深層互動」：不同色塊對應不同回憶、使用者可加入快樂記憶、世界隨快樂成長變美，意圖從單次互動躍升為情緒系統設計。",
+          "「你現在是一個互動設計領域的專家…請按照這樣的情緒靈感…成為一個可以互動的html 網頁…要能用滑鼠左鍵跟網頁互動、網頁大小要可以跟著視窗大小自動改變」；「太無聊了，我希望能夠有更深層的互動。例如按下不同的色塊，可以跳出不同的回憶…讓使用者加入自己對於快樂的記憶點和想像，最後這個網站可以隨著快樂增加而變得更漂亮、更鮮豔。」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★★",
+          "從草圖讀取中央爆發、圓點、不規則形、線條流動、色彩分散，轉為爆炸光形、氣泡、流動線、彩色雲塊；升級版為色塊＝快樂類型（黃成就、藍平靜、綠關係等）、localStorage 記憶與世界成長視覺，審美與互動層次豐富。",
+          "「中央爆發、圓點、不規則形、線條流動、色彩分散」；「色塊＝快樂記憶入口」「世界會因快樂而成長」「背景變亮、飽和度提升」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★★★",
+          "初次即給完整 HTML 與設計邏輯對應；第二輪「太無聊了」直指需求升級，並具體列出色塊回憶、使用者加入記憶、快樂增加變美三點，AI 回覆「情緒世界生成系統」與作品級 HTML，溝通高效。",
+          "「請開始」→ 即得可執行 HTML；「太無聊了…更深層的互動…色塊跳出回憶…加入記憶…隨快樂變漂亮」"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★★",
+          "需求涵蓋左鍵互動、自適應、多版本迭代；升級版含 localStorage 持久化、多色塊類型與動態世界狀態，具產品與使用情境思維。",
+          "「要能用滑鼠左鍵跟網頁互動」「網頁大小要可以跟著視窗大小自動改變」；「使用者加入自己對於快樂的記憶點…重開網頁仍存在」"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★★★",
+          "能吸收「情緒視覺」「互動架構」「快樂累積系統」等概念，並以「深層互動」「探索快樂」「記憶點」反饋為具體功能需求，學習與應用表現優異。",
+          "「更深層的互動」「像在探索這世界上的快樂」「加入自己對於快樂的記憶點和想像」「隨著快樂增加而變得更漂亮」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 112,321 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"112\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">翁圓舒_快樂 (5-5-5-5-5)</text>\n</svg>",
+      "textConcept": "設 計 理 念  \n這 個 作 品 源 自 我 對 快 樂 的 想 像 ， 是 種 種 瞬 間 逐 漸 累 積 ， 並 透 過 回 憶 而 長 大 的 能 量。 網 站\n被\n設\n計\n成\n一\n個\n會\n成\n長\n的\n世\n界\n，\n每\n當\n使\n用\n者\n加\n入\n快\n樂\n的\n記\n憶\n，\n會\n透\n過\n網\n展\n轉\n化\n為\n柔\n軟、\n不\n規\n則、\n帶\n有\n呼\n吸\n感\n的\n暖\n色\n色\n塊\n，\n在\n畫\n面\n中\n緩\n緩\n漂\n浮、\n擴\n散\n，\n並\n彼\n此\n影\n響。\n \n互\n動\n的\n核\n心\n並\n只\n有\n操\n作\n網\n站\n，\n而\n是\n希\n望\n使\n用\n者\n使\n用\n網\n站\n的\n同\n時\n，\n能\n夠\n重\n新\n回\n味\n快\n樂\n的\n片\n段。\n使\n用\n者\n除\n了\n輸\n入\n文\n字\n以\n外\n，\n也\n可\n以\n透\n過\n滑\n鼠\n點\n擊\n去\n觸\n碰\n色\n塊\n，\n可\n以\n重\n溫\n自\n己\n紀\n錄\n的\n記\n憶。\n當\n記\n憶\n增\n加\n，\n網\n頁\n本\n身\n會\n變\n得\n更\n明\n亮、\n更\n鮮\n豔。\n背\n景\n變\n暖、\n光\n暈\n浮\n現、\n空\n間\n微\n微\n放\n大\n，\n象\n徵\n快\n樂\n對\n人\n們\n產\n生\n的\n影\n響\n，\n它\n也\n會\n逐\n漸\n改\n變\n我\n們\n觀\n看\n世\n界\n的\n方\n式。\n \n在 視 覺 上 ， 整 體 採 用 暖 色 系 但 多 層 次 的 色 譜 ， 避 免 單 一 顏 色 的 單 調 ， 讓 快 樂 呈 現 為 多 種\n質\n地\n：\n陽\n光\n的、\n柔\n軟\n的、\n跳\n動\n的、\n被\n包\n圍\n的。\n形\n體\n刻\n意\n不\n規\n則\n，\n模\n擬\n情\n緒\n的\n不\n確\n定\n與\n流\n動\n性。\n \n \n如 果 快 樂 可 以 被 看 見 ， 它 會 長 成 什 麼 樣 子？  \n如\n果\n記\n憶\n會\n發\n光\n，\n我\n們\n是\n否\n能\n在\n其\n中\n找\n到\n自\n己\n正\n在\n成\n長\n的\n軌\n跡。",
+      "adjectives": "踏\n足\n而\n過\n的\n遍\n地\n快\n樂\n，\n都\n能\n夠\n是\n成\n長\n的\n養\n分\n!",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "翁圓舒_快樂/圖像靈感.jpg",
+        "翁圓舒_快樂/文字靈感.HEIC"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/69972f88-1e84-8007-bda7-6c9a2955344b"
+      ],
+      "aiUsed": [
+        "ChatGPT"
+      ]
+    },
+    {
+      "folderName": "賴眉均_恐懼",
+      "studentName": "賴眉均",
+      "emotion": "恐懼",
+      "avgStars": 4.8,
+      "finalHtmlRel": "賴眉均_恐懼/HTML/final.html",
+      "scoreCsvRel": "賴眉均_恐懼/賴眉均_恐懼_評分表.csv",
+      "radarSvgRel": "賴眉均_恐懼/賴眉均_恐懼_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.8★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★★",
+          "從敘事對話中選定「恐懼」為存在感情緒，再經「形狀/顏色/質感…以上都可以」保留多維度，上傳作業單後由 AI 拆解流程；最後將恐懼收斂為「沉到海裡」的緩慢下沉，意圖層層遞進、極具設計感。",
+          "「應該是……恐懼吧。」；「嗯……好像以上都可以。」；「我覺得對我來說最大的恐懼是沉到海裡」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★★",
+          "AI 提供恐懼視覺方案（尖角、深黑暗紅、顆粒、高對比、留白壓迫），再針對「沉到海裡」給出圓形/氣泡、垂直構圖、深藍漸層、點擊觸發下沉等視覺與互動語言，轉譯精準。",
+          "「沉到海裡」→「形狀：圓形（氣泡／意識）、大色塊、垂直往下；顏色：深藍、越往下越黑；動態：滑鼠左鍵觸發下沉、氣泡往上飄」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★★★",
+          "先以角色對話建立情緒選擇與視覺開放性，再上傳作業單取得流程拆解與視覺武器包，最後一句「沉到海裡」即獲完整視覺與互動方案，溝通效率高。",
+          "「我要走＿＿風格」的引導；「我覺得對我來說最大的恐懼是沉到海裡」→ ChatGPT 給出情緒核心、視覺語言、動態與明暗建議"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★",
+          "作業需求含手繪草圖、多版 html、RWD、左鍵互動與理念說明；AI 主動提醒版本命名、檢查清單與「老師一看就覺得很有感」的恐懼方案，環境與交件情境考量佳。",
+          "上傳作業單後 ChatGPT 拆解「用幾何形狀表達情緒」「手繪草圖」「做成 .html」「RWD」「所有過程檔都要交」"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★★★",
+          "能吸收「情緒是多維度的」「視覺語言」「RWD」「垂直構圖」「存在壓力」等說法，並以「沉到海裡」一句觸發完整設計方案，學習與應用表現突出。",
+          "「恐懼的長相」「緩慢、無法反抗的下沉」「一種安靜但持續加重的存在壓力」"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 129,297 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">賴眉均_恐懼 (5-5-5-4-5)</text>\n</svg>",
+      "textConcept": "作品以「沉入深海的恐懼」作為核心情緒出發，嘗試將抽象的心理感受轉化為可被觀看與互動的數位體驗。對我而言，最深層的恐懼並非瞬間的驚嚇，而是一種持續下沉、逐漸失去控制與呼吸空間的壓迫感。因此畫面以深海為隱喻場域，透過黑暗、模糊與緩慢位移，營造出被包覆與吞沒的感受。\n在視覺設計上，我運用低彩度藍黑色調建立深海氛圍，並加入噪點質感模擬混濁水域，使畫面帶有不安定的顆粒感。中央的「手電筒視野」象徵人在恐懼中僅存的感知範圍，而滑鼠移動所產生的微視差，則暗示身體仍在水中漂移與下沉。\n互動機制是本作品的重要層次：\n當觀者持續操作時，系統會產生氣泡，象徵暫時獲得氧氣與控制感；一旦停止動作，畫面便進入窒息狀態，呼吸節奏加劇、視覺變得混亂，強化「靜止即沉沒」的心理壓力。\n希望觀者不是只「看到」恐懼，而是在操作過程中逐漸意識到自己正在下沉。這種需要不斷行動才能維持狀態的設計，對應到人面對焦慮與不安時，那種必須持續掙扎、才能維持平衡的存在感。",
+      "adjectives": "窒息的",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "賴眉均_恐懼/靈感紙.jpg"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/6995e627-8938-8002-8fe3-2e4981a8592b"
+      ],
+      "aiUsed": [
+        "ChatGPT"
+      ]
+    },
+    {
+      "folderName": "連浡崴_平靜",
+      "studentName": "連浡崴",
+      "emotion": "平靜",
+      "avgStars": null,
+      "finalHtmlRel": "連浡崴_平靜/HTML/平靜的存在感 Final_louie5588@gmail.com.html",
+      "scoreCsvRel": null,
+      "radarSvgRel": null,
+      "scoreRows": [],
+      "radarSvgContent": null,
+      "textConcept": null,
+      "adjectives": null,
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "連浡崴_平靜/靈感紙.jpg"
+      ],
+      "aiChatLinks": [],
+      "aiUsed": []
+    },
+    {
+      "folderName": "邵靖榕_快樂",
+      "studentName": "邵靖榕",
+      "emotion": "快樂",
+      "avgStars": 3.8,
+      "finalHtmlRel": "邵靖榕_快樂/html/final__ac0906657680@gmail.com_.html",
+      "scoreCsvRel": "邵靖榕_快樂/邵靖榕_快樂_評分表.csv",
+      "radarSvgRel": "邵靖榕_快樂/邵靖榕_快樂_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (3.8★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★",
+          "以圖片上傳快樂意象，要求轉成可互動、自適應之 HTML；後續追加「陽光灑進、光暈、喜悅表情」等氛圍描述，意圖從視覺到氛圍層級漸進明確。",
+          "「這是我對於快樂的意象，請幫我用這個情緒作為靈感，做成html網頁檔 1. 要能用滑鼠左鍵跟網頁互動 2. 網頁大小要能自適應」；「我想要環境有陽光灑進的效果，粒子周圍出現淡淡光暈，表情是喜悅、快樂的」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★",
+          "從圓形角色、點點、斜線轉譯為漂浮粒子、連線與地面感；再升級為斜向光束、shadowBlur 光暈與微笑弧線，審美與快樂意象一致。",
+          "「陽光灑進的效果，粒子周圍出現淡淡光暈，表情是喜悅、快樂的」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★★",
+          "初次即給完整 HTML 與設計概念對應；第二輪三點需求（陽光、光暈、喜悅）一次提出，AI 整合為單一版本，迭代簡潔。",
+          "「我想要環境有陽光灑進的效果…」；ChatGPT 回覆「設計轉譯說明」並給最終版本"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★",
+          "需求涵蓋左鍵互動、自適應與氛圍強化；成品具 resize、粒子邊界與連線邏輯，基本使用情境完整。",
+          "「要能用滑鼠左鍵跟網頁互動」「網頁大小要能自適應」"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★",
+          "能接受「快樂粒子」「連線」「斜向光束」「radial gradient」等描述並提出具體氛圍需求；較少主動反饋技術術語，多為情境描述。",
+          "「陽光灑進」「淡淡光暈」「喜悅、快樂」等情感用語為主"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,80 314,163 271,297 129,297 114,172\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"80\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"314\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"114\" cy=\"172\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">邵靖榕_快樂 (4-4-4-4-3)</text>\n</svg>",
+      "textConcept": "設計理念 \n我特別喜歡這種光束。每每經過學校這⼀個⾓落，我便會為此駐⾜停留，靜靜觀賞它的美好。 \n這種無以名狀的快樂，讓我感到好療癒，彷彿是陽光下的空氣粒⼦正在向我打招呼、說說話。 \n因此，這個設計，我想要嘗試透過這種⾃然現象，讓⼈感受到快樂的實感。",
+      "adjectives": "⼀句話形容 \n光束撒下的剎那，療癒了潛在的⾃我。",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "邵靖榕_快樂/圖像靈感.heic",
+        "邵靖榕_快樂/文字靈感.heic"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/699c8666-6c0c-8002-a40f-e80a5fc80e30"
+      ],
+      "aiUsed": [
+        "ChatGPT"
+      ]
+    },
+    {
+      "folderName": "鍾佩蓉_恐懼",
+      "studentName": "鍾佩蓉",
+      "emotion": "恐懼",
+      "avgStars": 3.8,
+      "finalHtmlRel": "鍾佩蓉_恐懼/02. html/final鍾佩蓉.html",
+      "scoreCsvRel": "鍾佩蓉_恐懼/鍾佩蓉_恐懼_評分表.csv",
+      "radarSvgRel": "鍾佩蓉_恐懼/鍾佩蓉_恐懼_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (3.8★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "ChatGPT",
+          "★★★★",
+          "以圖片上傳傳達情緒靈感，並要求產出可互動、自適應之 .html；需求簡要（左鍵互動、自適應、同對話串公開分享），意圖清楚但較依賴視覺而非文字拆解。",
+          "「請幫我的情緒靈感做成.html網頁檔，並給我程式碼。a. 要能用滑鼠左鍵與網頁互動 b. 網頁大小要自適應…c. 請保持在同一個對話串和AI聊天並設為公開，網址分享。」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "ChatGPT",
+          "★★★★",
+          "上傳圖片作為情緒切片靈感，AI 解讀為輪廓線、擾動與明暗切換；成品具「情緒切片」標題、波紋變形與 R/S/空白鍵操作，審美與互動有對應。",
+          "Uploaded an image + 「請幫我的情緒靈感做成.html網頁檔」"
+        ],
+        [
+          "溝通效率與迭代",
+          "ChatGPT",
+          "★★★★",
+          "單次需求即涵蓋互動、自適應與分享方式；AI 說明無法代為公開但提供 GitHub Pages/Netlify 作法，並給出完整單一檔案 HTML，溝通直接。",
+          "「請幫我的情緒靈感做成.html網頁檔，並給我程式碼」；ChatGPT 回覆「已思考 16s」並提供下載與公開方式"
+        ],
+        [
+          "環境預見與判斷",
+          "ChatGPT",
+          "★★★★",
+          "明確要求自適應、左鍵互動與 DPR 處理；成品含 R 重置、S 截圖、空白鍵切換明暗，具基本使用情境考量。",
+          "「要能用滑鼠左鍵與網頁互動」「網頁大小要自適應，能跟著視窗大小改變」"
+        ],
+        [
+          "生字內化與演化",
+          "ChatGPT",
+          "★★★",
+          "對話中較少出現技術名詞的主動反饋；能接受 AI 提供的 Canvas、CSS、單一檔案與公開部署建議，學習與應用多為被動接收。",
+          "主要為上傳圖片與三點需求，較少在後續追問或引用 AI 術語"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,80 314,163 271,297 129,297 114,172\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"80\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"314\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"114\" cy=\"172\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">鍾佩蓉_恐懼 (4-4-4-4-3)</text>\n</svg>",
+      "textConcept": "最後檔案：\nfile:///Users/chaojipai/Downloads/fear_quiet_disturbance.html\n04一句話\n恐懼不是劇烈的波動，而是一層安靜卻不斷收緊的黑暗，將細碎與巨大一併吞沒，直到它們融為同一個重量。\n\n05一個形容詞\n窒息",
+      "adjectives": null,
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "鍾佩蓉_恐懼/01.手繪圖片.JPG",
+        "鍾佩蓉_恐懼/02. html/01.png",
+        "鍾佩蓉_恐懼/02. html/02.png",
+        "鍾佩蓉_恐懼/02. html/03.png"
+      ],
+      "aiChatLinks": [
+        "https://chatgpt.com/share/699c2cfb-ff50-8003-bc28-1498049e6197"
+      ],
+      "aiUsed": [
+        "ChatGPT"
+      ]
+    },
+    {
+      "folderName": "陳子怡_平靜",
+      "studentName": "陳子怡",
+      "emotion": "平靜",
+      "avgStars": null,
+      "finalHtmlRel": "陳子怡_平靜/HTML/final.html",
+      "scoreCsvRel": null,
+      "radarSvgRel": null,
+      "scoreRows": [],
+      "radarSvgContent": null,
+      "textConcept": "Core\nConcept\n《泡沫之境  |  THE LAND OF FOAM 》\n這是⼀個為了緩解焦慮⽽做的⼩空間。\n我想像中的「泡沫」是很溫柔的，它透明、輕盈，⼜帶著⼀\n點點包容感。在這個網⾴裡，沒有什麼雜亂的資訊，只有在\n那裡慢慢擴張、收縮的圓圈，節奏就像平穩的呼吸⼀樣。\n你可以隨意滑動滑⿏，看著泡泡在那裡擠來擠去、合在⼀\n起，這過程其實滿療癒⼈⼼的。那些⽣活裡覺得很煩、很惱\n⼈的壓⼒，在這邊好像都被磨平了。看著泡泡散開⼜重新出\n現，就像把⼼情洗過⼀遍，只剩下最簡單的平靜。\n⽂字理念",
+      "adjectives": "Project\nAdjectives\n形容詞\n平靜\n泡沫帶⾛塵垢後的清爽感\n靈感形容\n輕盈  (Ethereal)\n朦朧  (Atmospheric)\n律動  (Rhythmic)\n純淨  (Pristine)\n包容  (Enveloping)\nInspiration & Ideation",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [],
+      "aiChatLinks": [
+        "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221haUNmVtOP6oBexgjVejb3YHEPLu5wi9E%22%5D,%22action%22:%22open%22,%22userId%22:%22109593207951084348939%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
+        "https://aistudio.google.com/app/prompts?state=%7B%22ids%22%3A%5B%22178d6fioY4eU6T6aZYcu68dVgB3bau7uS%22%5D%2C%22action%22%3A%22open%22%2C%22userId%22%3A%22109593207951084348939%22%2C%22resourceKeys%22%3A%7B%7D%7D&usp=drive_link"
+      ],
+      "aiUsed": [
+        "其他"
+      ]
+    },
+    {
+      "folderName": "陳翰博_悲傷",
+      "studentName": "陳翰博",
+      "emotion": "悲傷",
+      "avgStars": 4.6,
+      "finalHtmlRel": "陳翰博_悲傷/HTML/05Final_a19990617chen@gmail.com(強化低音氛圍).html",
+      "scoreCsvRel": "陳翰博_悲傷/陳翰博_悲傷_評分表.csv",
+      "radarSvgRel": "陳翰博_悲傷/陳翰博_悲傷_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.6★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "將「散去後的悲傷」轉譯為粒子擴散、煙霧淡化、滑鼠痕跡與 Perlin Noise，並主動請求具象化物體靈感（蒲公英殘骸、餘燼、墨痕等），意圖與隱喻對應精準。",
+          "「我將創建一個網頁互動設計呈現<散去後的悲傷>…請轉給我HTML檔（內含必要的css 和javascript），另外關於<散去後的悲傷>你有什麼具象化的物體名稱也提供給我靈感」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★★",
+          "結合 p5.js 粒子、半透明覆蓋與聽覺設計（41.2Hz 三角波、Sub Bass、正弦波合成器），「記憶如煙花散去」與低頻震盪的氛圍一致；具象化名單直接啟發情感層次。",
+          "「接下來疊加音樂效果我希望添加像是 sub bass 或 sine wave與合成器音色，來立體化氛圍空間-在滑鼠靠近時隨著形狀浮現並散去」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★",
+          "以「散去後的悲傷」單一主題開場並索求靈感與程式碼，AI 一次給出粒子系統與具象化名單；追加音訊時明確描述「滑鼠靠近時隨著形狀浮現並散去」，迭代方向清楚。",
+          "「我將創建一個網頁互動設計呈現<散去後的悲傷>…請轉給我HTML檔」；「疊加音樂效果…sub bass 或 sine wave與合成器音色」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★",
+          "需求含網頁互動、即時創作轉 HTML、自適應與音訊觸發（使用者點擊後啟動）；程式中有 start-screen、點擊閾值與 Golden 粒子等設計，環境與互動考量完整。",
+          "提供 openprocessing 及時創作檔案並要求轉 HTML；音訊設計含「使用者點擊後才能啟動」的引導畫面"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★★",
+          "能吸收並反饋「Perlin Noise」「Sub Bass」「Triangle 波形」「BiquadFilter」「exponentialRampToValueAtTime」等術語，並以「41.2Hz 三角波震盪，記憶如煙花散去」整合聽覺與視覺敘事。",
+          "對話中接納「粒子系統」「低頻深沉音」「動態過濾」等描述並進一步要求疊加音樂效果"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 271,297 129,297 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">陳翰博_悲傷 (5-5-4-4-5)</text>\n</svg>",
+      "textConcept": "情境摘要\n在一個陽光溫柔而燦爛的平凡日子裡，妳毫無預警地闖進我的生活。\n妳的笑容，還有那在陽光下閃耀的金髮——究竟是天使的降臨，還是誤闖世界的怪人？\n妳走進我的空間，撥動我的情緒，讓原本平穩的節奏瞬間失序。\n當我終於鼓起勇氣靠近，當情感開始升溫，妳卻選擇瀟灑離開。\n身為一個慢熱的人，我之所以習慣保持距離，不是冷漠，而是害怕——\n害怕突如其來的闖入，也害怕毫無徵兆的離去。\n最後，只剩我一個人站在原地，看著如煙花後熱烈褪色，讓自己慢慢黯淡下來....情緒層次\n驚訝 → 慌亂 → 不安 → 靠近 → 失衡(高峰) → 抽離(她) → 空白(沒再被接住) → 餘溫裡的悲傷\n\n概念堆疊\n命名: 散去後的(定語)悲傷(名詞)\n靈感(過去創作): https://openprocessing.org/sketch/2840144/embed\n\n視覺互動構成: 點>線>面(簡單才能保有呼吸堆疊與帶入空間) \n隨機觸發機制-每當點擊次數達到一個隨機設定的臨界值（8 到 20 次之間），下一次點擊將觸發珍貴的「金色煙花」。這象徵在無盡的灰暗悲傷中，偶爾閃現驚喜般的溫暖回憶。\n色彩構成：白 > 黑  / (偶時金色)\n並非情緒沒有顏色，而是尚未辨識出情節的濾鏡；\n在未被定義的關係之前，一切便悄然散去。\n白，在現實中象徵純粹；\n然而在光之中，它其實是混合後的總和。\n黑，則恰好相反——\n在物質世界裡是吸納，在光學裡卻是純粹的缺席。\n於是，虛與實的交錯徬徨，\n就在白與黑的錯置之間悄然生成。\n偶時出現的金色，就像在茫茫人海裡，突然遇見那個很像妳的人。\n音樂構成: \nSub Bass (低頻深沉音)：一個持續的低頻正弦波，為空間提供厚度與壓抑感。\nSine Wave Synth (正弦波合成器)：當滑鼠移動（即悲傷產生的瞬間）。",
+      "adjectives": "驚訝 → 慌亂 → 不安 → 靠近 → 失衡(高峰) → 抽離(她) → 空白(沒再被接住) → 餘溫裡的悲傷\n→散去後的悲傷",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "陳翰博_悲傷/企劃/靈感架構.jpg"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/f5347bd9f9be"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "顏士傑_憤怒",
+      "studentName": "顏士傑",
+      "emotion": "憤怒",
+      "avgStars": 4.8,
+      "finalHtmlRel": "顏士傑_憤怒/Html files(from beginning to final versions)/final_jackyen8227@gmail.com.html",
+      "scoreCsvRel": "顏士傑_憤怒/顏士傑_憤怒_評分表.csv",
+      "radarSvgRel": "顏士傑_憤怒/顏士傑_憤怒_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.8★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Claude",
+          "★★★★★",
+          "首輪即用五維（顏色、形狀、質感、明暗、空間）拆解憤怒：深紅、鋸齒齒輪、粗糙／黑板／毛氈、暗沉無光、狹隘；具體意象為心臟在中央被齒輪包圍摩擦、左鍵點擊齒輪轉動、簡單2D、HTML 含 CSS/JS，並主動請 AI 提供憤怒具象化物體靈感，意圖與視覺邏輯一致。",
+          "「我選的情緒是憤怒」「用顏色,形狀,質感,明暗,空間來表達憤怒，顏色是深紅色,形狀是鋸齒齒輪,質感是粗糙,像黑板的材質,毛氈，明暗是有點暗沉無光，空間是狹隘」「有顆暗沉無光且深紅的心臟在網頁的正中央，被四周帶有多齒的鋸齒齒輪包圍且摩擦著」「滑鼠左鍵在鋸齒圖上點擊，所有鋸齒都會一起轉動，設計成簡單2Ｄ即可，給我HTML檔（內含必要的css 和javascript），另外關於憤怒你有什麼具象化的物體名稱也提供給我靈感」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Claude",
+          "★★★★★",
+          "從深紅心臟、鋸齒齒輪、粗糙毛氈、狹隘空間轉譯為漸層與粗糙線條、齒輪毛髮線條、岩漿／血液粒子、心臟跳動與點擊加速、齒輪減速摩擦；主動引用 AI brainstorm 依序加入放射狀裂痕、心臟火環、鐵籠邊框，內部爆發與外在囚禁的對比強，審美與憤怒的壓迫／爆發感對應佳。",
+          "「深紅色」「鋸齒齒輪」「粗糙」「毛氈」「暗沉無光」「狹隘」「心臟的四周會偶爾出現橘紅色的岩漿」「心臟都會變大又變小」「點擊時…鮮紅色的particle」「齒輪…變慢（增加摩擦心臟的感覺）」；「缺少了一些你上面brain storm的idea, 比如說lava, burning, cage」→ 先做1（裂痕）、接著做2（火環）、做3（鐵籠）"
+        ],
+        [
+          "溝通效率與迭代",
+          "Claude",
+          "★★★★★",
+          "首輪一次給足五維與互動、技術需求；第二輪補響應式、心臟畫大、距離小、岩漿；第三輪心臟位置、跳動、點擊加速、鮮紅粒子、齒輪變慢；第四輪心臟 Y 軸置中；第五輪主動問「怎麼安排 graphic」後依序要求裂痕、火環、鐵籠；遇 script error 明確說「重來」並獲乾淨版本；最後一輪微調齒輪轉速對比。迭代有節奏、需求具體。",
+          "「響應式設計」「心臟畫大一點」「齒輪之間距離很小，幾乎有摩擦的感覺」「橘紅色的岩漿」；「心臟放在四個齒輪的正中間」「心臟變大又變小」「mouse left button click時…心臟…頻率暫時加速」「齒輪…變慢」；「重來，你遇到script error了」；「在還沒有按下mouse 之前，讓齒輪轉得比現在快一點」"
+        ],
+        [
+          "環境預見與判斷",
+          "Claude",
+          "★★★★",
+          "需求含響應式、左鍵互動、多裝置／觸控；實作具 resize、心臟跳動與點擊加速、齒輪減速、岩漿／血液粒子、放射狀裂痕、火環、鐵籠、轉速對比，視覺層次與互動完整；技術面為逐步追加而非一次預見，故略扣一星。",
+          "「可以在任何的device打開都不失format」；AI 實作響應式、觸控、心臟跳動邏輯、齒輪減速、裂痕／火環／鐵籠繪製、轉速參數調整"
+        ],
+        [
+          "生字內化與演化",
+          "Claude",
+          "★★★★★",
+          "能運用「質感」「明暗」「空間」「狹隘」「毛氈」「岩漿」「響應式」「心臟跳動」「齒輪摩擦」等語彙，並接受「壓抑的爆發」「摩擦壓迫感」等描述；主動引用 AI 提供的 brainstorm（lava, burning, cage）要求依序實作，生字內化與視覺演化清楚。",
+          "「質感是粗糙,像黑板的材質,毛氈」「空間是狹隘」「岩漿」；「缺少了一些你上面brain storm的idea, 比如說lava, burning file, cage」→ 先做1、接著做2、做3"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 343,154 288,321 129,297 57,154\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"343\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"288\" cy=\"321\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"57\" cy=\"154\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">顏士傑_憤怒 (5-5-5-4-5)</text>\n</svg>",
+      "textConcept": "憤怒情緒視覺化 - 設計理念\n核心概念：內在爆發與外在囚禁的矛盾\n這個作品探討憤怒最本質的矛盾性：一種渴望爆發卻被壓抑、想要宣洩卻無處可去的情緒狀態。設計透過多層次的視覺隱喻，呈現憤怒從潛伏、累積到爆發的完整過程。\n\n視覺元素與象徵意義\n🫀 跳動的心臟 - 情緒核心\n暗沉的深紅色：壓抑的、無光澤的情緒狀態\n持續跳動：情緒永遠不會完全平靜，隨時可能爆發\n粗糙質感：像毛氈般的表面，象徵情緒的粗礪與不適\n點擊後狂跳：憤怒被觸發時的失控狀態，心跳加速、血壓上升\n⚙️ 鋸齒齒輪 - 摩擦與壓迫\n四個齒輪包圍：來自四面八方的壓力源（工作、人際、環境、自我）\n鋸齒形狀：尖銳、具攻擊性，代表外在刺激的傷害性\n毛髮質感：粗糙、扎人，增強不適感\n旋轉運動：持續不斷的摩擦，象徵壓力的恆常性\n點擊後減速：當情緒爆發時，外界彷彿慢了下來，內心與外界的時間感出現落差\n🌋 岩漿與血液粒子 - 內在能量\n橘紅色岩漿：平時持續釋放的低強度怒火，像地底暗流\n鮮紅色血液：爆發時噴發的高強度情緒，像傷口湧出的血\n隨機噴發：情緒能量的不可預測性\n向外擴散：內在能量試圖向外釋放\n🔥 火焰環 - 燃燒的憤怒\n環繞心臟：憤怒在內心周圍燃燒，隨時可能吞噬一切\n跳動搖曳：不穩定的情緒狀態\n點擊後暴漲：憤怒瞬間失控，火勢蔓延\n明亮色彩：高明度的橘黃色，象徵憤怒的能量和破壞力\n⚡ 放射狀裂痕 - 即將崩潰\n從心臟向外輻射：內在壓力撕裂外在表象\n不規則分支：崩潰的不可控性\n深紅色：像乾涸的血跡，象徵舊傷與創痕\n靜態存在：過去累積的傷害永久存在\n🔒 鐵籠邊框 - 社會規範的束縛\n四周包圍：社會期待、道德規範的限制\n鐵鏽材質：陳舊、僵化的規則系統\n漸層淡出：束縛從外向內施加壓力\n無法逃脫：憤怒被困在內心，無處宣洩\n\n空間設計的隱喻\n狹窄的空間\n心臟與齒輪之間的距離極小，幾乎貼合\n象徵「透不過氣」的壓迫感\n沒有緩衝、沒有喘息空間\n層次關係\n從內到外：裂痕（過去創傷）→ 齒輪（外在壓力）→ 粒子/火焰（情緒能量）→ 心臟（核心自我）→ 鐵籠（社會束縛）\n這個層次反映了憤怒的生成路徑：過去的傷害 + 外在壓力 + 內在能量累積 = 被困住的爆發\n\n色彩策略\n暗沉的紅色系\n深紅 #2a0505 到 #4a0a0a：壓抑的、內斂的憤怒\n不是鮮豔的紅，而是暗啞的紅，象徵「無光的心臟」\n高彩度的橘紅/黃\n火焰與岩漿：#ff4500、#ffff00\n象徵憤怒的能量、力量、破壞性\n明暗對比：內心暗沉 vs. 外放能量明亮\n鐵鏽棕紅\n鐵籠：#2a1a1a、#3a2020\n陳舊、腐蝕、僵化的束縛\n\n互動設計的意義\n點擊 = 觸發憤怒\n現實中的憤怒往往由某個特定事件觸發，點擊模擬這個「最後一根稻草」的時刻\n點擊後的連鎖反應\n心臟狂跳 - 生理反應\n齒輪減速 - 時間感扭曲，世界彷彿慢動作\n火焰暴漲 - 情緒失控\n血液噴發 - 內在創傷湧現\n約5秒後恢復 - 憤怒的短暫性與週期性\n\n動態效果的哲學\n永不停歇的運動\n齒輪持續旋轉：壓力永不停止\n心臟持續跳動：情緒永遠存在\n粒子持續噴發：能量持續累積\n火焰持續搖曳：憤怒隨時可能爆發\n象徵：憤怒不是單一事件，而是持續的狀態\n週期性與重複性\n心臟的跳動、火焰的閃爍、齒輪的旋轉，都是週期性的 象徵：憤怒會反覆出現，是人類情緒的自然循環\n\n整體隱喻\n這個作品呈現的是一個被困住的火山：\n內部（心臟、岩漿、火焰）想要爆發\n外部（齒輪、鐵籠）施加壓力與束縛\n裂痕顯示表面即將崩潰\n狹窄的空間讓壓力無處釋放\n最終想傳達的訊息： 憤怒不是單純的「壞情緒」，而是內在能量與外在壓力交互作用的複雜結果。它既有破壞性（火焰、鋸齒），也有合理性（摩擦、壓迫）。理解憤怒，就是理解這份被困住、想掙脫卻無法掙脫的矛盾與痛苦。\n\n設計手法總結\n✅ 具象化抽象情緒 - 用視覺元素具體呈現無形的感受\n✅ 多層次隱喻 - 每個元素都有多重意義\n✅ 矛盾對立 - 內部爆發 vs. 外部囚禁\n✅ 互動敘事 - 透過點擊體驗情緒的觸發與宣洩\n✅ 動態表現 - 用運動和變化模擬情緒的流動性",
+      "adjectives": "囚禁,障礙,摩擦,內耗,隱性的怒氣到外放的怒氣",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "顏士傑_憤怒/企劃/靈感A.jpg",
+        "顏士傑_憤怒/企劃/靈感Ｂ.jpg"
+      ],
+      "aiChatLinks": [
+        "https://claude.ai/share/a2411284-5b71-4e91-ae20-455ee8c2bf6e"
+      ],
+      "aiUsed": [
+        "Claude"
+      ]
+    },
+    {
+      "folderName": "黃政文_恐懼",
+      "studentName": "黃政文",
+      "emotion": "恐懼",
+      "avgStars": 4.2,
+      "finalHtmlRel": "黃政文_恐懼/Final.html",
+      "scoreCsvRel": "黃政文_恐懼/黃政文_恐懼_評分表.csv",
+      "radarSvgRel": "黃政文_恐懼/黃政文_恐懼_雷達圖.svg",
+      "scoreRows": [
+        [
+          "評分項目",
+          "使用 AI",
+          "得分 (4.2★)",
+          "犀利點評",
+          "原文擷取 (學生指令)"
+        ],
+        [
+          "意圖解析與拆解",
+          "Gemini",
+          "★★★★★",
+          "將「恐懼」具象化為呼吸式縮放、裂痕、長按層級、暗角與有機輪廓，規範完整且具互動藝術與氛圍感；需求條列清晰，技術方案（Canvas、CSS Variables、狀態管理）對應明確。",
+          "「我想要作互動式網頁，要符合以下規範：他是自適應網頁…滑鼠移動 > 背景產生局部扭曲…長按 10 秒 > 輪廓透明 25%…滾動 100% > 畫面出現中央選擇區塊」"
+        ],
+        [
+          "審美轉譯與內涵",
+          "Gemini",
+          "★★★★",
+          "以「氛圍感」「Atmospheric Horror」定位視覺風格，要求無裂痕/無輪廓的初始態與漸進揭露；後續接受程序化生成取代圖片，具象化有機輪廓與扭曲效果。",
+          "「不要用圖片改用程式碼運算」「給我HTML完整程式碼」"
+        ],
+        [
+          "溝通效率與迭代",
+          "Gemini",
+          "★★★★",
+          "一次給足完整規範，AI 回覆即提供結構化方案與程式碼；追加「不用圖片、程式碼運算」與「完整 HTML」時能快速收斂為單一檔案實作。",
+          "「不要用圖片改用程式碼運算」「給我HTML完整程式碼」"
+        ],
+        [
+          "環境預見與判斷",
+          "Gemini",
+          "★★★★",
+          "需求已含自適應、多種輸入（滑鼠移動/點擊/長按/滾輪）與狀態累積（裂痕永久、輪廓殘留）；AI 建議震動動畫、效能最佳化與遮罩圖使用，具產品思維。",
+          "規範中已明確「自適應網頁」「滑鼠左鍵點擊（單擊）」「長按 1 秒 > 畫面微震動」等層級與恢復條件"
+        ],
+        [
+          "生字內化與演化",
+          "Gemini",
+          "★★★★",
+          "能運用「程序化生成」「Backdrop-filter」「Simplex Noise」等術語與 AI 回覆中的技術建議；需求從圖片改為純程式運算時表述清楚。",
+          "「不要用圖片改用程式碼運算」；對話中接受「Vanilla JS 搭配 CSS Variables」「requestAnimationFrame」等用語"
+        ]
+      ],
+      "radarSvgContent": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-28 0 472 400\" width=\"400\" height=\"400\">\n  <rect x=\"-28\" y=\"0\" width=\"500\" height=\"400\" fill=\"#ffffff\"/>\n  <title>5 Dimensions Radar</title>\n  <g fill=\"none\" stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <circle cx=\"200\" cy=\"200\" r=\"30\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"60\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"90\"/>\n    <circle cx=\"200\" cy=\"200\" r=\"120\"/>\n  </g>\n  <circle cx=\"200\" cy=\"200\" r=\"150\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\"/>\n  <g stroke=\"#d0d0d0\" stroke-width=\"0.8\">\n    <line x1=\"200\" y1=\"200\" x2=\"200\" y2=\"50\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"314\" y2=\"162\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"271\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"129\" y2=\"297\"/>\n    <line x1=\"200\" y1=\"200\" x2=\"58\" y2=\"154\"/>\n  </g>\n  <text x=\"200\" y=\"202\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">0</text>\n  <text x=\"200\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">1</text>\n  <text x=\"200\" y=\"140\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">2</text>\n  <text x=\"200\" y=\"110\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">3</text>\n  <text x=\"200\" y=\"80\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">4</text>\n  <text x=\"200\" y=\"50\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">5</text>\n  <polygon points=\"200,50 314,163 271,297 129,297 86,163\" fill=\"#87ceeb\" fill-opacity=\"0.45\" stroke=\"#4169e1\" stroke-width=\"2\"/>\n  <circle cx=\"200\" cy=\"50\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"314\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"271\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"129\" cy=\"297\" r=\"3\" fill=\"#4169e1\"/>\n  <circle cx=\"86\" cy=\"163\" r=\"3\" fill=\"#4169e1\"/>\n  <rect x=\"98\" y=\"19\" width=\"204\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"30\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">意圖解析與拆解</text>\n  <rect x=\"318\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"384\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">審美轉譯與內涵</text>\n  <rect x=\"218\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"284\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">溝通效率與迭代</text>\n  <rect x=\"50\" y=\"309\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"116\" y=\"320\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">環境預見與判斷</text>\n  <rect x=\"-22\" y=\"149\" width=\"132\" height=\"16\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"44\" y=\"160\" text-anchor=\"middle\" font-size=\"11\" fill=\"#000\">生字內化與演化</text>\n  <rect x=\"108\" y=\"373\" width=\"184\" height=\"20\" fill=\"#ffffff\" stroke=\"#e0e0e0\" stroke-width=\"0.5\" rx=\"2\"/>\n  <text x=\"200\" y=\"387\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"bold\" fill=\"#000\">黃政文_恐懼 (5-4-4-4-4)</text>\n</svg>",
+      "textConcept": "一個形容詞\n理智崩解前透明的裂縫\n\n文字理念\n我選擇的是平靜。\n\n我選擇的是恐懼。\n我的恐懼，不是來自黑暗，\n而是來自「自己」。\n那是一種在尖叫即將出口前的停頓，\n在放手去做之前的最後一秒。\n我知道只要跨出去，\n只要真的喊出來、真的做了，\n某種東西就會被打開。\n那不是世界的門，\n那是我自己的門。\n我彷彿已經看見那個版本的我——\n輪廓清晰、觸手可及，\n瘋狂、自由、不再壓抑。\n他離我很近。\n近到只要我願意失控一次，\n他就會取代我。\n但可怕的是——\n我不確定我還能不能回來。\n恐懼不是害怕做不到，\n而是害怕做到了之後，\n再也無法收手。\n於是我在崩潰邊緣學會克制，\n在喉嚨發燙時選擇沉默，\n在想衝出去時把自己拉回來。\n那種對自己的壓迫，\n比任何外在威脅都更真實。\n因為我知道——\n瘋子不是別人。\n是我。\n而我正在努力不要成為他。\n\n\nAI 對話串網址:\nhttps://gemini.google.com/share/385f6874d512",
+      "adjectives": null,
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "黃政文_恐懼/參考圖1.jpg",
+        "黃政文_恐懼/參考圖2.jpg",
+        "黃政文_恐懼/參考圖3.jpg"
+      ],
+      "aiChatLinks": [
+        "https://gemini.google.com/share/385f6874d512"
+      ],
+      "aiUsed": [
+        "Gemini"
+      ]
+    },
+    {
+      "folderName": "黃鈺倢_渴望",
+      "studentName": "黃鈺倢",
+      "emotion": "渴望",
+      "avgStars": null,
+      "finalHtmlRel": "黃鈺倢_渴望/Final_(asa2841677@gmail.com).html",
+      "scoreCsvRel": null,
+      "radarSvgRel": null,
+      "scoreRows": [],
+      "radarSvgContent": null,
+      "textConcept": "概要(Logline)\n\n日夜前行，在一方黑夜中點綴絢爛繁星，在無盡日夜畫上宇宙。\n\n\n\n\n\n01 日夜交替\n渴望由無數日夜形成，無論你做不做、前不前行，時間也永遠不會為你停下腳步，但你仍選擇可以駐留在原地，或是走慢點，欣賞或忽略這一路風景，照你想要的腳步前行，俗話說吃飽睡好才能活得長久。\n功能：請用滑鼠左鍵點擊正中間的日夜，方可前行。\n\n\n02 點綴畫布\n你都追到前方了，為什麼不染上一點自己喜愛的顏色呢？\n功能：時間有限，但還是能挑個顏色吧。\n\n03 宇宙\n畫布也可以是在黑夜中的宇宙。\n功能：滑動滑鼠滾輪可以看見點綴的畫布。",
+      "adjectives": "介於虛實的，浪漫卻現實的。",
+      "adjectivesImageRel": null,
+      "inspirationImageRels": [
+        "黃鈺倢_渴望/靈感紙.jpg",
+        "黃鈺倢_渴望/靈感紙02.jpg"
+      ],
+      "aiChatLinks": [],
+      "aiUsed": []
+    }
+  ],
+  "emotions": [
+    "平靜",
+    "快樂",
+    "恐懼",
+    "悲傷",
+    "憤怒",
+    "渴望",
+    "興奮",
+    "開心"
+  ],
+  "ais": [
+    "ChatGPT",
+    "Claude",
+    "Gemini",
+    "其他"
+  ],
+  "conclusionReport": "============================================================\n評分總覽報告（互動式情緒網頁／AI 協作作業）\n============================================================\n\n有效評分人數：20 人\n整體平均星等：4.6★\n\n----------------------------------------\n一、各維度平均與 5★／4★ 比例（可圖表化）\n----------------------------------------\n\n  意圖解析與拆解：平均 4.85★ ｜ 5★ 85.0% ｜ 4★ 15.0%\n  審美轉譯與內涵：平均 4.80★ ｜ 5★ 80.0% ｜ 4★ 20.0%\n  溝通效率與迭代：平均 4.50★ ｜ 5★ 55.0% ｜ 4★ 40.0%\n  環境預見與判斷：平均 4.35★ ｜ 5★ 35.0% ｜ 4★ 65.0%\n  生字內化與演化：平均 4.50★ ｜ 5★ 65.0% ｜ 4★ 20.0%\n\n----------------------------------------\n二、學生普遍優點\n----------------------------------------\n\n  · 表現最好的維度：「意圖解析與拆解」（平均 4.85★，5★ 比例 85.0%）\n  · 多數學生能清楚拆解意圖、具體描述情緒與技術需求，並在迭代中維持一致目標。\n  · 多數作品具備左鍵互動與自適應（RWD）需求，且能與 AI 多輪修正至滿意。\n  · 審美語彙（顏色、質感、動態）與成品轉譯多能對應，情緒內涵可見。\n\n----------------------------------------\n三、學生普遍可改進處（缺點）\n----------------------------------------\n\n  · 相對較弱的維度：「環境預見與判斷」（平均 4.35★，5★ 比例 35.0%）\n  · 部分同學首輪未一次給足風格／動態語彙或技術條件，需多輪才補齊。\n  · 環境預見（裝置、邊界、效能）常為「做到再補」而非事先提出。\n  · 生字內化：可多運用課程與 AI 回饋的術語，讓指令更精準。\n\n----------------------------------------\n四、分數高低主要差在哪裡？\n----------------------------------------\n\n  高分组（平均 ≥ 4.5★，14 人）vs 低分组（平均 < 4.0★，3 人）維度差異：\n\n  · 意圖解析與拆解：高分组平均較低分组多 1.00★\n  · 審美轉譯與內涵：高分组平均較低分组多 0.67★\n  · 溝通效率與迭代：高分组平均較低分组多 1.12★\n  · 環境預見與判斷：高分组平均較低分组多 0.50★\n  · 生字內化與演化：高分组平均較低分组多 1.86★\n\n  差異最大的維度：「生字內化與演化」—— 高分组在此維度明顯較佳，整體而言高分组在意圖拆解、溝通迭代與語彙運用上通常更具體、一輪內給足或快速補齊。\n\n----------------------------------------\n五、可圖表化的百分比資料摘要\n----------------------------------------\n\n  · 各維度 5★ 比例（%）：意圖解析與拆解 85.0%、審美轉譯與內涵 80.0%、溝通效率與迭代 55.0%、環境預見與判斷 35.0%、生字內化與演化 65.0%\n  · 各維度 4★ 比例（%）：意圖解析與拆解 15.0%、審美轉譯與內涵 20.0%、溝通效率與迭代 40.0%、環境預見與判斷 65.0%、生字內化與演化 20.0%\n  · 各維度平均星等：已寫入「評分總覽_圖表資料.csv」，可用 Excel 繪製長條圖／雷達圖。\n  · 每位學生五維分數與平均：已寫入「評分總覽_各生.csv」，可排序、篩選、繪製分布。\n\n----------------------------------------\n六、對 AI 而言：何謂好 prompt／高品質使用方式？\n----------------------------------------\n\n  根據本批評分維度與高分组表現，整理出以下幾點，供日後與 AI 協作時參考：\n\n  1. 一次給足「目的＋約束」\n     明確說出你要的產物（例如：可互動的 HTML 網頁、程式碼）、情緒主題，以及技術條件（滑鼠左鍵、自適應、不要照片等），減少來回補問。\n\n  2. 用具體語彙描述「長相」與「行為」\n     不只說「快樂」「悲傷」，而是補充顏色、形狀、質感、明暗、動態（例如：緩慢墜落、點擊時震動、放射狀、浮誇）。AI 才能對應到可實作的視覺與互動。\n\n  3. 迭代時一句話鎖定一個改動\n     例如：「花朵再大一點」「不要衝出畫面」「加上不規則放射狀」—— 一次一個焦點，方便 AI 對準修改，也方便你驗收。\n\n  4. 事先提使用情境與限制\n     若需要多裝置、觸控、邊界不超出、效能或數量上限，在第一輪或第二輪就說出來，比「做到再補」更容易得到完整實作。\n\n  5. 吸收並重用 AI 與課程的用語\n     當 AI 回覆出現「RWD」「動態語彙」「飽和度」等詞，下一輪可試著用同一套語彙微調需求，指令會更精準、產出更貼近預期。\n\n  6. 出錯時簡潔指出並要求修正\n     例如：「重來，你遇到 script error 了」「這裡不對，請改成……」—— 不糾結長篇解釋，直接給行為指令，有助快速收斂。\n\n============================================================",
+  "conclusionPerStudentCsv": "學生,使用AI,意圖解析與拆解,審美轉譯與內涵,溝通效率與迭代,環境預見與判斷,生字內化與演化,平均\n周昱翔_開心,Gemini,5,4,4,4,5,4.4\n嚴文浩_渴望,Gemini,5,5,5,5,5,5.0\n張哲瑜_平靜,Gemini,5,5,5,5,5,5.0\n張永成_悲傷,Gemini,5,5,5,5,4,4.8\n戴抒瑜_渴望,ChatGPT,5,5,5,4,4,4.6\n曾莉榛_快樂,Gemini,5,5,5,4,5,4.8\n林曉萱_悲傷,Gemini,5,5,5,5,5,5.0\n楊漢軒_興奮,Claude,5,5,5,5,5,5.0\n楊靜慧_悲傷,Gemini,5,5,5,5,5,5.0\n王建勛_恐懼,ChatGPT,4,5,3,4,3,3.8\n王欣怡_悲傷,ChatGPT,5,5,4,4,5,4.6\n盧品安_恐懼,Gemini,5,5,4,4,4,4.4\n翁圓舒_快樂,ChatGPT,5,5,5,5,5,5.0\n蔡佳翰_平靜,ChatGPT,5,5,4,4,5,4.6\n賴眉均_恐懼,ChatGPT,5,5,5,4,5,4.8\n邵靖榕_快樂,ChatGPT,4,4,4,4,3,3.8\n鍾佩蓉_恐懼,ChatGPT,4,4,4,4,3,3.8\n陳翰博_悲傷,Gemini,5,5,4,4,5,4.6\n顏士傑_憤怒,Claude,5,5,5,4,5,4.8\n黃政文_恐懼,Gemini,5,4,4,4,4,4.2",
+  "conclusionChartDataCsv": "維度,平均星等,5★人數,5★比例%,4★人數,4★比例%,3★以下人數\n意圖解析與拆解,4.85,17,85.0,3,15.0,0\n審美轉譯與內涵,4.8,16,80.0,4,20.0,0\n溝通效率與迭代,4.5,11,55.0,8,40.0,1\n環境預見與判斷,4.35,7,35.0,13,65.0,0\n生字內化與演化,4.5,13,65.0,4,20.0,3"
+}

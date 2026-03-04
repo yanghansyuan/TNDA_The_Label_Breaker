@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BACKROOMS - LEVEL 0</title>
+    <style>
+        :root {
+            --backrooms-yellow: #d1b87d;
+            --wall-shadow: rgba(0,0,0,0.15);
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: #000;
+            overflow: hidden; cursor: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* 噪點層 */
+        .noise {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.12; pointer-events: none; z-index: 100;
+        }
+
+        /* 核心背景容器 */
+        #abyss-container {
+            position: fixed; width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 3s cubic-bezier(0.4, 0, 0.2, 1), filter 3s;
+        }
+
+        /* 後室牆面背景 */
+        #perspective-bg {
+            position: absolute; width: 150%; height: 150%;
+            background-color: var(--backrooms-yellow);
+            /* 模擬後室牆壁紋理與踢腳線 */
+            background-image: 
+                linear-gradient(var(--wall-shadow) 2px, transparent 2px),
+                linear-gradient(90deg, var(--wall-shadow) 2px, transparent 2px),
+                linear-gradient(to bottom, transparent 70%, rgba(0,0,0,0.2) 70.5%, #7a6e4d 71%);
+            background-size: 100px 100px, 100px 100px, 100% 100%;
+            z-index: 1;
+            transition: transform 0.2s ease-out;
+        }
+
+        /* 手電筒遮罩 */
+        #flashlight {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            -webkit-mask-image: radial-gradient(circle 220px at 50% 50%, black 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+            mask-image: radial-gradient(circle 220px at 50% 50%, black 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+            z-index: 10;
+        }
+
+        /* 中心說明文字 */
+        .instruction {
+            position: absolute; width: 100%; text-align: center;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #4a4532; z-index: 5; pointer-events: none;
+        }
+
+        h1 { font-size: 2.2rem; letter-spacing: 0.8rem; margin: 0; filter: blur(2px); opacity: 0.8; }
+        p { font-size: 0.9rem; letter-spacing: 0.2rem; margin-top: 15px; opacity: 0.6; }
+
+        /* 點擊產生的模糊人影 */
+        .ghost {
+            position: absolute;
+            width: 120px; height: 280px;
+            background: #000;
+            filter: blur(35px);
+            border-radius: 40% 40% 20% 20%;
+            pointer-events: none;
+            z-index: 4;
+            animation: ghost-fade 1.5s ease-out forwards;
+        }
+
+        @keyframes ghost-fade {
+            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+            20% { opacity: 0.6; transform: scale(1) translateY(0px); }
+            100% { opacity: 0; transform: scale(1.1) translateY(-30px); }
+        }
+
+        /* 背景縮小（吸入感） */
+        .sucked-in { transform: scale(0.75); filter: blur(10px) brightness(0.5); }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="noise"></div>
+    
+    <div id="flashlight">
+        <div id="abyss-container">
+            <div id="perspective-bg"></div>
+            <div class="instruction">
+                <h1 id="title">後室規範：生存指南</h1>
+                <p id="desc">保持移動。不要直視陰影。點擊牆面確認實體存在。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('abyss-container');
+        const bg = document.getElementById('perspective-bg');
+        const mask = document.getElementById('flashlight');
+        const title = document.getElementById('title');
+        
+        let audioCtx, droneGain;
+        let idleTimer;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                droneGain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = 42; 
+                droneGain.gain.value = 0.04;
+                osc.connect(droneGain);
+                droneGain.connect(audioCtx.destination);
+                osc.start();
+            }
+        }
+
+        function playThud(freq, vol) {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            g.gain.setValueAtTime(vol, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 1.5);
+        }
+
+        function handleMove(e) {
+            initAudio();
+            const x = e.clientX;
+            const y = e.clientY;
+
+            // 1. 手電筒移動
+            mask.style.webkitMaskImage = `radial-gradient(circle 220px at ${x}px ${y}px, black 0%, rgba(0,0,0,0.5) 60%, transparent 100%)`;
+
+            // 2. 視差背景移動 (平面空間感)
+            const moveX = (x - window.innerWidth / 2) / 10;
+            const moveY = (y - window.innerHeight / 2) / 10;
+            bg.style.transform = `translate(${-moveX}px, ${-moveY}px)`;
+
+            // 3. 恢復縮小狀態 (只要一動就拉回來)
+            container.classList.remove('sucked-in');
+            
+            // 4. 監測停止不動
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                container.classList.add('sucked-in');
+                if (droneGain) droneGain.gain.setTargetAtTime(0.1, audioCtx.currentTime, 2);
+            }, 2000); // 2秒不動即觸發抽離感
+        }
+
+        window.addEventListener('mousemove', handleMove);
+
+        // 點擊產生模糊人影
+        window.addEventListener('mousedown', (e) => {
+            initAudio();
+            playThud(50, 0.6);
+
+            // 生成模糊人影
+            const ghost = document.createElement('div');
+            ghost.className = 'ghost';
+            
+            // 讓人在滑鼠位置附近隨機偏移
+            const offsetX = (Math.random() - 0.5) * 100;
+            ghost.style.left = (e.clientX - 60 + offsetX) + 'px';
+            ghost.style.top = (e.clientY - 140) + 'px';
+            
+            // 把人影加在背景層，這樣它會隨著背景視差移動
+            bg.appendChild(ghost);
+            
+            setTimeout(() => ghost.remove(), 1500);
+        });
+
+        // 隨機文字小跳動
+        setInterval(() => {
+            if(Math.random() > 0.95) {
+                title.style.transform = `translateX(${Math.random()*10-5}px)`;
+                setTimeout(() => title.style.transform = 'none', 50);
+            }
+        }, 100);
+
+    </script>
+</body>
+</html>

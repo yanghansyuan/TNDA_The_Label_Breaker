@@ -1,0 +1,2657 @@
+============================================================
+學生／資料夾: 張哲瑜_平靜
+擷取之連結數: 1
+============================================================
+
+----------------------------------------
+[連結 1] https://gemini.google.com/share/ebab91e3130c
+----------------------------------------
+登入
+Gemini
+關於 Gemini
+在新視窗中開啟
+Gemini 應用程式
+在新視窗中開啟
+訂閱
+在新視窗中開啟
+企業用途
+在新視窗中開啟
+情緒網頁設計：從雜訊到平靜
+https://gemini.google.com/share/ebab91e3130c
+透過「思考型」建立 2026年2月19日 下午02:41
+發布時間：2026年2月19日 下午09:16
+你說了
+
+＃背景
+
+我想要做一個互動式的網頁，網頁大小要遵循RWD設計，能夠自動調整視窗排版並適應不同的裝置，互動方式必須包含滑鼠左鍵點擊功能，去觸發不同的效果
+
+
+
+
+＃目的
+
+我要做一個跟「情緒」有關的互動式網頁，HTML格式，這個情緒主題是「平靜」，我想藉由滑鼠左鍵點擊的方式去觸發不同的情緒動畫，整體動畫過場需要流暢
+
+
+
+
+＃風格
+
+我想藉由簡單的線條，一直延伸出不同顏色、材質的平面，平靜的顏色必須符合Pantone 11-4201 Cloud Dancer色系，激動的顏色必須符合PANTONE 18-1438 Marsala
+
+
+
+
+＃動態構想
+
+當滑鼠游標經過時，動畫會是像雜訊一般，毫無章法，滑鼠左鍵點擊後，畫面的線條會是柔和的直線，或是接近直線的曲線
+
+這是一個非常有詩意的構想。將「情緒」轉化為視覺上的「混亂」與「秩序」，並透過 Pantone 色系的對比來呈現，能創造出一種深層的心理共鳴。
+
+為了實現你的需求，我建議使用 HTML5 Canvas API。這是處理大量線條動畫、流暢過場以及 RWD 縮放最有效率的方式。
+
+以下是為你設計的互動式網頁原型代碼。
+
+核心設計邏輯
+
+色彩計畫：背景預設為代表激動的 Marsala (#955251)，點擊後平穩過渡至 Cloud Dancer (#F0EEE9)。
+
+線條動態：
+
+平時（雜訊感）：線條會根據滑鼠位置產生隨機的抖動（Perlin Noise 概念），呈現不安的氛圍。
+
+點擊後（平靜感）：線條會透過插值運算（Lerp），平滑地拉直並放慢速度，形成柔和的平行線或曲面。
+
+互動網頁源碼 (HTML/CSS/JS)
+
+你可以直接將以下代碼存為 .html 檔案並在瀏覽器開啟。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒實驗室：從雜訊到平靜</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            cursor: crosshair;
+            transition: background-color 1.5s ease;
+        }
+
+        /* Pantone 18-1438 Marsala (激動/初始) */
+        body.agitated {
+            background-color: #955251;
+        }
+
+        /* Pantone 11-4201 Cloud Dancer (平靜/觸發) */
+        body.calm {
+            background-color: #F0EEE9;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #instruction {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: 2px;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            mix-blend-mode: difference;
+            color: white;
+        }
+    </style>
+</head>
+<body class="agitated">
+
+    <div id="instruction">點擊左鍵 尋找平靜</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const body = document.body;
+        let width, height;
+        let isCalm = false;
+        let particles = [];
+        const particleCount = 60;
+
+        // 初始化畫布
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initParticles();
+        }
+
+        window.addEventListener('resize', resize);
+
+        class Particle {
+            constructor(y) {
+                this.y = y;
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.points = [];
+                this.pointCount = 20;
+                this.noiseScale = 0.5;
+                this.speed = Math.random() * 2 + 1;
+            }
+
+            update() {
+                this.points = [];
+                for (let i = 0; i < this.pointCount; i++) {
+                    let px = (i / (this.pointCount - 1)) * width;
+                    let py;
+
+                    if (!isCalm) {
+                        // 雜訊模式：隨機抖動與波動
+                        let noise = (Math.random() - 0.5) * 50;
+                        py = this.y + Math.sin(Date.now() * 0.005 + i) * 20 + noise;
+                    } else {
+                        // 平靜模式：趨向直線
+                        py = this.y + Math.sin(Date.now() * 0.001 + i * 0.2) * 5;
+                    }
+                    this.points.push({x: px, y: py});
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.points[0].x, this.points[0].y);
+
+                for (let i = 1; i < this.points.length; i++) {
+                    // 使用二次貝茲曲線達到流暢過場
+                    const xc = (this.points[i].x + this.points[i-1].x) / 2;
+                    const yc = (this.points[i].y + this.points[i-1].y) / 2;
+                    ctx.quadraticCurveTo(this.points[i-1].x, this.points[i-1].y, xc, yc);
+                }
+
+                ctx.strokeStyle = isCalm ? 'rgba(149, 82, 81, 0.4)' : 'rgba(240, 238, 233, 0.6)';
+                ctx.lineWidth = isCalm ? 1 : 2;
+                ctx.stroke();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const step = height / particleCount;
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(i * step));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // 點擊事件
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // 左鍵
+                isCalm = !isCalm;
+                body.className = isCalm ? 'calm' : 'agitated';
+                document.getElementById('instruction').style.opacity = isCalm ? '0.3' : '1';
+                document.getElementById('instruction').innerText = isCalm ? "呼吸..." : "點擊左鍵 尋找平靜";
+            }
+        });
+
+        resize();
+        animate();
+    </script>
+</body>
+</html>
+
+設計亮點說明
+
+動態對比：
+
+在 "Agitated" (激動) 狀態下，我加入了一個隨機的 noise 變數，讓線條看起來在顫抖，顏色使用 Cloud Dancer 的淺色線條在 Marsala 深色背景上跳動，模擬焦慮感。
+
+在 "Calm" (平靜) 狀態下，線條會減緩波動頻率，並利用 quadraticCurveTo 進行平滑處理。線條顏色反轉，與背景形成低對比度的視覺感受。
+
+RWD 自適應：代碼中包含 window.addEventListener('resize', resize)，確保在手機、平板或桌機上，線條都能填滿整個視窗。
+
+材質與平面感：線條的密度（particleCount）被設定為 60 條，當它們趨於平緩時，視覺上會看起來像是一層層交疊的絲綢平面，符合你要求的延伸質感。
+
+您可以嘗試的下一步：
+
+增加音效：您是否希望在點擊時加入一段輕微的「低頻環境音」或是「白雜訊的消失」來增強沉浸感？
+
+材質細節：如果您希望線條更有「紙張」或「布料」的材質感，我們可以加入 Canvas 的 globalCompositeOperation 屬性來做疊加效果。
+
+需要我為您調整線條的密度或是加入特定的轉場速度嗎？
+
+你說了
+
+請直接給我可以直接使用的HTML代碼
+
+這是一份整合了 HTML5 Canvas、CSS3 變場動畫與 JavaScript 物理演算的完整代碼。
+
+這份代碼實現了：
+
+動態雜訊感：滑鼠游標移動時，局部線條會產生高頻破碎感（像電視雜訊）。
+
+平滑過渡：點擊左鍵後，所有線條會以「彈簧物理（Spring Physics）」的邏輯緩慢拉直，從激動轉為平靜。
+
+材質疊加：透過半透明線條重疊，創造出類似紙張或織品的平面質感。
+
+您可以直接將以下代碼複製並儲存為 .html 檔案（例如 calm.html）：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒實驗室：平靜與激動</title>
+    <style>
+        /* 色彩定義：Marsala (#955251) 與 Cloud Dancer (#F0EEE9) */
+        :root {
+            --marsala: #955251;
+            --cloud-dancer: #F0EEE9;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--marsala);
+            transition: background-color 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: none; /* 使用自定義圓點或隱藏 */
+        }
+
+        body.calm-mode {
+            background-color: var(--cloud-dancer);
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui-hint {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            pointer-events: none;
+            mix-blend-mode: difference;
+            color: #fff;
+            opacity: 0.6;
+            transition: opacity 1s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-hint">滑鼠滑過觸發雜訊，點擊左鍵切換平靜</div>
+    <canvas id="stage"></canvas>
+
+    <script>
+        const canvas = document.getElementById('stage');
+        const ctx = canvas.getContext('2d');
+        let width, height, lines = [];
+        let isCalm = false;
+        let mouse = { x: -1000, y: -1000 };
+        
+        // 設定參數
+        const LINE_COUNT = 45;       // 線條數量
+        const SEGMENTS = 60;         // 每條線的分段點（越多越流暢）
+        const NOISE_INTENSITY = 80;  // 雜訊強度
+        const COLORS = {
+            marsala: 'rgba(149, 82, 81, 0.6)',
+            cloudDancer: 'rgba(240, 238, 233, 0.7)'
+        };
+
+        class Line {
+            constructor(y) {
+                this.baseY = y;
+                this.points = [];
+                for (let i = 0; i <= SEGMENTS; i++) {
+                    this.points.push({
+                        x: (i / SEGMENTS) * window.innerWidth,
+                        y: y,
+                        currentY: y,
+                        targetY: y,
+                        vx: 0,
+                        vy: 0
+                    });
+                }
+            }
+
+            update() {
+                this.points.forEach((p, i) => {
+                    // 基礎目標是回歸原本的水平位置
+                    p.targetY = this.baseY;
+
+                    if (!isCalm) {
+                        // 激動模式：滑鼠距離判斷
+                        let dx = p.x - mouse.x;
+                        let dy = p.y - mouse.y;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < 250) {
+                            // 產生雜訊點
+                            let noise = (Math.random() - 0.5) * (NOISE_INTENSITY * (1 - dist/250));
+                            p.targetY += noise * 2;
+                        }
+                    } else {
+                        // 平靜模式：極微小的正弦波
+                        p.targetY += Math.sin(Date.now() * 0.001 + i * 0.1 + this.baseY) * 2;
+                    }
+
+                    // 彈簧物理運動
+                    let ay = (p.targetY - p.currentY) * 0.05;
+                    p.vy += ay;
+                    p.vy *= 0.85; // 阻尼
+                    p.currentY += p.vy;
+                });
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.points[0].x, this.points[0].currentY);
+
+                for (let i = 1; i < this.points.length - 1; i++) {
+                    let xc = (this.points[i].x + this.points[i + 1].x) / 2;
+                    let yc = (this.points[i].currentY + this.points[i + 1].currentY) / 2;
+                    ctx.quadraticCurveTo(this.points[i].x, this.points[i].currentY, xc, yc);
+                }
+
+                ctx.strokeStyle = isCalm ? COLORS.marsala : COLORS.cloudDancer;
+                ctx.lineWidth = isCalm ? 1.5 : 2.5;
+                ctx.stroke();
+                
+                // 填充平面感
+                if (isCalm && this.baseY % 100 === 0) {
+                   ctx.globalAlpha = 0.05;
+                   ctx.lineTo(width, height);
+                   ctx.lineTo(0, height);
+                   ctx.fillStyle = COLORS.marsala;
+                   ctx.fill();
+                   ctx.globalAlpha = 1;
+                }
+            }
+        }
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            lines = [];
+            let spacing = height / LINE_COUNT;
+            for (let i = 0; i <= LINE_COUNT; i++) {
+                lines.push(new Line(i * spacing));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            lines.forEach(line => {
+                line.update();
+                line.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // 事件監聽
+        window.addEventListener('resize', init);
+        
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // 左鍵點擊
+                isCalm = !isCalm;
+                document.body.classList.toggle('calm-mode');
+                document.getElementById('ui-hint').style.opacity = isCalm ? "0.2" : "0.6";
+            }
+        });
+
+        // 啟動
+        init();
+        animate();
+    </script>
+</body>
+</html>
+
+如何使用與調整？
+
+如何預覽：將代碼貼入記事本，存檔為 index.html，直接用瀏覽器開啟即可。
+
+調整流暢度：
+
+若覺得動畫太慢，可以調整第 95 行的 0.05（數值愈大彈回速度愈快）。
+
+若覺得線條太多造成效能負擔，可以減少第 46 行的 LINE_COUNT。
+
+視覺風格：
+
+激動時：深紅底色（Marsala）配上白色雜訊線條。
+
+平靜時：米白底色（Cloud Dancer）配上纖細的紅褐色線條，線條會趨近水平，並帶有極微小的呼吸感波動。
+
+這段代碼目前已經處理了 RWD 縮放，無論在電腦還是手機上打開，線條都會自動填滿螢幕。
+
+需要我為您在平靜狀態加入一些「光影閃爍」或是「緩慢延伸的色塊」嗎？
+
+你說了
+
+我用chrome瀏覽器無法直接開啟，可以再告訴我一次完整預覽流程嗎？
+
+沒問題！有時候電腦會耍點小脾氣，明明代碼沒錯，卻因為檔案格式的「隱藏設定」導致瀏覽器認不出它是個網頁。
+
+通常 Chrome 無法直接開啟（或是點開只看到一堆文字），是因為檔案被存成了 index.html.txt。
+
+以下是保證成功的 3 個步驟預覽流程：
+
+第一步：正確儲存檔案（最關鍵）
+
+如果你是用 記事本 (Notepad) 或 TextEdit 貼上代碼，請務必按照以下步驟存檔：
+
+在記事本點選 「檔案」 > 「另存新檔」。
+
+存檔類型：請務必下拉選擇 「所有檔案 (.)」，不要選「文字文件 (*.txt)」。
+
+檔名：手動輸入 emotion.html （一定要有 .html）。
+
+編碼：建議選擇 UTF-8。
+
+第二步：確認檔案後綴名（隱藏魔鬼）
+
+Windows 預設會隱藏副檔名，這常導致你的檔案其實是 emotion.html.txt，所以 Chrome 只會把它當純文字。
+
+Windows 11/10：開啟資料夾 -> 點擊上方的「檢視」 -> 勾選 「副檔名」。
+
+Mac：選取檔案 -> 按 Cmd + I (取得資訊) -> 確認「名稱與副檔名」欄位沒有隱藏的 .txt。
+
+如果看到檔案後面多出了 .txt，請重新命名並刪掉那三個字母，只保留 .html。
+
+第三步：用 Chrome 開啟
+
+這時候檔案圖示應該會變成 Chrome 的標誌：
+
+直接拖曳：把這個 emotion.html 檔案直接拖進已經開啟的 Chrome 分頁中。
+
+右鍵開啟：在檔案上按右鍵 -> 「開啟檔案」 -> 選擇 「Google Chrome」。
+
+如果你想要更專業的「即時預覽」？
+
+如果你之後想頻繁修改代碼並看結果，我推薦使用 VS Code (Visual Studio Code)，這是目前全世界最好用的開發工具：
+
+下載安裝 VS Code。
+
+安裝外掛插件：Live Server。
+
+在 VS Code 裡打開你的 HTML 檔案，點擊右下角的 "Go Live"。
+
+優點： 你每次改代碼按下儲存 (Ctrl+S)，Chrome 網頁就會自動重新整理，不需要手動重整。
+
+代碼快速檢查清單
+
+為了確保萬無一失，這裡有一份極簡版的代碼（只有背景切換），你可以先測試這段。如果這段能動，代表你的存檔方式成功了：
+
+HTML
+<!DOCTYPE html>
+<html>
+<body style="background-color:#955251; transition: 2s;" onclick="this.style.backgroundColor='#F0EEE9'">
+    <h1 style="color:white; text-align:center; margin-top:20%;">點擊畫面任何地方測試顏色切換</h1>
+</body>
+</html>
+
+
+依照上面的流程操作後，有成功看到變色的畫面了嗎？如果還有問題，請隨時告訴我你看到的錯誤訊息！
+
+你說了
+
+我是使用mac，並且也已確認檔案有存成.html，也有使用你現在給的測試代碼，但還是沒有成功
+
+在 Mac 上使用系統內建的 TextEdit (文字編輯器) 存檔時，最常遇到的一個隱藏陷阱是：它預設會以「富文本 (RTF)」格式儲存。
+
+即便你副檔名改成了 .html，TextEdit 會在後台偷偷加入很多格式代碼（像 Word 那樣），導致 Chrome 讀取時會變得很混亂或完全無法顯示。
+
+請跟我一起執行以下步驟，這是 Mac 上開發網頁的「正確打開方式」：
+
+1. 徹底解決 TextEdit 的格式問題
+
+打開你的 TextEdit (文字編輯器)。
+
+在上方選單列點擊 「格式」 (Format)。
+
+選擇 「製作純文字」 (Make Plain Text)。
+
+快捷鍵：Shift + Command + T
+
+注意：如果選單顯示的是「製作富文本」，代表現在已經是純文字模式了，那就不用動。
+
+現在再把代碼貼進去。
+
+儲存檔案時，確認 「如果沒有副檔名，請使用 .txt」 這個勾選框不要勾。
+
+2. 或是使用更簡單的「線上預覽法」 (免存檔)
+
+如果你只是想先看看效果，不想被 Mac 的檔案系統折磨，請直接使用這個方法：
+
+開啟 CodePen.io (這是一個專業的網頁預覽平台)。
+
+你會看到三個框框：HTML, CSS, JS。
+
+將我提供的代碼進行拆解貼入：
+
+把 <body> 到 </body> 之間的內容貼進 HTML。
+
+把 <style> 到 </style> 之間的內容貼進 CSS。
+
+把 <script> 到 </script> 之間的內容貼進 JS。
+
+下方就會直接顯示出互動效果了！
+
+3. 專為 Mac 推薦的免費工具
+
+如果你之後還想繼續創作，強烈建議不要用 TextEdit。你可以下載 Sublime Text 或 Visual Studio Code。
+
+這些軟體是「天生為代碼設計」的，存成 .html 絕對不會出錯。
+
+安裝後，直接把檔案拖進去，按下存檔，Chrome 就能完美讀取。
+
+再次提供一份「純淨版」代碼 (請務必在純文字模式下貼上)
+
+請嘗試將這段最簡單的代碼，用上述 「製作純文字」 的方式存成 test.html：
+
+HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mac 測試</title>
+</head>
+<body style="background-color:#955251; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;" onclick="this.style.backgroundColor='#F0EEE9'">
+    <h1 style="color:white; font-family:sans-serif; cursor:pointer;">
+        如果你看到這行紅底白字，請點擊我
+    </h1>
+</body>
+</html>
+
+
+如果在執行「製作純文字」後存檔還是有問題，請告訴我 Chrome 開啟檔案後畫面上顯示的是什麼（是空白、還是一堆亂碼代碼）？我會再幫你診斷。
+
+你說了
+
+我現在使用CodePen.io有成功預覽了，不過我覺得目前動畫的呈現我還不是很滿意，而且我有注意到你的互動效果右邊會被裁切掉一部分，請解決這個問題
+
+
+
+
+＃修改項目
+
+1. 互動效果右邊會被裁切掉一部分，請確保動畫的RWD設計
+
+2. 動畫我想再新增多一點顏色，並且減少目前線條數量，我想要平靜的時候畫面是乾淨的，不要有過多線條；雜亂的時候線條材質、大小，可以再有更多不同的粗細對比
+
+太棒了！很高興聽到你在 CodePen 上成功運行了。CodePen 的預覽視窗有時候會有預設的邊距（padding），或者因為 Canvas 的寬度在初始化後沒有隨視窗縮放更新，導致右側被裁切。
+
+我針對你的需求進行了大幅度的邏輯重構：
+
+修正裁切問題：加入動態監測機制，確保畫布永遠等於視窗的 100vw 與 100vh。
+
+線條減量與對比：大幅減少平靜時的線條數，並在激動時賦予每根線條隨機的粗細（Thickness）與速度。
+
+色彩進階化：除了 Marsala 與 Cloud Dancer，我額外調配了幾種同色系的漸層色，讓畫面更有層次感，而不是單調的色塊。
+
+修正後的代碼 (可以直接複製到 CodePen)
+
+請分別將以下代碼貼入 CodePen 的 HTML, CSS, JS 欄位中：
+
+HTML
+HTML
+<canvas id="emotionCanvas"></canvas>
+<div id="hint">點擊左鍵：切換混亂與平靜</div>
+
+CSS
+CSS
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* 防止滾動條導致裁切感 */
+  background-color: #955251;
+  transition: background-color 2s ease-in-out;
+}
+
+body.calm-state {
+  background-color: #F0EEE9;
+}
+
+canvas {
+  display: block; /* 移除 Canvas 底部的微小間隙 */
+  width: 100vw;
+  height: 100vh;
+}
+
+#hint {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  font-family: sans-serif;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 1px;
+  pointer-events: none;
+  mix-blend-mode: difference;
+}
+
+JavaScript
+JavaScript
+const canvas = document.getElementById('emotionCanvas');
+const ctx = canvas.getContext('2d');
+let lines = [];
+let isCalm = false;
+let width, height;
+
+// 色彩組合
+const AGITATED_COLORS = ['#955251', '#7A3E3D', '#B0706F', '#5E2C2B', '#F0EEE9']; 
+const CALM_COLORS = ['#955251', '#A86B6A', '#D9B5B4']; // 在白底上輕微點綴的顏色
+
+class Line {
+  constructor(index) {
+    this.index = index;
+    this.reset();
+  }
+
+  reset() {
+    this.points = [];
+    this.segments = 50;
+    // 隨機屬性：創造粗細與材質對比
+    this.thickness = Math.random() * 5 + 0.5;
+    this.speed = Math.random() * 0.02 + 0.005;
+    this.color = AGITATED_COLORS[Math.floor(Math.random() * AGITATED_COLORS.length)];
+    this.offset = Math.random() * 1000;
+    
+    for (let i = 0; i <= this.segments; i++) {
+      this.points.push({ x: (i / this.segments) * width, y: height / 2 });
+    }
+  }
+
+  update() {
+    this.points.forEach((p, i) => {
+      let targetY;
+      if (!isCalm) {
+        // 雜亂模式：高頻雜訊、線條粗細不一
+        let noise = Math.sin(Date.now() * this.speed + i * 0.2 + this.offset) * 150;
+        let erratic = (Math.random() - 0.5) * 40; // 增加毫無章法的碎裂感
+        targetY = (height / (lines.length + 1)) * (this.index + 1) + noise + erratic;
+      } else {
+        // 平靜模式：極簡、纖細、柔和曲線
+        targetY = (height / (lines.length + 1)) * (this.index + 1) + Math.sin(Date.now() * 0.001 + i * 0.1) * 10;
+      }
+      // 緩動過場
+      p.y += (targetY - p.y) * 0.1;
+      p.x = (i / this.segments) * width; // 確保 RWD 縮放時線條長度正確
+    });
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.lineWidth = isCalm ? 0.8 : this.thickness; // 平靜時變細，雜亂時有粗有細
+    ctx.strokeStyle = isCalm ? CALM_COLORS[this.index % CALM_COLORS.length] : this.color;
+    ctx.lineCap = 'round';
+    
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length - 1; i++) {
+      let xc = (this.points[i].x + this.points[i+1].x) / 2;
+      let yc = (this.points[i].y + this.points[i+1].y) / 2;
+      ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+    }
+    ctx.stroke();
+  }
+}
+
+function init() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  lines = [];
+  const lineCount = 12; // 減少線條數量，讓畫面更乾淨
+  for (let i = 0; i < lineCount; i++) {
+    lines.push(new Line(i));
+  }
+}
+
+function animate() {
+  // 增加殘影效果，模擬材質感
+  ctx.fillStyle = isCalm ? 'rgba(240, 238, 233, 0.2)' : 'rgba(149, 82, 81, 0.2)';
+  ctx.fillRect(0, 0, width, height);
+  
+  lines.forEach(line => {
+    line.update();
+    line.draw();
+  });
+  requestAnimationFrame(animate);
+}
+
+// 監聽視窗縮放 (RWD)
+window.addEventListener('resize', init);
+
+// 點擊互動
+window.addEventListener('mousedown', (e) => {
+  if (e.button === 0) {
+    isCalm = !isCalm;
+    document.body.classList.toggle('calm-state');
+  }
+});
+
+init();
+animate();
+
+本次修正重點說明
+1. 解決右側裁切 (RWD 核心)
+
+在 init() 函數中，我使用了 canvas.width = window.innerWidth。
+
+此外，在 update() 循環裡，我加入了 p.x = (i / this.segments) * width;。這確保了當你縮放視窗時，線條的端點會重新計算位置，永遠貼合螢幕邊緣，不會出現右側空白或被切斷的情況。
+
+2. 線條材質與對比感
+
+激動時：我加入了 erratic 隨機變數，這會在線條流動時產生「細微的跳動點」，模擬雜訊質感。同時，線條寬度會在 0.5px 到 5.5px 之間隨機分布。
+
+平靜時：線條數量維持在 12 條（你可以修改 lineCount 數值），且粗細統一縮減至 0.8px，讓視覺壓力大幅降低。
+
+3. 豐富的 Pantone 色系延伸
+
+激動色盤：以 Marsala 為核心，加入了深紅褐、暗磚紅，並混入一點點 Cloud Dancer 的亮色線條，讓混亂感更有層次。
+
+平靜色盤：雖然背景變成了純淨的 Cloud Dancer，但線條轉為淡淡的 Marsala 淺色系，看起來就像是在高級信封紙上的淡雅紋路。
+
+您可以嘗試的下一步：
+
+線條密度：如果您覺得 12 條還是太多，可以把 lineCount 改成 5 或 6。
+
+滑鼠影響力：目前線條是自動跳動，您希望滑鼠「移動」到線條上方時，該部分的線條才產生更劇烈的雜訊嗎？
+
+這段代碼現在應該能完美適應 CodePen 的各種視窗大小了，請試試看！
+
+你說了
+
+我想要把提示詞的部分拿掉，這樣的話我是不是直接把HTML中的文字刪掉即可？
+
+
+
+
+＃想修改的部分
+
+1. 混亂時的線條動畫不要交錯，也不要一直往左移動，我希望線條是在原地雜亂
+
+2. 平靜的時候再多一點冷色調的顏色，但不要是全白，可以是漸層
+
+沒問題，我們一步一步來調整。
+
+關於您的第一個問題：「把提示詞的部分拿掉，這樣的話我是不是直接把HTML中的文字刪掉即可？」
+
+是的，完全正確。
+
+在 CodePen 的 HTML 區塊中，只要把 <div id="hint">...</div> 這一整行刪除，畫面上的文字就會消失了。為了程式碼的整潔，建議也順便把 CSS 區塊裡對應的 #hint { ... } 樣式設定也刪除（雖然不刪也不會報錯）。
+
+接下來針對您提出的兩個修改項目進行優化：
+
+修正雜亂動畫：我重新撰寫了激動狀態下的演算邏輯。現在線條會根據它們的排序，固定在各自的水平區域內上下「原地抖動」，不再有橫向的波浪移動，並且透過限制抖動幅度，確保線條之間不會互相交叉。
+
+平靜狀態的冷色調漸層：
+
+背景：我將原本的純色背景改為 CSS 線性漸層（Linear Gradient），從上方的冷灰藍色過渡到下方的 Pantone Cloud Dancer 米白色，營造空氣感。
+
+線條顏色：我更新了平靜狀態的色盤，加入了清冷的藍灰色調，讓畫面更符合「冷靜」的感覺。
+
+以下是修改後的完整代碼，請直接替換 CodePen 上的內容：
+
+1. HTML (已移除提示文字)
+HTML
+<canvas id="emotionCanvas"></canvas>
+
+2. CSS (加入冷色漸層背景)
+CSS
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 預設背景 (激動狀態 - Marsala) */
+  background-color: #955251;
+  /* 背景顏色的過渡時間 */
+  transition: background 2s ease-in-out, background-color 2s ease-in-out;
+}
+
+/* 平靜狀態的樣式 */
+body.calm-state {
+  /* 使用 CSS 漸層：從冷灰藍色漸變到原本的 Cloud Dancer 米白色 */
+  background: linear-gradient(to bottom, #D0DDE6, #F0EEE9);
+  /* 備用純色，以防瀏覽器不支援漸層 */
+  background-color: #F0EEE9;
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: pointer; /* 將滑鼠游標改為手型，提示可點擊 */
+}
+
+3. JS (修正動畫邏輯與新色盤)
+JavaScript
+const canvas = document.getElementById('emotionCanvas');
+const ctx = canvas.getContext('2d');
+let lines = [];
+let isCalm = false;
+let width, height;
+let lineSpacing = 0;
+
+// --- 色彩設定 ---
+// 激動色彩 (維持暖色調與深色對比)
+const AGITATED_COLORS = ['#955251', '#7A3E3D', '#5E2C2B', '#F0EEE9', '#333333'];
+// 平靜色彩 (新增冷色調：藍灰、淺冷灰，保留一點點暖灰做平衡)
+const CALM_COLORS = ['#AABCCE', '#C3D1DC', '#D8E2E8', '#B0AFA9'];
+
+class Line {
+  constructor(index) {
+    this.index = index;
+    // 隨機賦予線條不同的「個性」
+    this.thickness = Math.random() * 6 + 1; // 粗細範圍 1px ~ 7px
+    this.jitterIntensity = Math.random() * 0.8 + 0.2; // 抖動劇烈程度
+    this.color = AGITATED_COLORS[Math.floor(Math.random() * AGITATED_COLORS.length)];
+    this.points = [];
+    this.segments = 40; // 分段數
+    this.resetPoints();
+  }
+
+  resetPoints() {
+    this.points = [];
+    // 根據視窗高度與線條數量，計算出這條線的「基準中線」Y座標
+    const baseY = lineSpacing * (this.index + 1);
+    for (let i = 0; i <= this.segments; i++) {
+      // 初始化點的位置
+      this.points.push({ x: 0, y: baseY, targetY: baseY });
+    }
+  }
+
+  update() {
+    // 計算基準 Y 座標
+    const baseY = lineSpacing * (this.index + 1);
+    // 計算最大允許的抖動幅度 (不超過間距的 45%，確保不交叉)
+    const maxDeviation = lineSpacing * 0.45;
+
+    this.points.forEach((p, i) => {
+      p.x = (i / this.segments) * width; // RWD 寬度定位
+
+      if (!isCalm) {
+        // --- 激動模式 (原地雜亂，不交叉) ---
+        // 使用 Math.random() 產生高頻雜訊，讓線條原地跳動
+        // 抖動幅度受限於 maxDeviation，並乘上線條自身的強度系數
+        let noise = (Math.random() - 0.5) * 2 * maxDeviation * this.jitterIntensity;
+
+        // 越粗的線條，抖動感稍微笨重一點，這裡做一點微調
+        if(this.thickness > 4) noise *= 0.7;
+
+        p.targetY = baseY + noise;
+
+      } else {
+        // --- 平靜模式 (冷靜、乾淨) ---
+        // 極微小的緩慢波動，幾乎接近直線
+        let subtleWave = Math.sin(Date.now() * 0.0008 + i * 0.15 + this.index) * 3;
+        p.targetY = baseY + subtleWave;
+      }
+
+      // 緩動演算法 (Easing)：讓線條平滑地移動到目標位置
+      // 激動時移動快 (0.2)，平靜時移動慢 (0.05)
+      let ease = isCalm ? 0.05 : 0.2;
+      p.y += (p.targetY - p.y) * ease;
+    });
+  }
+
+  draw() {
+    ctx.beginPath();
+    // 平靜時線條統一變細 (1px)，激動時使用隨機粗細
+    ctx.lineWidth = isCalm ? 1 : this.thickness;
+    // 根據狀態切換色盤
+    ctx.strokeStyle = isCalm ? CALM_COLORS[this.index % CALM_COLORS.length] : this.color;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (this.points.length > 0) {
+        ctx.moveTo(this.points[0].x, this.points[0].y);
+        // 使用二次貝茲曲線繪製平滑線條
+        for (let i = 1; i < this.points.length - 1; i++) {
+          let xc = (this.points[i].x + this.points[i+1].x) / 2;
+          let yc = (this.points[i].y + this.points[i+1].y) / 2;
+          ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+        }
+        // 連接最後一點
+        let lastP = this.points[this.points.length-1];
+        ctx.lineTo(lastP.x, lastP.y);
+    }
+    ctx.stroke();
+  }
+}
+
+function init() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  lines = [];
+  // 線條數量設定 (可依需求調整，目前 10 條)
+  const lineCount = 10;
+  // 計算線條之間的垂直間距
+  lineSpacing = height / (lineCount + 1);
+
+  for (let i = 0; i < lineCount; i++) {
+    lines.push(new Line(i));
+  }
+}
+
+function animate() {
+  // 使用半透明背景清除畫布，製造一點點動態殘影軌跡感
+  ctx.fillStyle = isCalm ? 'rgba(240, 238, 233, 0.3)' : 'rgba(149, 82, 81, 0.4)';
+  // 注意：因為 CSS 有漸層背景，這裡的 fillRect 主要是為了蓋掉上一幀的線條軌跡
+  // 透明度不能太高，否則會蓋住 CSS 的漸層背景
+  ctx.clearRect(0, 0, width, height); // 使用 clearRect 完全清除，讓 CSS 背景透出來
+
+  lines.forEach(line => {
+    line.update();
+    line.draw();
+  });
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', init);
+
+window.addEventListener('mousedown', (e) => {
+  if (e.button === 0) {
+    isCalm = !isCalm;
+    document.body.classList.toggle('calm-state');
+  }
+});
+
+init();
+animate();
+
+你說了
+
+我覺得現在動畫的過渡滿好的，但我想再增加一些細節
+
+
+
+
+＃增加細節
+
+1. 我希望混亂時的線條要的滑鼠(hover)過去的時候線條才開始抖動，沒有(hover)的時候是粗細不一致的線條，另外我想要背景的顏色和線條顏色對調，背景要是深色，線條要是淺色
+
+
+
+
+2. 平靜時的線條是漸層的，他漸層的感覺像是一塊的面，變成背景布，但不要有很明顯的線條，並且要世代一點藍色的漸層，實際的藍色要是混亂時背景的對比色
+
+這是一個非常棒的進階需求！你對細節的關注讓這個互動體驗的層次感提升了許多。
+
+我們這次的修改核心在於「對比」與「互動深度」的強化：
+
+色彩理論應用：
+
+激動狀態（背景深、線條淺）：背景使用深沈的 Marsala 酒紅，線條改為明亮的 Cloud Dancer 米白系，創造強烈視覺對比。
+
+平靜狀態（互補色漸層面）：
+
+Marsala 紅色 (#955251) 的互補色是帶有綠調的藍綠色 (Teal/Cyan色系，大約是 #519495)。
+
+我們利用 CSS 線性漸層，讓背景從米白過渡到這個互補藍綠色，形成一個柔和的「面」，不再繪製明顯的線條。
+
+滑鼠互動深化：
+
+我們加入了滑鼠座標追蹤。在激動狀態下，線條平時是靜止的（但粗細不一），只有當滑鼠游標靠近時，受影響區域的線條才會開始劇烈抖動。
+
+完整的成品代碼
+
+請將 CodePen 中的 HTML、CSS、JS 內容全部替換為以下代碼：
+
+1. HTML
+HTML
+<canvas id="emotionCanvas"></canvas>
+
+2. CSS (核心色彩與漸層設定)
+CSS
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 激動狀態背景：深色 Marsala 
+  */
+  background-color: #955251;
+  
+  /* 背景過渡時間設定為 3 秒，讓色彩變化更綿長 */
+  transition: background 3s ease-in-out, background-color 3s ease-in-out;
+}
+
+/* 平靜狀態樣式 */
+body.calm-state {
+  /* 平靜狀態背景：漸層面
+    從上方的 Cloud Dancer 米白，漸變到下方的 Marsala 互補色 (藍綠色調)
+    營造出像是一塊布面或水面的感覺
+  */
+  background: linear-gradient(to bottom, #F0EEE9 0%, #A4C3C4 60%, #519495 100%);
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: crosshair; /* 激動時游標為十字線，提示瞄準互動 */
+  transition: opacity 3s ease-in-out; /* 讓 Canvas 的線條淡出 */
+}
+
+/* 平靜時讓 canvas 透明度降低，使線條看起來消失溶入背景 */
+body.calm-state canvas {
+    opacity: 0; 
+    pointer-events: none; /* 平靜時不接收滑鼠事件 */
+}
+
+3. JS (滑鼠追蹤與繪圖邏輯更新)
+JavaScript
+const canvas = document.getElementById('emotionCanvas');
+const ctx = canvas.getContext('2d');
+let lines = [];
+let isCalm = false;
+let width, height;
+// 初始化滑鼠位置在螢幕外，避免一開始就觸發抖動
+let mouse = { x: -9999, y: -9999 }; 
+
+// --- 色彩設定 ---
+// 激動色彩：改為淺色系 (Cloud Dancer 變體)，在深紅背景上跳脫出來
+const AGITATED_LIGHT_COLORS = ['#F0EEE9', '#E8E0E0', '#DDCBCB', '#C7B2B2'];
+
+
+class Line {
+  constructor(index, totalLines) {
+    this.index = index;
+    this.totalLines = totalLines;
+    this.reset();
+  }
+
+  reset() {
+    // 隨機粗細：製造靜止時的材質感 (0.5px ~ 6.5px)
+    this.thickness = Math.random() * 6 + 0.5;
+    // 隨機顏色
+    this.color = AGITATED_LIGHT_COLORS[Math.floor(Math.random() * AGITATED_LIGHT_COLORS.length)];
+    this.points = [];
+    this.segments = 60; // 增加分段數讓抖動更細緻
+    this.baseY = (height / (this.totalLines + 1)) * (this.index + 1);
+
+    for (let i = 0; i <= this.segments; i++) {
+      this.points.push({
+        x: (i / this.segments) * width,
+        y: this.baseY,
+        targetY: this.baseY,
+        // 每個點稍微錯開一點初始位置，讓靜止時看起來不那麼死板
+        offsetY: (Math.random() -0.5) * 5 
+      });
+    }
+  }
+
+  update() {
+    // 重新計算寬度分佈 (RWD)
+    this.points.forEach((p, i) => {
+      p.x = (i / this.segments) * width;
+      
+      // 預設目標是回到基準線加上一點點靜態偏移
+      p.targetY = this.baseY + p.offsetY;
+
+      // --- 激動模式的滑鼠互動核心 ---
+      if (!isCalm) {
+        // 計算滑鼠與當前點的距離
+        const dx = p.x - mouse.x;
+        // 使用基準 Y 來計算距離，避免線條跑掉後感應區跟著跑
+        const dy = this.baseY - mouse.y; 
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // 設定滑鼠影響半徑 (例如 120px)
+        const hoverRadius = 120;
+
+        if (dist < hoverRadius) {
+          // 計算影響力道：距離越近，力道越強 (0 ~ 1)
+          const intensity = 1 - (dist / hoverRadius);
+          // 產生雜訊抖動，越靠近滑鼠抖動越劇烈
+          // 乘以 thickness 讓粗線條看起來比較重，抖動幅度稍小
+          const noise = (Math.random() - 0.5) * 50 * intensity * (1 - this.thickness/10);
+          p.targetY += noise;
+        }
+      }
+
+      // 緩動演算：讓點滑順地移動到目標位置
+      // 靠近滑鼠時反應快 (0.3)，回歸靜止時慢 (0.05)
+      const ease = !isCalm && (Math.abs(p.targetY - this.baseY) > 10) ? 0.3 : 0.05;
+      p.y += (p.targetY - p.y) * ease;
+    });
+  }
+
+  draw() {
+    // 只有在非平靜狀態才繪製線條
+    if (isCalm) return;
+
+    ctx.beginPath();
+    ctx.lineWidth = this.thickness;
+    ctx.strokeStyle = this.color;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length - 1; i++) {
+      let xc = (this.points[i].x + this.points[i+1].x) / 2;
+      let yc = (this.points[i].y + this.points[i+1].y) / 2;
+      ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+    }
+    ctx.stroke();
+  }
+}
+
+function init() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  lines = [];
+  // 增加線條數量以獲得更密集的材質感 (例如 25 條)
+  const lineCount = 25; 
+  for (let i = 0; i < lineCount; i++) {
+    lines.push(new Line(i, lineCount));
+  }
+}
+
+function animate() {
+  // 完全清除畫布，因為背景色現在由 CSS 控制
+  ctx.clearRect(0, 0, width, height);
+
+  lines.forEach(line => {
+    line.update();
+    line.draw();
+  });
+  requestAnimationFrame(animate);
+}
+
+// 事件監聽
+window.addEventListener('resize', init);
+
+window.addEventListener('mousemove', (e) => {
+  // 更新滑鼠座標
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+window.addEventListener('mousedown', (e) => {
+  if (e.button === 0) {
+    isCalm = !isCalm;
+    document.body.classList.toggle('calm-state');
+    // 切換時將滑鼠移開，避免切換瞬間線條還在抖動
+    mouse.x = -9999; 
+    mouse.y = -9999;
+  }
+});
+
+init();
+animate();
+
+修改重點解析
+
+色彩對調實現：
+
+CSS 的 body 背景色設為深紅 #955251。
+
+JS 的 AGITATED_LIGHT_COLORS 改為淺米白、淺灰粉色系。
+
+互補色漸層面實現：
+
+在 CSS 的 body.calm-state 中，我使用了線性漸層 linear-gradient。
+
+漸層從上方的米白 (#F0EEE9) 過渡到中間的淺藍綠，最後到底部的互補色深藍綠 (#519495)。
+
+關鍵技巧：為了達成「沒有明顯線條」的需求，我使用了 CSS opacity 和 transition。當切換到 calm-state 時，整個 <canvas> 元素會在 3 秒內慢慢變透明 (opacity: 0)，視覺上線條就溶化消失在背景漸層中了。
+
+Hover 抖動互動：
+
+在 JS 的 update() 中加入了計算滑鼠距離 (dist) 的邏輯。
+
+設定了 hoverRadius = 120 (像素)，只有當滑鼠進入線條某個點的 120px 範圍內，該點才會被施加隨機雜訊 (noise)。
+
+使用了 intensity (強度) 計算，讓越靠近滑鼠中心的點，雜訊抖動越劇烈，邊緣則較小。
+
+快速預覽方式
+
+請將這份代碼貼到 CodePen 上的 HTML, CSS, JS 三個視窗中。
+
+初始狀態 (Marsala 背景)：深紅背景上，有著粗細不一的淺米白線條。滑鼠沒碰到時它們是靜止的，滑鼠滑過會激起局部抖動。
+
+點擊後 (Cloud Dancer/Teal 漸層背景)：背景會慢慢變成米白到藍綠色的漸層，同時線條會慢慢淡出消失，形成一片平滑的色彩面。
+
+這樣的調整讓互動體驗更豐富，而且色彩對比更強烈了，請試試看！
+
+你說了
+
+現在的抖動效果我覺得可以，但是平靜時的背景動態不太明顯
+
+
+
+
+＃修改項目
+
+1. 點擊後的背景過渡動畫，我想有linear transition的感覺
+
+2. 漸層背景現在略顯單調，我希望可以加入一些3D物件，例如：跟者滑鼠移動的星芒
+
+這個細節的調整會讓網頁從「平面動畫」躍升為具有「空間感」的互動藝術。
+
+為了達成你的要求，我優化了兩大核心機制：
+
+背景線性過渡 (Linear Transition)：由於 CSS 無法直接對 linear-gradient 進行平滑動畫，我改用**雙層背景疊加（Opacity Fade）**的方式。這能確保從深色 Marsala 切換到藍色漸層面時，視覺上是極其平滑且線性的。
+
+3D 星芒系統 (Starburst Particles)：我加入了一套粒子系統，當切換到「平靜」模式時，畫面上會生成具有 Parallax（視差） 效果的星芒。它們會根據滑鼠移動產生前後深度感（Z 軸模擬），且顏色使用了 Marsala 的對比藍綠色調。
+
+完整的修改代碼 (CodePen 適用)
+
+請將以下代碼分別替換至 CodePen 的欄位中：
+
+1. HTML
+HTML
+<div id="bg-agitated"></div>
+<div id="bg-calm"></div>
+<canvas id="emotionCanvas"></canvas>
+
+2. CSS
+CSS
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000; /* 底色 */
+}
+
+/* 激動背景層：深色 Marsala */
+#bg-agitated {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: #955251;
+  z-index: 1;
+  transition: opacity 2.5s linear; /* 線性過渡 */
+}
+
+/* 平靜背景層：藍綠色漸層 */
+#bg-calm {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #F0EEE9 0%, #A4C3C4 50%, #519495 100%);
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 2.5s linear; /* 線性過渡 */
+}
+
+/* 切換狀態 */
+body.calm-state #bg-agitated { opacity: 0; }
+body.calm-state #bg-calm { opacity: 1; }
+
+canvas {
+  position: relative;
+  z-index: 10;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: crosshair;
+}
+
+3. JavaScript
+JavaScript
+const canvas = document.getElementById('emotionCanvas');
+const ctx = canvas.getContext('2d');
+let lines = [];
+let stars = []; // 平靜時的星芒物件
+let isCalm = false;
+let width, height;
+let mouse = { x: -999, y: -999, lerpX: 0, lerpY: 0 };
+
+const COLORS = {
+  agitatedLine: '#F0EEE9',
+  starLight: '#519495', // 互補藍色
+  starCore: '#F0EEE9'   // Cloud Dancer
+};
+
+// --- 3D 星芒類別 ---
+class Star {
+  constructor() {
+    this.init();
+  }
+  init() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.z = Math.random() * 1.5 + 0.5; // 模擬深度
+    this.size = Math.random() * 15 + 5;
+    this.opacity = 0;
+    this.rotation = Math.random() * Math.PI;
+  }
+  draw() {
+    // 視差效果：滑鼠移動會影響不同深度的位移
+    const px = this.x + (mouse.lerpX - width/2) * (this.z * 0.05);
+    const py = this.y + (mouse.lerpY - height/2) * (this.z * 0.05);
+    
+    this.opacity += isCalm ? 0.02 : -0.05;
+    this.opacity = Math.max(0, Math.min(this.opacity, 0.8));
+
+    if (this.opacity <= 0) return;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(this.rotation + Date.now() * 0.0005);
+    ctx.globalAlpha = this.opacity;
+    
+    // 繪製星芒 (四角星)
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.moveTo(0, 0 - this.size * this.z);
+      ctx.lineTo(0, 0 + this.size * this.z);
+      ctx.moveTo(0 - this.size * 0.2 * this.z, 0);
+      ctx.lineTo(0 + this.size * 0.2 * this.z, 0);
+    }
+    ctx.strokeStyle = COLORS.starLight;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 星芒核心亮點
+    ctx.fillStyle = COLORS.starCore;
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.5 * this.z, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// --- 線條類別 (激動模式) ---
+class Line {
+  constructor(index, total) {
+    this.index = index;
+    this.total = total;
+    this.reset();
+  }
+  reset() {
+    this.thickness = Math.random() * 5 + 0.5;
+    this.points = [];
+    this.segments = 50;
+    this.baseY = (height / (this.total + 1)) * (this.index + 1);
+    this.alpha = 1;
+    for (let i = 0; i <= this.segments; i++) {
+      this.points.push({ x: (i / this.segments) * width, y: this.baseY });
+    }
+  }
+  update() {
+    this.alpha += isCalm ? -0.03 : 0.03;
+    this.alpha = Math.max(0, Math.min(this.alpha, 1));
+
+    this.points.forEach((p, i) => {
+      p.x = (i / this.segments) * width;
+      let targetY = this.baseY;
+
+      if (!isCalm) {
+        const dx = p.x - mouse.x;
+        const dy = this.baseY - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          const intensity = 1 - dist / 150;
+          targetY += (Math.random() - 0.5) * 60 * intensity;
+        }
+      }
+      p.y += (targetY - p.y) * 0.1;
+    });
+  }
+  draw() {
+    if (this.alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.beginPath();
+    ctx.lineWidth = this.thickness;
+    ctx.strokeStyle = COLORS.agitatedLine;
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length - 1; i++) {
+      let xc = (this.points[i].x + this.points[i+1].x) / 2;
+      let yc = (this.points[i].y + this.points[i+1].y) / 2;
+      ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function init() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  lines = [];
+  stars = [];
+  for (let i = 0; i < 20; i++) lines.push(new Line(i, 20));
+  for (let i = 0; i < 40; i++) stars.push(new Star());
+}
+
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+  
+  // 滑鼠平滑跟隨 (Lerp)
+  mouse.lerpX += (mouse.x - mouse.lerpX) * 0.05;
+  mouse.lerpY += (mouse.y - mouse.lerpY) * 0.05;
+
+  stars.forEach(s => s.draw());
+  lines.forEach(l => {
+    l.update();
+    l.draw();
+  });
+  
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', init);
+window.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+window.addEventListener('mousedown', e => {
+  if (e.button === 0) {
+    isCalm = !isCalm;
+    document.body.classList.toggle('calm-state');
+  }
+});
+
+init();
+animate();
+
+本次修正細節說明：
+
+Linear 過渡實現：
+
+我在 CSS 中使用了 #bg-agitated 與 #bg-calm 兩個全螢幕圖層。當點擊時，兩者的 opacity 會以 linear 的方式在 2.5 秒內交替。這比直接修改背景色更能產生「色彩慢慢滲透進去」的質感。
+
+3D 星芒 (Starburst) 動態：
+
+深度感：每顆星芒都有隨機的 z 軸數值。在 draw() 函式中，我計算了 (mouse.lerpX - width/2) * (this.z * 0.05)，這意味著「越近（Z 軸越大）」的星芒在滑鼠移動時，位移幅度越大，產生強烈的 3D 視差運動。
+
+顏色對應：星芒的外殼使用了 Marsala 的對比色（藍綠色 #519495），核心則是 Cloud Dancer 米白色，與平靜背景的漸層完美融合。
+
+互動邏輯優化：
+
+線條行為：當切換至平靜時，線條會透過 alpha 漸漸透明消失，而不是突然不見。
+
+原地抖動：維持了你滿意的 Hover 觸發抖動，且在沒有滑鼠靠近時，線條呈現靜止但粗細不一的「平面感」。
+
+下一步建議：
+
+星芒數量：目前設定為 40 顆，如果你希望畫面更「空靈」一點，可以把 stars 的數量減少到 15 顆左右。
+
+星芒形狀：目前是四角星，需要我改成更多芒的放射狀或者是更像「光暈」的圓形嗎？
+
+這段代碼現在應該非常符合你要求的「線性過渡」與「3D 空間感」了！
+
+你說了
+
+我希望星芒能的動畫夠增加3D閃爍感，其他項目可以維持
+
+這個需求非常細緻。為了增加 「3D 閃爍感」，我為星芒加入了呼吸頻率（Twinkle Pulse）與深度位移偏移。
+
+具體修改如下：
+
+呼吸閃爍邏輯：每顆星芒都有獨立的隨機相位（Phase），它們會以正弦波的方式改變透明度與大小，模擬遙遠星光的閃爍感。
+
+光暈效果 (Bloom Effect)：利用 shadowBlur 增加柔和的發光感，讓星芒看起來像是在 3D 空間中發光的能量點。
+
+動態旋轉與縮放：星芒在閃爍時會伴隨極細微的旋轉，增加視覺上的靈動感。
+
+以下是更新後的完整代碼：
+
+1. HTML
+HTML
+<div id="bg-agitated"></div>
+<div id="bg-calm"></div>
+<canvas id="emotionCanvas"></canvas>
+
+2. CSS
+CSS
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+#bg-agitated {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: #955251; /* Pantone Marsala */
+  z-index: 1;
+  transition: opacity 2.5s linear;
+}
+
+#bg-calm {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #F0EEE9 0%, #A4C3C4 50%, #519495 100%);
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 2.5s linear;
+}
+
+body.calm-state #bg-agitated { opacity: 0; }
+body.calm-state #bg-calm { opacity: 1; }
+
+canvas {
+  position: relative;
+  z-index: 10;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: crosshair;
+}
+
+3. JavaScript
+JavaScript
+const canvas = document.getElementById('emotionCanvas');
+const ctx = canvas.getContext('2d');
+let lines = [];
+let stars = [];
+let isCalm = false;
+let width, height;
+let mouse = { x: -999, y: -999, lerpX: 0, lerpY: 0 };
+
+const COLORS = {
+  agitatedLine: '#F0EEE9', // Cloud Dancer
+  starLight: '#519495',    // Marsala 對比藍綠色
+  starCore: '#FFFFFF'
+};
+
+// --- 強化版 3D 閃爍星芒 ---
+class Star {
+  constructor() {
+    this.init();
+  }
+  init() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.z = Math.random() * 2 + 0.5; // 深度感 (0.5 遠 ~ 2.5 近)
+    this.baseSize = Math.random() * 12 + 4;
+    this.phase = Math.random() * Math.PI * 2; // 隨機初始相位
+    this.pulseSpeed = Math.random() * 0.05 + 0.02; // 閃爍速度
+    this.opacity = 0;
+    this.rotation = Math.random() * Math.PI;
+  }
+  draw() {
+    // 視差計算 (根據 Z 軸深度決定移動量)
+    const px = this.x + (mouse.lerpX - width/2) * (this.z * 0.04);
+    const py = this.y + (mouse.lerpY - height/2) * (this.z * 0.04);
+    
+    // 閃爍邏輯 (Sin 波控制透明度與大小)
+    const twinkle = Math.sin(Date.now() * this.pulseSpeed + this.phase);
+    const currentSize = this.baseSize * (1 + twinkle * 0.3) * this.z;
+    
+    // 狀態切換時的淡入淡出
+    this.opacity += isCalm ? 0.02 : -0.05;
+    this.opacity = Math.max(0, Math.min(this.opacity, 1));
+
+    if (this.opacity <= 0) return;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(this.rotation + Date.now() * 0.0003);
+    ctx.globalAlpha = this.opacity * (0.5 + (twinkle + 1) / 4); // 基礎透明度隨閃爍變動
+
+    // 增加光暈 (Glow)
+    ctx.shadowBlur = 10 * this.z;
+    ctx.shadowColor = COLORS.starLight;
+
+    // 繪製 3D 星芒 (長短交錯的十字)
+    ctx.beginPath();
+    ctx.strokeStyle = COLORS.starLight;
+    ctx.lineWidth = 1 * this.z;
+    
+    // 主十字
+    ctx.moveTo(-currentSize, 0); ctx.lineTo(currentSize, 0);
+    ctx.moveTo(0, -currentSize); ctx.lineTo(0, currentSize);
+    
+    // 副十字 (旋轉 45 度且較短)
+    ctx.rotate(Math.PI / 4);
+    const shortSize = currentSize * 0.4;
+    ctx.moveTo(-shortSize, 0); ctx.lineTo(shortSize, 0);
+    ctx.moveTo(0, -shortSize); ctx.lineTo(0, shortSize);
+    
+    ctx.stroke();
+
+    // 核心亮點 (閃爍最劇烈的部分)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = COLORS.starCore;
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.2 * this.z * (1 + twinkle * 0.2), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+// --- 線條類別 ---
+class Line {
+  constructor(index, total) {
+    this.index = index;
+    this.total = total;
+    this.reset();
+  }
+  reset() {
+    this.thickness = Math.random() * 4 + 0.5;
+    this.points = [];
+    this.segments = 50;
+    this.baseY = (height / (this.total + 1)) * (this.index + 1);
+    this.alpha = 1;
+    for (let i = 0; i <= this.segments; i++) {
+      this.points.push({ x: (i / this.segments) * width, y: this.baseY });
+    }
+  }
+  update() {
+    this.alpha += isCalm ? -0.04 : 0.04;
+    this.alpha = Math.max(0, Math.min(this.alpha, 1));
+
+    this.points.forEach((p, i) => {
+      p.x = (i / this.segments) * width;
+      let targetY = this.baseY;
+
+      if (!isCalm) {
+        const dx = p.x - mouse.x;
+        const dy = this.baseY - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 140) {
+          const intensity = 1 - dist / 140;
+          targetY += (Math.random() - 0.5) * 55 * intensity;
+        }
+      }
+      p.y += (targetY - p.y) * 0.1;
+    });
+  }
+  draw() {
+    if (this.alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.beginPath();
+    ctx.lineWidth = this.thickness;
+    ctx.strokeStyle = COLORS.agitatedLine;
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length - 1; i++) {
+      let xc = (this.points[i].x + this.points[i + 1].x) / 2;
+      let yc = (this.points[i].currentY + this.points[i + 1].currentY) / 2 || (this.points[i].y + this.points[i+1].y)/2;
+      ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function init() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  lines = [];
+  stars = [];
+  for (let i = 0; i < 22; i++) lines.push(new Line(i, 22));
+  for (let i = 0; i < 45; i++) stars.push(new Star());
+}
+
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+  
+  // 滑鼠平滑插值
+  mouse.lerpX += (mouse.x - mouse.lerpX) * 0.07;
+  mouse.lerpY += (mouse.y - mouse.lerpY) * 0.07;
+
+  stars.forEach(s => s.draw());
+  lines.forEach(l => {
+    l.update();
+    l.draw();
+  });
+  
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', init);
+window.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+window.addEventListener('mousedown', e => {
+  if (e.button === 0) {
+    isCalm = !isCalm;
+    document.body.classList.toggle('calm-state');
+  }
+});
+
+init();
+animate();
+
+動態細節說明
+
+3D 閃爍感 (Sparkle)：
+
+在 Star.draw() 裡面，currentSize 和 globalAlpha 都綁定了 Math.sin() 動態。這會讓星芒產生「忽明忽暗、忽大忽小」的效果。
+
+由於每顆星芒的 phase（初始時間點）和 pulseSpeed（閃爍頻率）是隨機的，所以畫面看起來會是非常自然的繁星閃爍，而不是整齊劃一的跳動。
+
+視覺層次：
+
+星芒採用了「主十字」疊加「副十字（轉 45 度）」的畫法，這在視覺上更像光學鏡頭捕捉到的星光（Starburst）。
+
+使用了 ctx.shadowBlur。這會在星芒周圍產生一層淡藍綠色的暈光，增加空間的通透感。
+
+線性背景過渡：
+
+維持了兩個 Div 層的切換。當你點擊時，你會發現 Marsala 深色是「線性地（勻速地）」淡出，露出底下的藍綠色漸層，視覺過場非常穩定。
+
+這份代碼現在已經完整地結合了你之前所有的要求，並在「平靜」模式下增加了極具質感的 3D 閃爍效果。你可以直接在 CodePen 中預覽！
+
+如果您覺得閃爍太劇烈或太慢，可以微調第 61 行的 pulseSpeed 數值。
+
+你說了
+
+請幫我將這一段程式碼做成一個完整的.html格式，我之後不會使用codepen預覽
+
+這是一份完整且獨立的 .html 檔案程式碼。我已將 HTML 結構、CSS 樣式以及 JavaScript 邏輯全部整合在一起。
+
+您可以直接複製下方內容，存檔為 emotion_project.html，然後使用 Chrome 或 Safari 瀏覽器直接開啟即可。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒實驗室：平靜與混亂</title>
+    <style>
+        /* 禁止頁面捲動與邊距重置 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* 激動狀態背景層：Pantone Marsala (#955251) */
+        #bg-agitated {
+            position: absolute;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            background-color: #955251;
+            z-index: 1;
+            transition: opacity 2.5s linear; /* 線性過渡 */
+        }
+
+        /* 平靜狀態背景層：藍綠色漸層 */
+        #bg-calm {
+            position: absolute;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            /* 從 Cloud Dancer 米白到互補藍綠色的線性漸層 */
+            background: linear-gradient(135deg, #F0EEE9 0%, #A4C3C4 50%, #519495 100%);
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 2.5s linear; /* 線性過渡 */
+        }
+
+        /* 當 body 標籤帶有 .calm-state 類別時的背景切換 */
+        body.calm-state #bg-agitated { opacity: 0; }
+        body.calm-state #bg-calm { opacity: 1; }
+
+        canvas {
+            position: relative;
+            z-index: 10;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-agitated"></div>
+    <div id="bg-calm"></div>
+
+    <canvas id="emotionCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('emotionCanvas');
+        const ctx = canvas.getContext('2d');
+        let lines = [];
+        let stars = [];
+        let isCalm = false;
+        let width, height;
+        let mouse = { x: -999, y: -999, lerpX: 0, lerpY: 0 };
+
+        const COLORS = {
+            agitatedLine: '#F0EEE9', // Cloud Dancer (淺色線條在深紅底)
+            starLight: '#519495',    // 互補藍綠色
+            starCore: '#FFFFFF'
+        };
+
+        // --- 3D 閃爍星芒類別 ---
+        class Star {
+            constructor() {
+                this.init();
+            }
+            init() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.z = Math.random() * 2 + 0.5; // 深度感
+                this.baseSize = Math.random() * 12 + 4;
+                this.phase = Math.random() * Math.PI * 2;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02; // 閃爍頻率
+                this.opacity = 0;
+                this.rotation = Math.random() * Math.PI;
+            }
+            draw() {
+                // 視差計算
+                const px = this.x + (mouse.lerpX - width/2) * (this.z * 0.04);
+                const py = this.y + (mouse.lerpY - height/2) * (this.z * 0.04);
+                
+                // 3D 閃爍邏輯 (Sin 波控制)
+                const twinkle = Math.sin(Date.now() * this.pulseSpeed + this.phase);
+                const currentSize = this.baseSize * (1 + twinkle * 0.3) * this.z;
+                
+                this.opacity += isCalm ? 0.02 : -0.05;
+                this.opacity = Math.max(0, Math.min(this.opacity, 1));
+
+                if (this.opacity <= 0) return;
+
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(this.rotation + Date.now() * 0.0003);
+                ctx.globalAlpha = this.opacity * (0.5 + (twinkle + 1) / 4);
+
+                // 星芒光暈
+                ctx.shadowBlur = 10 * this.z;
+                ctx.shadowColor = COLORS.starLight;
+
+                // 繪製十字星芒結構
+                ctx.beginPath();
+                ctx.strokeStyle = COLORS.starLight;
+                ctx.lineWidth = 1 * this.z;
+                
+                ctx.moveTo(-currentSize, 0); ctx.lineTo(currentSize, 0);
+                ctx.moveTo(0, -currentSize); ctx.lineTo(0, currentSize);
+                
+                ctx.rotate(Math.PI / 4);
+                const shortSize = currentSize * 0.4;
+                ctx.moveTo(-shortSize, 0); ctx.lineTo(shortSize, 0);
+                ctx.moveTo(0, -shortSize); ctx.lineTo(0, shortSize);
+                
+                ctx.stroke();
+
+                // 星芒核心
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = COLORS.starCore;
+                ctx.beginPath();
+                ctx.arc(0, 0, 1.2 * this.z * (1 + twinkle * 0.2), 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // --- 雜訊線條類別 ---
+        class Line {
+            constructor(index, total) {
+                this.index = index;
+                this.total = total;
+                this.reset();
+            }
+            reset() {
+                this.thickness = Math.random() * 4 + 0.5;
+                this.points = [];
+                this.segments = 50;
+                this.baseY = (height / (this.total + 1)) * (this.index + 1);
+                this.alpha = 1;
+                for (let i = 0; i <= this.segments; i++) {
+                    this.points.push({ x: (i / this.segments) * width, y: this.baseY });
+                }
+            }
+            update() {
+                this.alpha += isCalm ? -0.04 : 0.04;
+                this.alpha = Math.max(0, Math.min(this.alpha, 1));
+
+                this.points.forEach((p, i) => {
+                    p.x = (i / this.segments) * width;
+                    let targetY = this.baseY;
+
+                    // Hover 觸發的原地抖動邏輯
+                    if (!isCalm) {
+                        const dx = p.x - mouse.x;
+                        const dy = this.baseY - mouse.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 140) {
+                            const intensity = 1 - dist / 140;
+                            targetY += (Math.random() - 0.5) * 55 * intensity;
+                        }
+                    }
+                    p.y += (targetY - p.y) * 0.1;
+                });
+            }
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.lineWidth = this.thickness;
+                ctx.strokeStyle = COLORS.agitatedLine;
+                ctx.moveTo(this.points[0].x, this.points[0].y);
+                for (let i = 1; i < this.points.length - 1; i++) {
+                    let xc = (this.points[i].x + this.points[i + 1].x) / 2;
+                    let yc = (this.points[i].y + this.points[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // 初始化環境
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            lines = [];
+            stars = [];
+            // 設定線條與星芒數量
+            for (let i = 0; i < 22; i++) lines.push(new Line(i, 22));
+            for (let i = 0; i < 45; i++) stars.push(new Star());
+        }
+
+        // 動畫循環
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // 滑鼠平滑位移 (Lerp)
+            mouse.lerpX += (mouse.x - mouse.lerpX) * 0.07;
+            mouse.lerpY += (mouse.y - mouse.lerpY) * 0.07;
+
+            // 繪製順序：星芒在後，線條在前
+            stars.forEach(s => s.draw());
+            lines.forEach(l => {
+                l.update();
+                l.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+
+        // 視窗自適應 (RWD)
+        window.addEventListener('resize', init);
+
+        // 滑鼠移動監測
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        // 點擊切換狀態
+        window.addEventListener('mousedown', e => {
+            if (e.button === 0) { // 左鍵
+                isCalm = !isCalm;
+                document.body.classList.toggle('calm-state');
+            }
+        });
+
+        // 啟動程式
+        init();
+        animate();
+    </script>
+</body>
+</html>
+
+如何正確儲存並執行？
+
+複製代碼：點擊右上方（或手動選取）複製上述所有代碼。
+
+Mac 使用者請注意：
+
+打開 TextEdit (文字編輯器)。
+
+非常重要：按下快捷鍵 Shift + Command + T（或是點選選單「格式」>「製作純文字」），確保編輯器上方沒有字體大小工具列。
+
+貼上代碼。
+
+儲存檔案：
+
+儲存時，檔名請命名為 index.html。
+
+確認存檔路徑後點擊儲存。
+
+開啟預覽：
+
+在存好的檔案上連點兩下，或將它直接拖進 Chrome 瀏覽器。
+
+這個版本現在具備了您要求的「線性過渡背景」以及「具備 3D 閃爍視差感的星芒」。如果您對背景的過渡速度或星芒的閃爍頻率有其他想法，隨時告訴我！
+
+你說了
+
+請幫我將這一段程式碼做成一個完整的.html格式，我之後不會使用codepen預覽
+
+
+
+
+1. HTML (已移除提示文字)
+
+
+
+
+HTML
+
+
+
+
+
+
+
+<canvas id="emotionCanvas"></canvas>
+
+
+
+
+2. CSS (加入冷色漸層背景)
+
+
+
+
+CSS
+
+
+
+
+
+
+
+body, html {
+
+  margin: 0;
+
+  padding: 0;
+
+  width: 100%;
+
+  height: 100%;
+
+  overflow: hidden;
+
+  /* 預設背景 (激動狀態 - Marsala) */
+
+  background-color: #955251;
+
+  /* 背景顏色的過渡時間 */
+
+  transition: background 2s ease-in-out, background-color 2s ease-in-out;
+
+}
+
+
+
+
+/* 平靜狀態的樣式 */
+
+body.calm-state {
+
+  /* 使用 CSS 漸層：從冷灰藍色漸變到原本的 Cloud Dancer 米白色 */
+
+  background: linear-gradient(to bottom, #D0DDE6, #F0EEE9);
+
+  /* 備用純色，以防瀏覽器不支援漸層 */
+
+  background-color: #F0EEE9;
+
+}
+
+
+
+
+canvas {
+
+  display: block;
+
+  width: 100vw;
+
+  height: 100vh;
+
+  cursor: pointer; /* 將滑鼠游標改為手型，提示可點擊 */
+
+}
+
+
+
+
+3. JS (修正動畫邏輯與新色盤)
+
+
+
+
+JavaScript
+
+
+
+
+
+
+
+const canvas = document.getElementById('emotionCanvas');
+
+const ctx = canvas.getContext('2d');
+
+let lines = [];
+
+let isCalm = false;
+
+let width, height;
+
+let lineSpacing = 0;
+
+
+
+
+// --- 色彩設定 ---
+
+// 激動色彩 (維持暖色調與深色對比)
+
+const AGITATED_COLORS = ['#955251', '#7A3E3D', '#5E2C2B', '#F0EEE9', '#333333'];
+
+// 平靜色彩 (新增冷色調：藍灰、淺冷灰，保留一點點暖灰做平衡)
+
+const CALM_COLORS = ['#AABCCE', '#C3D1DC', '#D8E2E8', '#B0AFA9'];
+
+
+
+
+class Line {
+
+  constructor(index) {
+
+    this.index = index;
+
+    // 隨機賦予線條不同的「個性」
+
+    this.thickness = Math.random() * 6 + 1; // 粗細範圍 1px ~ 7px
+
+    this.jitterIntensity = Math.random() * 0.8 + 0.2; // 抖動劇烈程度
+
+    this.color = AGITATED_COLORS[Math.floor(Math.random() * AGITATED_COLORS.length)];
+
+    this.points = [];
+
+    this.segments = 40; // 分段數
+
+    this.resetPoints();
+
+  }
+
+
+
+
+  resetPoints() {
+
+    this.points = [];
+
+    // 根據視窗高度與線條數量，計算出這條線的「基準中線」Y座標
+
+    const baseY = lineSpacing * (this.index + 1);
+
+    for (let i = 0; i <= this.segments; i++) {
+
+      // 初始化點的位置
+
+      this.points.push({ x: 0, y: baseY, targetY: baseY });
+
+    }
+
+  }
+
+
+
+
+  update() {
+
+    // 計算基準 Y 座標
+
+    const baseY = lineSpacing * (this.index + 1);
+
+    // 計算最大允許的抖動幅度 (不超過間距的 45%，確保不交叉)
+
+    const maxDeviation = lineSpacing * 0.45;
+
+
+
+
+    this.points.forEach((p, i) => {
+
+      p.x = (i / this.segments) * width; // RWD 寬度定位
+
+
+
+
+      if (!isCalm) {
+
+        // --- 激動模式 (原地雜亂，不交叉) ---
+
+        // 使用 Math.random() 產生高頻雜訊，讓線條原地跳動
+
+        // 抖動幅度受限於 maxDeviation，並乘上線條自身的強度系數
+
+        let noise = (Math.random() - 0.5) * 2 * maxDeviation * this.jitterIntensity;
+
+
+
+
+        // 越粗的線條，抖動感稍微笨重一點，這裡做一點微調
+
+        if(this.thickness > 4) noise *= 0.7;
+
+
+
+
+        p.targetY = baseY + noise;
+
+
+
+
+      } else {
+
+        // --- 平靜模式 (冷靜、乾淨) ---
+
+        // 極微小的緩慢波動，幾乎接近直線
+
+        let subtleWave = Math.sin(Date.now() * 0.0008 + i * 0.15 + this.index) * 3;
+
+        p.targetY = baseY + subtleWave;
+
+      }
+
+
+
+
+      // 緩動演算法 (Easing)：讓線條平滑地移動到目標位置
+
+      // 激動時移動快 (0.2)，平靜時移動慢 (0.05)
+
+      let ease = isCalm ? 0.05 : 0.2;
+
+      p.y += (p.targetY - p.y) * ease;
+
+    });
+
+  }
+
+
+
+
+  draw() {
+
+    ctx.beginPath();
+
+    // 平靜時線條統一變細 (1px)，激動時使用隨機粗細
+
+    ctx.lineWidth = isCalm ? 1 : this.thickness;
+
+    // 根據狀態切換色盤
+
+    ctx.strokeStyle = isCalm ? CALM_COLORS[this.index % CALM_COLORS.length] : this.color;
+
+    ctx.lineCap = 'round';
+
+    ctx.lineJoin = 'round';
+
+
+
+
+    if (this.points.length > 0) {
+
+        ctx.moveTo(this.points[0].x, this.points[0].y);
+
+        // 使用二次貝茲曲線繪製平滑線條
+
+        for (let i = 1; i < this.points.length - 1; i++) {
+
+          let xc = (this.points[i].x + this.points[i+1].x) / 2;
+
+          let yc = (this.points[i].y + this.points[i+1].y) / 2;
+
+          ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+
+        }
+
+        // 連接最後一點
+
+        let lastP = this.points[this.points.length-1];
+
+        ctx.lineTo(lastP.x, lastP.y);
+
+    }
+
+    ctx.stroke();
+
+  }
+
+}
+
+
+
+
+function init() {
+
+  width = canvas.width = window.innerWidth;
+
+  height = canvas.height = window.innerHeight;
+
+  lines = [];
+
+  // 線條數量設定 (可依需求調整，目前 10 條)
+
+  const lineCount = 10;
+
+  // 計算線條之間的垂直間距
+
+  lineSpacing = height / (lineCount + 1);
+
+
+
+
+  for (let i = 0; i < lineCount; i++) {
+
+    lines.push(new Line(i));
+
+  }
+
+}
+
+
+
+
+function animate() {
+
+  // 使用半透明背景清除畫布，製造一點點動態殘影軌跡感
+
+  ctx.fillStyle = isCalm ? 'rgba(240, 238, 233, 0.3)' : 'rgba(149, 82, 81, 0.4)';
+
+  // 注意：因為 CSS 有漸層背景，這裡的 fillRect 主要是為了蓋掉上一幀的線條軌跡
+
+  // 透明度不能太高，否則會蓋住 CSS 的漸層背景
+
+  ctx.clearRect(0, 0, width, height); // 使用 clearRect 完全清除，讓 CSS 背景透出來
+
+
+
+
+  lines.forEach(line => {
+
+    line.update();
+
+    line.draw();
+
+  });
+
+  requestAnimationFrame(animate);
+
+}
+
+
+
+
+window.addEventListener('resize', init);
+
+
+
+
+window.addEventListener('mousedown', (e) => {
+
+  if (e.button === 0) {
+
+    isCalm = !isCalm;
+
+    document.body.classList.toggle('calm-state');
+
+  }
+
+});
+
+
+
+
+init();
+
+animate();
+
+這是一份將你提供的 HTML、CSS 和 JavaScript 邏輯整合後的完整代碼。我已經幫你處理好了結構，讓你只需複製並儲存即可直接執行。
+
+互動式網頁：情緒實驗室 (完整代碼)
+
+你可以將以下內容複製到一個新的文字檔案中，並命名為 emotion.html。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒實驗室：平靜與激動</title>
+    <style>
+        /* --- CSS 樣式區 --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 預設背景 (激動狀態 - Marsala) */
+            background-color: #955251;
+            /* 背景顏色的過渡時間 */
+            transition: background 2s ease-in-out, background-color 2s ease-in-out;
+        }
+
+        /* 平靜狀態的樣式 */
+        body.calm-state {
+            /* 使用 CSS 漸層：從冷灰藍色漸變到原本的 Cloud Dancer 米白色 */
+            background: linear-gradient(to bottom, #D0DDE6, #F0EEE9);
+            /* 備用純色，以防瀏覽器不支援漸層 */
+            background-color: #F0EEE9;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: pointer; /* 將滑鼠游標改為手型，提示可點擊 */
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="emotionCanvas"></canvas>
+
+    <script>
+        /* --- JavaScript 邏輯區 --- */
+        const canvas = document.getElementById('emotionCanvas');
+        const ctx = canvas.getContext('2d');
+        let lines = [];
+        let isCalm = false;
+        let width, height;
+        let lineSpacing = 0;
+
+        // --- 色彩設定 ---
+        // 激動色彩 (維持暖色調與深色對比)
+        const AGITATED_COLORS = ['#955251', '#7A3E3D', '#5E2C2B', '#F0EEE9', '#333333'];
+        // 平靜色彩 (新增冷色調：藍灰、淺冷灰，保留一點點暖灰做平衡)
+        const CALM_COLORS = ['#AABCCE', '#C3D1DC', '#D8E2E8', '#B0AFA9'];
+
+        class Line {
+            constructor(index) {
+                this.index = index;
+                // 隨機賦予線條不同的「個性」
+                this.thickness = Math.random() * 6 + 1; // 粗細範圍 1px ~ 7px
+                this.jitterIntensity = Math.random() * 0.8 + 0.2; // 抖動劇烈程度
+                this.color = AGITATED_COLORS[Math.floor(Math.random() * AGITATED_COLORS.length)];
+                this.points = [];
+                this.segments = 40; // 分段數
+                this.resetPoints();
+            }
+
+            resetPoints() {
+                this.points = [];
+                // 根據視窗高度與線條數量，計算出這條線的「基準中線」Y座標
+                const baseY = lineSpacing * (this.index + 1);
+                for (let i = 0; i <= this.segments; i++) {
+                    // 初始化點的位置
+                    this.points.push({ x: 0, y: baseY, targetY: baseY });
+                }
+            }
+
+            update() {
+                // 計算基準 Y 座標
+                const baseY = lineSpacing * (this.index + 1);
+                // 計算最大允許的抖動幅度 (不超過間距的 45%，確保不交叉)
+                const maxDeviation = lineSpacing * 0.45;
+
+                this.points.forEach((p, i) => {
+                    p.x = (i / this.segments) * width; // RWD 寬度定位
+
+                    if (!isCalm) {
+                        // --- 激動模式 (原地雜亂，不交叉) ---
+                        // 使用 Math.random() 產生高頻雜訊，讓線條原地跳動
+                        let noise = (Math.random() - 0.5) * 2 * maxDeviation * this.jitterIntensity;
+
+                        // 越粗的線條，抖動感稍微笨重一點，這裡做一點微調
+                        if(this.thickness > 4) noise *= 0.7;
+
+                        p.targetY = baseY + noise;
+
+                    } else {
+                        // --- 平靜模式 (冷靜、乾淨) ---
+                        // 極微小的緩慢波動，幾乎接近直線
+                        let subtleWave = Math.sin(Date.now() * 0.0008 + i * 0.15 + this.index) * 3;
+                        p.targetY = baseY + subtleWave;
+                    }
+
+                    // 緩動演算法 (Easing)：讓線條平滑地移動到目標位置
+                    let ease = isCalm ? 0.05 : 0.2;
+                    p.y += (p.targetY - p.y) * ease;
+                });
+            }
+
+            draw() {
+                ctx.beginPath();
+                // 平靜時線條統一變細 (1px)，激動時使用隨機粗細
+                ctx.lineWidth = isCalm ? 1 : this.thickness;
+                // 根據狀態切換色盤
+                ctx.strokeStyle = isCalm ? CALM_COLORS[this.index % CALM_COLORS.length] : this.color;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                if (this.points.length > 0) {
+                    ctx.moveTo(this.points[0].x, this.points[0].y);
+                    // 使用二次貝茲曲線繪製平滑線條
+                    for (let i = 1; i < this.points.length - 1; i++) {
+                        let xc = (this.points[i].x + this.points[i+1].x) / 2;
+                        let yc = (this.points[i].y + this.points[i+1].y) / 2;
+                        ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+                    }
+                    // 連接最後一點
+                    let lastP = this.points[this.points.length-1];
+                    ctx.lineTo(lastP.x, lastP.y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            lines = [];
+            // 線條數量設定 (可依需求調整，目前 10 條)
+            const lineCount = 10;
+            // 計算線條之間的垂直間距
+            lineSpacing = height / (lineCount + 1);
+
+            for (let i = 0; i < lineCount; i++) {
+                lines.push(new Line(i));
+            }
+        }
+
+        function animate() {
+            // 完全清除畫布，讓 CSS 背景透出來
+            ctx.clearRect(0, 0, width, height); 
+
+            lines.forEach(line => {
+                line.update();
+                line.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', init);
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // 滑鼠左鍵點擊
+                isCalm = !isCalm;
+                document.body.classList.toggle('calm-state');
+            }
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
+
+Mac 儲存小提醒
+
+由於你之前遇到 TextEdit 格式問題，請務必遵循以下步驟來確保檔案能正確執行：
+
+打開 TextEdit (文字編輯器)。
+
+按下 Shift + Command + T（將文件轉換為純文字格式）。如果看到視窗上方原本的字體選項消失了，就代表成功了。
+
+貼上代碼。
+
+儲存時，將檔名設定為 emotion.html。
+
+在 Chrome 中點擊兩下該檔案即可看到效果！
+
+這段代碼已經幫你把「原地雜亂」和「平靜冷色漸層」的效果都優化好了。
+請問需要我幫你加入一些輕柔的背景音樂，讓點擊後的「平靜感」更完整嗎？
+
+Google 隱私權政策
+在新視窗中開啟
+Google 服務條款
+在新視窗中開啟
+個人隱私權與 Gemini 應用程式
+在新視窗中開啟
+
+Gemini 可能會提供不準確的資訊 (包括人物資訊)，因此請查證回覆內容。
+
+登入

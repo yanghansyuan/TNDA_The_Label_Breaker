@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ripple with Light</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* --- 背景設定調整 --- */
+            /* 將底色換成深一點點、更有質感的天藍色 */
+            background-color: #9cd0e8; 
+            background-image: 
+                /* 降低白色雲霧的亮度，避免過於刺眼 */
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%),
+                /* 加入一層淡淡的深海藍色漸層，增加水底的深度感 */
+                radial-gradient(circle at 50% 50%, rgba(70, 130, 180, 0.2) 0%, rgba(70, 130, 180, 0) 65%),
+                /* 保留紙張紋理噪點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            background-blend-mode: normal;
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        // --- 設定參數 ---
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        // 【關鍵調整】點點變小、變精緻
+        const dotSpacing = 6;    // 讓點點排列更緊密一點 (原本是 8)
+        const maxRadius = 2.5;   // 波峰時點點的最大半徑大幅縮小 (原本是 6)
+        const colorStrength = 1.2; // 稍微降低光芒的刺眼程度
+
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+
+                    let intensity = Math.abs(waveHeight);
+                    
+                    // 波動小於 8 就直接隱藏，維持背景的乾淨度
+                    if (intensity < 8) continue; 
+                    
+                    let alpha = (intensity / 200) * colorStrength;
+                    // 最高透明度限制在 0.75，讓發光更柔和不刺眼
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+
+                    let radius = (intensity / 150) * maxRadius;
+                    // 最小半徑設定為 0.5，讓細微的波紋有如星塵般點綴
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100), {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+
+    </script>
+</body>
+</html>

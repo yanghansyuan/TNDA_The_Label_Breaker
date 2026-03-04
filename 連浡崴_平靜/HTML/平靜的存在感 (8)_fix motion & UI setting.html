@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平靜的存在感 | Presence in Calmness</title>
+    <style>
+        :root {
+            /* 字體設定：優先使用 Honor Sans，若無則回退到系統無襯線字體 */
+            --font-stack: "Honor Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            
+            --text-primary: #e6e6e6;
+            --text-secondary: rgba(230, 230, 230, 0.5);
+            --glass-surface: rgba(10, 10, 10, 0.75); /* 更深沉的玻璃底色 */
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --accent-danger: #ff5c5c;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-stack);
+            background-color: #020202;
+            color: var(--text-primary);
+            /* 優化字體渲染 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 層級 0: 動態背景畫布 */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            filter: contrast(1.1) brightness(0.9); /* 讓背景稍微暗沉一點 */
+        }
+
+        /* 層級 1: 3D 場景 */
+        #three-canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 層級 2: 啟動遮罩 */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.8s ease-in-out;
+            cursor: pointer;
+        }
+
+        .overlay-title {
+            font-family: var(--font-stack);
+            font-size: 2rem; 
+            font-weight: 300; /* 字重保持輕盈 */
+            letter-spacing: 0.3em;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+
+        .overlay-hint {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            animation: breathe 4s infinite ease-in-out;
+        }
+
+        /* 層級 3: UI 面板 */
+        #ui-layer {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s;
+            pointer-events: none; /* 讓滑鼠穿透空白處 */
+        }
+
+        #ui-layer.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .glass-panel {
+            pointer-events: auto;
+            background: var(--glass-surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+
+        /* 模式按鈕群組 */
+        .mode-selector {
+            border-radius: 60px;
+            padding: 6px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .mode-btn {
+            font-family: var(--font-stack);
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500; 
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            text-transform: uppercase;
+        }
+
+        .mode-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .mode-btn.active {
+            background: #e0e0e0;
+            color: #050505;
+            font-weight: 700;
+            box-shadow: 0 0 25px rgba(255,255,255,0.15);
+        }
+
+        /* MUTE 按鈕特殊樣式 */
+        .mode-btn[data-type="off"]:hover { color: var(--accent-danger); }
+        .mode-btn[data-type="off"].active {
+            background: rgba(200, 50, 50, 0.15);
+            color: var(--accent-danger);
+            border: 1px solid rgba(255, 92, 92, 0.2);
+            box-shadow: none;
+        }
+
+        /* 調音台 */
+        .tuner-panel {
+            border-radius: 24px;
+            padding: 18px 28px;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-family: var(--font-stack);
+            font-size: 0.55rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 90px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #d4d4d4;
+            transition: transform 0.2s;
+            box-shadow: 0 0 8px rgba(0,0,0,0.6);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.4);
+            background: #fff;
+        }
+
+        .divider {
+            width: 1px;
+            height: 20px;
+            background: var(--glass-border);
+        }
+
+        @keyframes breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; } }
+    </style>
+</head>
+<body>
+
+    <!-- BG Art -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- 3D Scene -->
+    <div id="three-canvas-container"></div>
+
+    <!-- Overlay -->
+    <div id="overlay">
+        <div class="overlay-title">平靜的存在感</div>
+        <div class="overlay-hint">點擊進入體驗</div>
+    </div>
+
+    <!-- UI -->
+    <div id="ui-layer">
+        <div class="glass-panel mode-selector">
+            <button class="mode-btn active" data-type="pure">PURE</button>
+            <button class="mode-btn" data-type="reverie">REVERIE</button>
+            <button class="mode-btn" data-type="deep">DEEP</button>
+            <button class="mode-btn" data-type="off">MUTE</button>
+        </div>
+
+        <div class="glass-panel tuner-panel">
+            <div class="control-group">
+                <div class="control-label">Tone</div>
+                <input type="range" id="tone" min="0" max="1" step="0.01" value="0.7">
+            </div>
+            <div class="divider"></div>
+            <div class="control-group">
+                <div class="control-label">Space</div>
+                <input type="range" id="space" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="divider"></div>
+            <div class="control-group">
+                <div class="control-label">Vol</div>
+                <!-- 預設音量 Slider 設為 0.5，但在 AudioEngine 內部我們會再乘上 0.5 的係數 -->
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        /**
+         * PART 1: AUDIO ENGINE (Refined & Lower Volume)
+         * - 純淨 (Pure) / 夢幻 (Reverie) / 深淵 (Deep)
+         * - 全體音量降低 50%
+         */
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.master = null;
+                this.source = null;
+                this.toneFilter = null;
+                this.delay = null;
+                this.wet = null;
+                this.analyser = null;
+                this.lfoNodes = [];
+                
+                // 基礎音量預設降低
+                this.baseGain = 0.5; // 全局衰減係數 (降低 50%)
+                this.vol = 0.5;      // 使用者設定值
+                
+                this.tone = 0.7;
+                this.space = 0.3;
+                this.isMuted = false;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AC = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AC();
+                
+                this.master = this.ctx.createGain();
+                this.master.gain.value = 0;
+                this.master.connect(this.ctx.destination);
+
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.analyser.smoothingTimeConstant = 0.85; // 更平滑的視覺反應
+                this.analyser.connect(this.master);
+
+                // Insert Effects
+                this.toneFilter = this.ctx.createBiquadFilter();
+                this.toneFilter.type = 'lowpass';
+                this.updateTone();
+
+                this.delay = this.ctx.createDelay();
+                this.delay.delayTime.value = 0.4; // 400ms delay
+                const feedback = this.ctx.createGain();
+                feedback.gain.value = 0.3; // 稍微減少回授
+                this.delay.connect(feedback);
+                feedback.connect(this.delay);
+
+                this.wet = this.ctx.createGain();
+                this.updateSpace();
+                
+                // Routing
+                this.delay.connect(this.wet);
+                this.wet.connect(this.analyser);
+                this.toneFilter.connect(this.analyser); // Dry
+                this.toneFilter.connect(this.delay);    // Send
+            }
+
+            stop() {
+                if(this.source) { try{this.source.stop();}catch(e){} }
+                this.lfoNodes.forEach(n => { try{n.stop(); n.disconnect();}catch(e){} });
+                this.lfoNodes = [];
+            }
+
+            createBuffer() {
+                // Generate White Noise Buffer
+                const b = this.ctx.createBuffer(1, 2*this.ctx.sampleRate, this.ctx.sampleRate);
+                const d = b.getChannelData(0);
+                for(let i=0; i<d.length; i++) d[i] = Math.random()*2 - 1;
+                return b;
+            }
+
+            play(type) {
+                this.init();
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+                if(type === 'off') { this.mute(); return; }
+
+                this.isMuted = false;
+                this.stop();
+
+                const buf = this.createBuffer();
+                this.source = this.ctx.createBufferSource();
+                this.source.buffer = buf;
+                this.source.loop = true;
+
+                let out = this.source;
+
+                // --- Sound Sculpting ---
+                if (type === 'pure') { // 原 Focus
+                    // 乾淨的高通濾波，去除低頻轟鳴
+                    const hp = this.ctx.createBiquadFilter();
+                    hp.type = 'highpass'; hp.frequency.value = 200;
+                    this.source.connect(hp); out = hp;
+                } 
+                else if (type === 'reverie') { // 原 Rain
+                    // 間歇性 LFO 雨聲
+                    const pink = this.ctx.createBiquadFilter();
+                    pink.type = 'lowshelf'; pink.frequency.value = 500; pink.gain.value = -10;
+                    
+                    const dynamic = this.ctx.createBiquadFilter();
+                    dynamic.type = 'lowpass'; dynamic.frequency.value = 800;
+
+                    const lfo = this.ctx.createOscillator();
+                    lfo.frequency.value = 0.12; // 緩慢的波浪
+                    const lfoG = this.ctx.createGain();
+                    lfoG.gain.value = 400; 
+                    lfo.connect(lfoG);
+                    lfoG.connect(dynamic.frequency);
+                    lfo.start();
+                    this.lfoNodes.push(lfo, lfoG);
+
+                    this.source.connect(pink); pink.connect(dynamic); out = dynamic;
+                } 
+                else if (type === 'deep') {
+                    // 極低頻
+                    const lp = this.ctx.createBiquadFilter();
+                    lp.type = 'lowpass'; lp.frequency.value = 180; // 更低沉
+                    this.source.connect(lp); out = lp;
+                }
+
+                out.connect(this.toneFilter);
+                this.source.start();
+
+                // Fade In to Target Volume (Base * UserVol)
+                const t = this.ctx.currentTime;
+                const targetVol = this.vol * this.baseGain;
+                this.master.gain.cancelScheduledValues(t);
+                this.master.gain.setValueAtTime(0, t);
+                this.master.gain.linearRampToValueAtTime(targetVol, t+2.5);
+            }
+
+            mute() {
+                if(!this.master) return;
+                this.isMuted = true;
+                const t = this.ctx.currentTime;
+                this.master.gain.cancelScheduledValues(t);
+                this.master.gain.setValueAtTime(this.master.gain.value, t);
+                this.master.gain.exponentialRampToValueAtTime(0.001, t+1.5);
+                setTimeout(() => { if(this.isMuted) this.stop(); }, 1600);
+            }
+
+            updateTone() {
+                if(!this.toneFilter) return;
+                // Log mapping
+                const val = 150 * Math.pow(80, this.tone);
+                this.toneFilter.frequency.setTargetAtTime(val, this.ctx.currentTime, 0.2);
+            }
+
+            updateSpace() {
+                if(!this.wet) return;
+                this.wet.gain.setTargetAtTime(this.space * 0.8, this.ctx.currentTime, 0.2);
+            }
+
+            set(p, v) {
+                if(p==='vol') { 
+                    this.vol = v; 
+                    if(!this.isMuted && this.master) {
+                        this.master.gain.setTargetAtTime(v * this.baseGain, this.ctx.currentTime, 0.1); 
+                    }
+                }
+                else if(p==='tone') { this.tone = v; this.updateTone(); }
+                else if(p==='space') { this.space = v; this.updateSpace(); }
+            }
+
+            getEnergy() {
+                if(!this.analyser || this.isMuted) return 0;
+                const d = new Uint8Array(this.analyser.frequencyBinCount);
+                this.analyser.getByteFrequencyData(d);
+                let s = 0; for(let i=0; i<d.length; i++) s+=d[i];
+                return (s/d.length)/255;
+            }
+        }
+
+        /**
+         * PART 2: BACKGROUND ART (Refined DEEP Bloom)
+         */
+        class BackgroundArt {
+            constructor() {
+                this.canvas = document.getElementById('bg-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.mode = 'off';
+                this.elements = [];
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            setMode(m) {
+                this.mode = m;
+                this.elements = [];
+                if (m === 'deep') {
+                    // 預先生成一些 Deep 粒子
+                    for(let i=0; i<8; i++) this.elements.push(this.createBar(true));
+                }
+            }
+
+            // Reverie Ripple
+            createRipple() {
+                return {
+                    x: Math.random() * this.canvas.width,
+                    y: Math.random() * this.canvas.height,
+                    r: 0,
+                    speed: Math.random() * 0.4 + 0.1,
+                    alpha: Math.random() * 0.3 + 0.1
+                };
+            }
+
+            // Deep Bar (Bloom Style)
+            createBar(randomY = false) {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                return {
+                    x: Math.random() * w, // 隨機水平位置 (如果需要垂直降落感，其實X不重要，重要的是漸層)
+                    y: randomY ? Math.random() * h : -100,
+                    width: w, // 全寬漸層
+                    height: Math.random() * 150 + 50, // 條紋高度
+                    speed: Math.random() * 0.2 + 0.05, // 極慢
+                    alpha: 0,
+                    life: Math.random() * 0.5 + 0.5
+                };
+            }
+
+            render(energy) {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const t = performance.now() * 0.001;
+                
+                // 1. Clear with trailing effect (更暗的拖尾)
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.fillStyle = 'rgba(2, 2, 2, 0.15)'; 
+                this.ctx.fillRect(0, 0, w, h);
+
+                // 2. Draw Modes
+                if (this.mode === 'pure') {
+                    // --- PURE: 絲滑的線條波 ---
+                    this.ctx.globalCompositeOperation = 'lighter';
+                    this.ctx.strokeStyle = `rgba(200, 220, 255, ${0.05 + energy * 0.15})`;
+                    this.ctx.lineWidth = 1;
+                    
+                    for (let i = 0; i < 4; i++) {
+                        this.ctx.beginPath();
+                        const speed = t * (0.3 + i * 0.05);
+                        for (let x = 0; x < w; x += 15) {
+                            const y = h/2 + Math.sin(x * 0.003 + speed + i) * (60 + energy * 80);
+                            if(x===0) this.ctx.moveTo(x,y); else this.ctx.lineTo(x,y);
+                        }
+                        this.ctx.stroke();
+                    }
+                }
+                else if (this.mode === 'reverie') {
+                    // --- REVERIE: 漣漪 ---
+                    this.ctx.globalCompositeOperation = 'screen';
+                    if (Math.random() < 0.03 + energy * 0.05) this.elements.push(this.createRipple());
+
+                    for (let i = this.elements.length - 1; i >= 0; i--) {
+                        const p = this.elements[i];
+                        p.r += p.speed;
+                        p.alpha -= 0.002;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        this.ctx.strokeStyle = `rgba(100, 200, 255, ${p.alpha})`;
+                        this.ctx.lineWidth = 1;
+                        this.ctx.stroke();
+                        if (p.alpha <= 0) this.elements.splice(i, 1);
+                    }
+                }
+                else if (this.mode === 'deep') {
+                    // --- DEEP: Bloom Gradient Bars ---
+                    // 使用 screen 混合模式讓重疊處發光
+                    this.ctx.globalCompositeOperation = 'screen'; 
+                    
+                    // 偶爾生成新條紋
+                    if (Math.random() < 0.01) this.elements.push(this.createBar());
+
+                    for (let i = this.elements.length - 1; i >= 0; i--) {
+                        const b = this.elements[i];
+                        b.y += b.speed;
+                        
+                        // 淡入淡出生命週期
+                        if (b.y < h * 0.3) b.alpha = Math.min(b.alpha + 0.002, 0.15); // 最高透明度很低，保持幽暗
+                        else if (b.y > h * 0.7) b.alpha -= 0.001;
+
+                        // 核心：Bloom Effect
+                        this.ctx.shadowBlur = 40; // 強烈的模糊
+                        this.ctx.shadowColor = `rgba(255, 100, 40, ${b.alpha * 0.8})`; // 琥珀色光暈
+                        
+                        // 繪製水平漸層條紋
+                        const grad = this.ctx.createLinearGradient(0, b.y, 0, b.y + b.height);
+                        // 頭部稍微亮一點
+                        grad.addColorStop(0, `rgba(255, 120, 60, 0)`);
+                        grad.addColorStop(0.3, `rgba(255, 120, 60, ${b.alpha * (0.5 + energy)})`);
+                        grad.addColorStop(1, `rgba(100, 40, 20, 0)`);
+                        
+                        this.ctx.fillStyle = grad;
+                        // 畫一個橫跨畫面的矩形，但我們只畫在隨機高度
+                        this.ctx.fillRect(0, b.y, w, b.height);
+                        
+                        // Reset Shadow to avoid affecting next frame too much (though we clear rect)
+                        this.ctx.shadowBlur = 0;
+
+                        if (b.y > h + 100 || b.alpha <= 0) this.elements.splice(i, 1);
+                    }
+                }
+            }
+        }
+
+        /**
+         * PART 3: 3D SCENE (Textures & Rendering)
+         */
+        class TextureGen {
+            createCanvas() { const c = document.createElement('canvas'); c.width=512; c.height=512; return c; }
+            pureTex() {
+                const c = this.createCanvas(); const ctx = c.getContext('2d');
+                ctx.fillStyle = '#808080'; ctx.fillRect(0,0,512,512);
+                for(let i=0;i<4000;i++) {
+                    const v = Math.random()*255; ctx.fillStyle=`rgba(${v},${v},${v},0.08)`;
+                    ctx.fillRect(Math.random()*512-50, Math.random()*512, Math.random()*200+50, 1);
+                }
+                return new THREE.CanvasTexture(c);
+            }
+            reverieTex() {
+                const c = this.createCanvas(); const ctx = c.getContext('2d');
+                ctx.fillStyle = '#808080'; ctx.fillRect(0,0,512,512);
+                for(let i=0;i<100;i++) {
+                    const x=Math.random()*512, y=Math.random()*512, r=Math.random()*60+10;
+                    const g = ctx.createRadialGradient(x,y,0,x,y,r);
+                    g.addColorStop(0,'rgba(255,255,255,0.2)'); g.addColorStop(1,'transparent');
+                    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,6.28); ctx.fill();
+                }
+                return new THREE.CanvasTexture(c);
+            }
+            deepTex() {
+                const c = this.createCanvas(); const ctx = c.getContext('2d');
+                const id = ctx.createImageData(512,512);
+                for(let i=0;i<id.data.length;i+=4){
+                    const v=Math.random()*200; // Darker noise
+                    id.data[i]=v; id.data[i+1]=v; id.data[i+2]=v; id.data[i+3]=255;
+                }
+                ctx.putImageData(id,0,0); return new THREE.CanvasTexture(c);
+            }
+        }
+
+        class Scene3D {
+            constructor() {
+                this.con = document.getElementById('three-canvas-container');
+                this.tg = new TextureGen();
+                this.mats = {};
+                this.mx=0; this.my=0;
+            }
+
+            init() {
+                this.scene = new THREE.Scene();
+                this.cam = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+                this.cam.position.set(0,0,10);
+                this.ren = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                this.ren.setSize(window.innerWidth, window.innerHeight);
+                this.ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.ren.shadowMap.enabled = true;
+                this.ren.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.con.appendChild(this.ren.domElement);
+
+                // Textures
+                const t1 = this.tg.pureTex();
+                const t2 = this.tg.reverieTex();
+                const t3 = this.tg.deepTex();
+
+                // Materials
+                this.mats.pure = new THREE.MeshStandardMaterial({
+                    color: 0xffffff, roughness: 0.25, metalness: 0.9, bumpMap: t1, bumpScale: 0.05
+                });
+                this.mats.reverie = new THREE.MeshStandardMaterial({
+                    color: 0x81d4fa, roughness: 0.1, metalness: 0.5, bumpMap: t2, bumpScale: 0.1,
+                    transparent: true, opacity: 0.9
+                });
+                this.mats.deep = new THREE.MeshStandardMaterial({
+                    color: 0x1a1a1a, roughness: 1.0, metalness: 0.0, bumpMap: t3, bumpScale: 0.5
+                });
+                this.mats.mute = new THREE.MeshBasicMaterial({
+                    color: 0x333333, wireframe: true, transparent: true, opacity: 0.15
+                });
+
+                // Objects
+                this.sphere = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 30), this.mats.pure);
+                this.sphere.castShadow = true; this.sphere.receiveShadow = true;
+                this.scene.add(this.sphere);
+
+                const planeMat = new THREE.MeshStandardMaterial({ 
+                    color: 0x000000, roughness: 1, metalness: 0,
+                    transparent: true, opacity: 0.6
+                });
+                this.plane = new THREE.Mesh(new THREE.PlaneGeometry(80,80), planeMat);
+                this.plane.rotation.x = -Math.PI/2;
+                this.plane.position.y = -3.5;
+                this.plane.receiveShadow = true;
+                this.scene.add(this.plane);
+
+                // Lighting
+                this.l1 = new THREE.PointLight(0xffffff, 1.0, 30); // 稍微調低亮度
+                this.l1.position.set(4,5,4); this.l1.castShadow = true;
+                this.scene.add(this.l1);
+
+                this.l2 = new THREE.PointLight(0x4466ff, 0.6, 30);
+                this.l2.position.set(-4,-2,5);
+                this.scene.add(this.l2);
+
+                window.addEventListener('resize', ()=> {
+                    this.cam.aspect = window.innerWidth/window.innerHeight;
+                    this.cam.updateProjectionMatrix();
+                    this.ren.setSize(window.innerWidth, window.innerHeight);
+                });
+                document.addEventListener('mousemove', e => {
+                    this.mx = (e.clientX/window.innerWidth)*2-1;
+                    this.my = -(e.clientY/window.innerHeight)*2+1;
+                });
+            }
+
+            setMode(m) {
+                const mat = (m==='off') ? this.mats.mute : (this.mats[m] || this.mats.pure);
+                this.sphere.material = mat;
+
+                if(m==='pure') { this.l1.color.setHex(0xffffff); this.l2.color.setHex(0xaaccff); }
+                else if(m==='reverie') { this.l1.color.setHex(0xb3e5fc); this.l2.color.setHex(0x0277bd); }
+                else if(m==='deep') { this.l1.color.setHex(0x5d4037); this.l2.color.setHex(0x1a1a1a); } // 非常暗的燈光
+                else { this.l1.color.setHex(0x444444); this.l2.color.setHex(0x111111); }
+            }
+
+            render(energy) {
+                const t = performance.now()*0.001;
+                
+                // Cam
+                const tx = Math.sin(this.mx*0.5)*9;
+                const tz = Math.cos(this.mx*0.5)*9;
+                const ty = this.my*3;
+                this.cam.position.lerp(new THREE.Vector3(tx, ty, tz), 0.04);
+                this.cam.lookAt(0,0,0);
+
+                // Sphere
+                const s = 1 + energy * 0.15; // 輕微呼吸
+                this.sphere.scale.lerp(new THREE.Vector3(s,s,s), 0.1);
+                this.sphere.rotation.y += 0.002;
+                this.sphere.rotation.x = Math.sin(t*0.25)*0.1;
+                
+                if(this.sphere.material.emissive) {
+                    // Deep 模式下自發光更弱
+                    const emit = this.sphere.material === this.mats.deep ? energy*0.3 : energy*0.6;
+                    this.sphere.material.emissive.setScalar(emit);
+                }
+
+                // Lights
+                this.l1.position.x = Math.sin(t*0.3)*7;
+                this.l1.position.z = Math.cos(t*0.3)*7;
+
+                this.ren.render(this.scene, this.cam);
+            }
+        }
+
+        /**
+         * MAIN APP
+         */
+        const App = {
+            audio: new AudioEngine(),
+            bg: new BackgroundArt(),
+            s3d: new Scene3D(),
+            
+            init() {
+                this.s3d.init();
+                const overlay = document.getElementById('overlay');
+                const ui = document.getElementById('ui-layer');
+                const btns = document.querySelectorAll('.mode-btn');
+
+                overlay.addEventListener('click', () => {
+                    this.audio.play('pure');
+                    this.bg.setMode('pure');
+                    overlay.style.opacity = 0;
+                    setTimeout(()=>{ overlay.style.display='none'; ui.classList.add('visible'); }, 1800);
+                });
+
+                btns.forEach(b => b.addEventListener('click', e => {
+                    btns.forEach(btn=>btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const t = e.target.dataset.type;
+                    this.audio.play(t);
+                    this.s3d.setMode(t);
+                    this.bg.setMode(t);
+                }));
+
+                const bind = (id, k) => {
+                    document.getElementById(id).addEventListener('input', e => this.audio.set(k, parseFloat(e.target.value)));
+                }
+                bind('volume', 'vol'); bind('tone', 'tone'); bind('space', 'space');
+
+                this.loop();
+            },
+
+            loop() {
+                requestAnimationFrame(this.loop.bind(this));
+                const e = this.audio.getEnergy();
+                this.bg.render(e);
+                this.s3d.render(e);
+            }
+        };
+
+        App.init();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記得要開心喔</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000000; /* 純黑背景 */
+            user-select: none; 
+        }
+
+        .canvas-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 融球濾鏡層 */
+        #goo-layer {
+            z-index: 1;
+            /* 保持黏性參數 */
+            filter: blur(12px) contrast(25);
+            background-color: #000000; 
+        }
+
+        /* 粒子層 */
+        #particle-layer {
+            z-index: 2;
+            pointer-events: none;
+            /* 增加一點發光感 */
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="canvas-wrapper" id="goo-layer">
+        <canvas id="gooCanvas"></canvas>
+    </div>
+    <div class="canvas-wrapper" id="particle-layer">
+        <canvas id="particleCanvas"></canvas>
+    </div>
+
+    <script>
+        const gooCanvas = document.getElementById('gooCanvas');
+        const ctxGoo = gooCanvas.getContext('2d');
+
+        const particleCanvas = document.getElementById('particleCanvas');
+        const ctxParticle = particleCanvas.getContext('2d');
+
+        let width, height;
+        let dpr = window.devicePixelRatio || 1;
+
+        let balls = [];
+        let particles = [];
+        let draggedBall = null;
+        let isGameOver = false;
+
+        let mouseX = 0, mouseY = 0;
+        let lastMouseX = 0, lastMouseY = 0;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+
+            gooCanvas.width = width * dpr;
+            gooCanvas.height = height * dpr;
+            ctxGoo.scale(dpr, dpr);
+
+            particleCanvas.width = width * dpr;
+            particleCanvas.height = height * dpr;
+            ctxParticle.scale(dpr, dpr);
+            
+            gooCanvas.style.width = `${width}px`;
+            gooCanvas.style.height = `${height}px`;
+            particleCanvas.style.width = `${width}px`;
+            particleCanvas.style.height = `${height}px`;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- 類別定義 ---
+
+        class Ball {
+            constructor(x, y, r) {
+                this.x = x;
+                this.y = y;
+                this.radius = r;
+                this.baseRadius = r;
+                
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.isDragging = false;
+                this.isGiant = false; // 標記是否為終局大球
+                
+                // 初始色相隨機
+                this.hue = Math.random() * 360;
+                this.updateColor();
+            }
+
+            updateColor() {
+                // 如果是終局大球，不使用位置變色邏輯
+                if (this.isGiant) return;
+
+                let safeX = Math.max(0, Math.min(this.x, width));
+                this.hue = (safeX / width) * 360;
+
+                // [修改 1] 移除白色：限制最高亮度
+                // 亮度範圍控制在 40% (底部) 到 70% (頂部) 之間
+                // 飽和度維持 100%，確保顏色鮮豔
+                let safeY = Math.max(0, Math.min(this.y, height));
+                let lightness = 70 - (safeY / height) * 30; 
+
+                this.color = `hsl(${this.hue}, 100%, ${lightness}%)`;
+            }
+
+            update() {
+                // [修改 2] 終局大球的特殊行為
+                if (this.isGiant) {
+                    // 自動彩虹循環變色
+                    this.hue = (this.hue + 0.5) % 360; // 每幀增加色相
+                    // 固定高亮度 65%，看起來很跳
+                    this.color = `hsl(${this.hue}, 100%, 65%)`; 
+                    
+                    // 平滑移到中間
+                    this.x += (width/2 - this.x) * 0.05;
+                    this.y += (height/2 - this.y) * 0.05;
+                    // 呼吸效果
+                    this.radius = this.baseRadius + Math.sin(Date.now() / 300) * 20;
+                    
+                    // 大球不執行後面的移動邏輯
+                    return;
+                }
+
+                if (this.isDragging) {
+                    // --- 拖曳模式 (含邊界限制) ---
+                    let targetX = mouseX;
+                    let targetY = mouseY;
+                    this.x = Math.max(this.radius, Math.min(targetX, width - this.radius));
+                    this.y = Math.max(this.radius, Math.min(targetY, height - this.radius));
+                    
+                    this.vx = this.x - lastMouseX;
+                    this.vy = this.y - lastMouseY;
+                    this.radius = this.baseRadius * 1.15;
+                } else {
+                    // --- 自由模式 ---
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vx *= 0.99;
+                    this.vy *= 0.99;
+
+                    if (this.x < this.radius) { this.x = this.radius; this.vx *= -1; }
+                    if (this.x > width - this.radius) { this.x = width - this.radius; this.vx *= -1; }
+                    if (this.y < this.radius) { this.y = this.radius; this.vy *= -1; }
+                    if (this.y > height - this.radius) { this.y = height - this.radius; this.vy *= -1; }
+
+                    if (this.radius > this.baseRadius) {
+                        this.radius -= 0.5;
+                    }
+                }
+                this.updateColor();
+            }
+
+            draw() {
+                ctxGoo.beginPath();
+                ctxGoo.fillStyle = this.color;
+                ctxGoo.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctxGoo.fill();
+            }
+        }
+
+        class Spark {
+            // [修改 3] 建構子不再需要接收顏色，自己生成隨機顏色
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 10 + 5; // 速度更快
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.02;
+                
+                // 隨機生成鮮豔的五彩顏色
+                const randomHue = Math.random() * 360;
+                this.color = `hsl(${randomHue}, 100%, 60%)`;
+                this.size = Math.random() * 6 + 3; // 粒子稍大
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2; // 重力
+                this.life -= this.decay;
+            }
+            draw() {
+                ctxParticle.globalAlpha = this.life;
+                ctxParticle.fillStyle = this.color;
+                
+                // 繪製粒子核心
+                ctxParticle.beginPath();
+                ctxParticle.arc(this.x, this.y, this.size * 0.7, 0, Math.PI * 2);
+                ctxParticle.fill();
+                
+                // 繪製外部光暈
+                ctxParticle.globalAlpha = this.life * 0.5;
+                ctxParticle.beginPath();
+                ctxParticle.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
+                ctxParticle.fill();
+                
+                ctxParticle.globalAlpha = 1.0;
+            }
+        }
+
+        // --- 邏輯函數 ---
+
+        // [修改 3] 不再需要傳入顏色參數
+        function createExplosion(x, y, count = 20) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Spark(x, y));
+            }
+        }
+
+        function checkCollisions() {
+            if (balls.length < 2) return;
+
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    let b1 = balls[i];
+                    let b2 = balls[j];
+                    let dx = b2.x - b1.x;
+                    let dy = b2.y - b1.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < (b1.radius + b2.radius) * 0.9) {
+                        
+                        let newArea = b1.radius * b1.radius + b2.radius * b2.radius;
+                        let newRadius = Math.sqrt(newArea);
+                        let totalR = b1.radius + b2.radius;
+                        let newX = (b1.x * b1.radius + b2.x * b2.radius) / totalR;
+                        let newY = (b1.y * b1.radius + b2.y * b2.radius) / totalR;
+
+                        let newBall = new Ball(newX, newY, newRadius);
+                        // 繼承色相，讓新球顏色不突兀
+                        newBall.hue = (b1.hue + b2.hue) / 2;
+
+                        if (b1.isDragging || b2.isDragging) {
+                             newBall.isDragging = true;
+                             draggedBall = newBall; 
+                        }
+
+                        // 融合時產生五彩火花 (數量增加)
+                        createExplosion(newX, newY, 50);
+
+                        balls.splice(j, 1);
+                        balls.splice(i, 1);
+                        balls.push(newBall);
+                        return; 
+                    }
+                }
+            }
+        }
+
+        function checkEndGame() {
+            if (balls.length === 1) {
+                let bigBall = balls[0];
+                let limit = Math.min(width, height) * 0.42; 
+                
+                if (bigBall.radius > limit && !isGameOver) {
+                    isGameOver = true;
+                    bigBall.isGiant = true; // 標記為大球
+
+                    if (draggedBall) {
+                        draggedBall.isDragging = false;
+                        draggedBall = null;
+                    }
+                }
+            }
+        }
+
+        // --- 輸入處理 ---
+
+        function handleInputStart(x, y) {
+            let hitBall = false;
+            for (let i = balls.length - 1; i >= 0; i--) {
+                let b = balls[i];
+                let dist = Math.sqrt((x - b.x)**2 + (y - b.y)**2);
+                
+                if (dist < b.radius) {
+                    hitBall = true;
+                    if (isGameOver) {
+                        // [修改 3] 終極五彩大爆炸 (數量超多)
+                        createExplosion(x, y, 300); 
+                        balls = [];
+                        isGameOver = false;
+                    } else {
+                        b.isDragging = true;
+                        draggedBall = b;
+                    }
+                    break; 
+                }
+            }
+
+            if (!hitBall && !isGameOver) {
+                let newR = Math.random() * 25 + 35;
+                balls.push(new Ball(x, y, newR));
+                // 生成時產生五彩火花
+                createExplosion(x, y, 15); 
+            }
+            mouseX = x; mouseY = y;
+            lastMouseX = x; lastMouseY = y;
+        }
+
+        function handleInputMove(x, y) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            mouseX = x;
+            mouseY = y;
+        }
+
+        function handleInputEnd() {
+            if (draggedBall) {
+                draggedBall.isDragging = false;
+                draggedBall = null;
+            }
+        }
+
+        window.addEventListener('mousedown', e => handleInputStart(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => handleInputMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleInputEnd);
+        
+        window.addEventListener('touchstart', e => {
+            e.preventDefault();
+            handleInputStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            handleInputMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        window.addEventListener('touchend', handleInputEnd);
+
+        // --- 繪圖循環 ---
+
+        function animate() {
+            ctxGoo.clearRect(0, 0, width, height);
+            ctxParticle.clearRect(0, 0, width, height);
+
+            balls.forEach(b => {
+                b.update();
+                b.draw();
+            });
+
+            checkCollisions();
+            checkEndGame();
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.update();
+                p.draw();
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+    </script>
+</body>
+</html>

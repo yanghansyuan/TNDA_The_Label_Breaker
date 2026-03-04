@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>情緒靈感互動｜像素 × 霓虹（順暢版）</title>
+  <style>
+    :root{
+      --bg1:#050611;
+      --bg2:#0b1440;
+      --ink: rgba(255,255,255,.90);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1100px 900px at 18% 10%, rgba(255,255,255,.06), transparent 60%),
+        radial-gradient(900px 800px at 75% 50%, rgba(255,0,180,.08), transparent 62%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      color:var(--ink);
+    }
+    .stage{position:relative;height:100%;width:100%}
+    canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+    .hud{
+      position:absolute; inset:0;
+      padding: clamp(12px, 2.0vw, 22px);
+      pointer-events:none;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      z-index:3;
+      text-shadow: 0 12px 32px rgba(0,0,0,.45);
+    }
+    .hud h1{
+      margin:0 0 6px 0;
+      font-size: clamp(16px, 2.0vw, 26px);
+      letter-spacing:.05em;
+    }
+    .hud p{
+      margin:0;
+      opacity:.78;
+      line-height:1.55;
+      font-size: clamp(12px, 1.25vw, 14px);
+      max-width:min(56vw, 560px);
+    }
+    .tip{
+      text-align:right;
+      opacity:.80;
+      font-size: clamp(12px, 1.25vw, 14px);
+    }
+    .tip b{opacity:.98}
+    .splitHint{
+      margin-top:8px;
+      opacity:.65;
+      font-size: clamp(11px, 1.1vw, 12px);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="main"></canvas>
+
+    <div class="hud">
+      <div>
+        <h1>左半像素風｜右半霓虹風</h1>
+        <p>左鍵點：衝擊波＋爆亮生成｜按住拖：霓虹噴灑｜放開：收束結尾（有句點感）。滑鼠靠近會推開、律動發光。</p>
+        <div class="splitHint">效能：已限制粒子/物件、DPR 上限、像素化用低解析度重繪（更順）。</div>
+      </div>
+      <div class="tip">
+        <div>左鍵點：<b>衝擊波</b></div>
+        <div>左鍵拖：<b>噴灑</b></div>
+        <div>放開：<b>收束結尾</b></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ====== Canvas setup (效能優先) ======
+  const main = document.getElementById('main');
+  const mctx = main.getContext('2d', { alpha:true });
+
+  // world：先畫完整畫面，再把左半做像素化，右半直接貼
+  const world = document.createElement('canvas');
+  const wctx = world.getContext('2d', { alpha:true });
+
+  // pixel buffer：低解析度（像素風），再放大到左半
+  const pix = document.createElement('canvas');
+  const pctx = pix.getContext('2d', { alpha:true });
+
+  let W=0, H=0, DPR=1, MID=0;
+  let pixelScale = 6; // 像素大小（越大越像素、也越省）
+  const DPR_CAP = 1.6; // 卡就把它降到 1.2
+
+  function resize(){
+    DPR = Math.min(DPR_CAP, Math.max(1, window.devicePixelRatio || 1));
+    W = window.innerWidth;
+    H = window.innerHeight;
+    MID = Math.floor(W/2);
+
+    main.width  = Math.floor(W * DPR);
+    main.height = Math.floor(H * DPR);
+    mctx.setTransform(DPR,0,0,DPR,0,0);
+
+    world.width  = Math.floor(W * DPR);
+    world.height = Math.floor(H * DPR);
+    wctx.setTransform(DPR,0,0,DPR,0,0);
+
+    // pixel buffer size（只做左半）
+    // 低解析度尺寸 = 左半 / pixelScale
+    const pw = Math.max(1, Math.floor(MID / pixelScale));
+    const ph = Math.max(1, Math.floor(H   / pixelScale));
+    pix.width = pw;
+    pix.height= ph;
+
+    // 像素風：放大時關閉平滑
+    mctx.imageSmoothingEnabled = true; // 右半正常
+    pctx.imageSmoothingEnabled = true; // buffer 內可平滑（不重要）
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ====== Utility ======
+  const rnd = (a,b)=> a + Math.random()*(b-a);
+  const clamp = (v,a,b)=> Math.max(a, Math.min(b,v));
+
+  // 鮮豔霓虹：HSL 動態色相（衝擊感更強）
+  function neon(t, bias){
+    const h = (t*55 + bias) % 360;      // 色相流動速度
+    return `hsl(${h} 98% 62%)`;
+  }
+  function hsla(t, bias, a){
+    const h = (t*55 + bias) % 360;
+    return `hsla(${h} 98% 62% / ${a})`;
+  }
+
+  // ====== Rhythm (律動) ======
+  const BPM = 112;
+  const omega = Math.PI*2*(BPM/60);
+
+  // ====== Object pools (避免一直 new，順很多) ======
+  const SH_MAX = 170;   // 形狀上限（卡就再降）
+  const SP_MAX = 260;   // 粒子上限
+  const WAV_MAX= 6;     // 衝擊波上限
+
+  const shapes = new Array(SH_MAX);
+  const sparks = new Array(SP_MAX);
+  const waves  = new Array(WAV_MAX);
+  let shN=0, spN=0, wvN=0;
+
+  function addShape(x,y, energy, t){
+    if(shN >= SH_MAX) shN = SH_MAX-1; // 直接頂住（不新增）
+    const s = shapes[shN] || (shapes[shN] = {});
+    shN++;
+
+    const r = Math.random();
+    s.type = (r<0.50) ? 0 : (r<0.80) ? 1 : 2; // 0 dot 1 line 2 tri
+
+    const scale = clamp(W/1200, 0.72, 1.05);
+    const base = (s.type===1) ? rnd(34, 110) : rnd(18, 72);
+    s.size = base * scale * rnd(0.92, 1.18);
+
+    s.x=x; s.y=y;
+    s.vx = rnd(-0.65,0.65)*energy;
+    s.vy = rnd(-0.60,0.60)*energy;
+    s.rot= rnd(-Math.PI, Math.PI);
+    s.vr = rnd(-0.020, 0.020);
+    s.a  = rnd(0.35, 0.95);
+    s.life = 1;
+    s.bias = rnd(0,360);
+    s.pop = 0.18; // 生成瞬間跳一下
+  }
+
+  function addSpark(x,y, vx,vy, r, a, bias){
+    if(spN >= SP_MAX) return;
+    const p = sparks[spN] || (sparks[spN] = {});
+    spN++;
+    p.x=x; p.y=y;
+    p.vx=vx; p.vy=vy;
+    p.r=r;
+    p.a=a;
+    p.bias=bias;
+    p.drag = rnd(0.90, 0.95);
+  }
+
+  function addWave(x,y, dir){ // dir: +1 擴散, -1 收縮
+    if(wvN >= WAV_MAX) return;
+    const w = waves[wvN] || (waves[wvN] = {});
+    wvN++;
+    w.x=x; w.y=y;
+    w.t = 0;        // 0..1
+    w.dir = dir;
+    w.bias = rnd(0,360);
+  }
+
+  function burst(x,y, power, t){
+    const nS = Math.round(2 + power*2);
+    for(let i=0;i<nS;i++){
+      addShape(x + rnd(-10,10), y + rnd(-10,10), 1.25*power, t);
+    }
+    const nP = Math.round(12 + power*18);
+    for(let i=0;i<nP;i++){
+      const ang = Math.random()*Math.PI*2;
+      const sp = rnd(1.7, 5.0)*power;
+      addSpark(x, y, Math.cos(ang)*sp, Math.sin(ang)*sp, rnd(1.2, 2.8), 1, rnd(0,360));
+    }
+    addWave(x,y, +1); // 擴散衝擊波
+    screenShake = Math.max(screenShake, 10*power); // 震動
+    flash = Math.max(flash, 0.55*power);           // 閃光
+  }
+
+  // ====== Interaction ======
+  const mouse = { x:-9999, y:-9999, down:false, last:0 };
+  let settling = 0;     // 放開後的「收束」狀態 0..1
+  let settleX=0, settleY=0;
+
+  window.addEventListener('pointermove', (e)=>{
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    if(mouse.down){
+      const now = performance.now();
+      if(now - mouse.last > 18){
+        // 噴灑：少量但密度夠
+        addShape(mouse.x + rnd(-9,9), mouse.y + rnd(-9,9), 1.05, now/1000);
+        if(Math.random()<0.35){
+          addSpark(mouse.x, mouse.y, rnd(-1.6,1.6), rnd(-1.6,1.6), rnd(1.0,2.2), 0.9, rnd(0,360));
+        }
+        mouse.last = now;
+      }
+    }
+  });
+
+  window.addEventListener('pointerdown', (e)=>{
+    if(e.button !== 0) return;
+    mouse.down = true;
+    mouse.last = performance.now();
+    settling = 0;
+    burst(e.clientX, e.clientY, 1.0, mouse.last/1000);
+  });
+
+  window.addEventListener('pointerup', (e)=>{
+    if(e.button !== 0) return;
+    mouse.down = false;
+
+    // 「結束感」：放開觸發收束結尾（反向波 + 物件快速安靜）
+    settling = 1;
+    settleX = mouse.x;
+    settleY = mouse.y;
+    addWave(settleX, settleY, -1); // 收縮波（句點感）
+    screenShake = Math.max(screenShake, 6);
+  });
+
+  window.addEventListener('pointerleave', ()=>{
+    mouse.x=-9999; mouse.y=-9999; mouse.down=false;
+  });
+
+  // ====== Visual punch helpers ======
+  let screenShake = 0; // 像遊戲 hitstop 的感覺
+  let flash = 0;       // 點擊閃光
+
+  function drawBackdrop(ctx, t, beat){
+    // 半透明覆蓋：形成殘影拖尾（太重會卡，這裡取中間值）
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = `rgba(5, 6, 17, 0.14)`;
+    ctx.fillRect(0,0,W,H);
+
+    // 霓虹雲（screen）
+    ctx.globalCompositeOperation = 'screen';
+    const g1 = ctx.createRadialGradient(W*0.22, H*0.18, 10, W*0.22, H*0.18, Math.min(W,H)*0.72);
+    g1.addColorStop(0.0, `hsla(${(t*40)%360} 98% 62% / ${0.18 + 0.10*beat})`);
+    g1.addColorStop(0.6, `hsla(${(t*40+90)%360} 98% 62% / 0.05)`);
+    g1.addColorStop(1.0, `hsla(${(t*40+140)%360} 98% 62% / 0.00)`);
+    ctx.fillStyle = g1; ctx.fillRect(0,0,W,H);
+
+    const g2 = ctx.createRadialGradient(W*0.80, H*0.54, 10, W*0.80, H*0.54, Math.min(W,H)*0.68);
+    g2.addColorStop(0.0, `hsla(${(t*38+210)%360} 98% 62% / ${0.14 + 0.08*beat})`);
+    g2.addColorStop(0.65,`hsla(${(t*38+260)%360} 98% 62% / 0.04)`);
+    g2.addColorStop(1.0, `hsla(${(t*38+320)%360} 98% 62% / 0.00)`);
+    ctx.fillStyle = g2; ctx.fillRect(0,0,W,H);
+
+    // 光束
+    ctx.save();
+    ctx.translate(W*0.10, H*0.05);
+    ctx.rotate(-0.22 + Math.sin(t*0.7)*0.03);
+    const beam = ctx.createLinearGradient(0,0,W,0);
+    beam.addColorStop(0.00,'rgba(255,255,255,0)');
+    beam.addColorStop(0.16,`rgba(255,255,255,${0.06+0.06*beat})`);
+    beam.addColorStop(0.22,`rgba(255,250,220,${0.14+0.10*beat})`);
+    beam.addColorStop(0.30,'rgba(255,255,255,0.03)');
+    beam.addColorStop(0.40,'rgba(255,255,255,0)');
+    beam.addColorStop(0.58,`rgba(255,0,200,${0.07+0.06*beat})`);
+    beam.addColorStop(0.66,`rgba(0,220,255,${0.08+0.06*beat})`);
+    beam.addColorStop(0.78,'rgba(255,255,255,0)');
+    ctx.fillStyle = beam;
+    ctx.fillRect(-W*0.3, -H*0.3, W*1.7, H*1.7);
+    ctx.restore();
+
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawShape(ctx, s, t, beat){
+    const col = neon(t, s.bias);
+    const a = clamp(s.a * s.life, 0, 1);
+
+    const pulse = 1 + 0.10*beat + 0.07*Math.sin(t*3 + s.bias);
+    const pop = 1 + s.pop;
+
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.rot);
+
+    ctx.globalAlpha = a;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.shadowBlur = 18 * (0.75 + 0.7*beat);
+    ctx.shadowColor = col;
+
+    if(s.type === 0){
+      const r = (s.size*0.50) * pulse * pop;
+      const g = ctx.createRadialGradient(-r*0.2, -r*0.2, r*0.12, 0,0,r);
+      g.addColorStop(0, 'rgba(255,255,255,0.70)');
+      g.addColorStop(0.35, hsla(t, s.bias, 0.55));
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+    } else if(s.type === 1){
+      const w = (s.size*2.0) * pulse * pop;
+      const h = Math.max(2, s.size*0.09);
+      const g = ctx.createLinearGradient(-w/2,0,w/2,0);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.5, hsla(t, s.bias, 0.78));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      roundRect(ctx, -w/2, -h/2, w, h, 999);
+      ctx.fill();
+    } else {
+      const A = (s.size) * pulse * pop;
+      ctx.fillStyle = hsla(t, s.bias, 0.58);
+      ctx.beginPath();
+      ctx.moveTo(0, -A*0.62);
+      ctx.lineTo( A*0.58, A*0.45);
+      ctx.lineTo(-A*0.58, A*0.45);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawSparks(ctx, t, beat){
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for(let i=0;i<spN;i++){
+      const p = sparks[i];
+      const col = neon(t, p.bias);
+      ctx.globalAlpha = clamp(p.a, 0, 1);
+      ctx.fillStyle = col.replace('hsl','hsla').replace(')', ` / ${0.55 + 0.25*beat})`);
+      ctx.shadowBlur = 16*(0.7 + 0.6*beat);
+      ctx.shadowColor = col;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawWaves(ctx, t, beat){
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    for(let i=0;i<wvN;i++){
+      const w = waves[i];
+      // dir=+1 擴散：半徑從小到大；dir=-1 收縮：半徑從大到小
+      const tt = w.t;
+      const maxR = Math.min(W,H)*0.55;
+      const r = (w.dir>0)
+        ? (tt*maxR)
+        : ((1-tt)*maxR);
+
+      const col = neon(t, w.bias);
+      const alpha = (1-tt) * (0.55 + 0.25*beat);
+
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 2 + 6*(0.6+beat);
+      ctx.shadowBlur = 22*(0.8+beat);
+      ctx.shadowColor = col;
+      ctx.strokeStyle = col.replace('hsl','hsla').replace(')', ` / ${alpha})`);
+
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, Math.max(6,r), 0, Math.PI*2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y, x+w,y+h, rr);
+    ctx.arcTo(x+w,y+h, x,y+h, rr);
+    ctx.arcTo(x,y+h, x,y, rr);
+    ctx.arcTo(x,y, x+w,y, rr);
+    ctx.closePath();
+  }
+
+  // ====== Update physics (含收束結尾) ======
+  function update(t, beat){
+    const rightLimit = W*0.92; // 保留右側 HUD 空間即可
+    const settlePull = settling ? (0.35 + 0.65*beat) : 0;
+
+    // shapes
+    for(let i=0;i<shN;i++){
+      const s = shapes[i];
+
+      // pop decay
+      s.pop += (0 - s.pop) * 0.12;
+
+      // base motion + rhythm
+      s.x += s.vx + Math.sin(t*1.2 + s.bias)*0.08*beat;
+      s.y += s.vy + Math.cos(t*1.1 + s.bias)*0.06*beat;
+      s.rot += s.vr;
+
+      // mouse push
+      const dx = s.x - mouse.x;
+      const dy = s.y - mouse.y;
+      const dist = Math.hypot(dx,dy);
+      const radius = Math.max(120, s.size*2.2);
+
+      if(dist < radius){
+        const f = (1 - dist/radius);
+        const nx = dx/(dist||1), ny = dy/(dist||1);
+        s.vx += nx * f * (0.85 + 0.55*beat);
+        s.vy += ny * f * (0.85 + 0.55*beat);
+        s.life = Math.min(1.25, s.life + f*0.05);
+        if(Math.random() < 0.008*f){
+          addSpark(s.x+rnd(-3,3), s.y+rnd(-3,3), rnd(-1.4,1.4), rnd(-1.4,1.4), rnd(1.0,2.2), 0.85, s.bias+rnd(-25,25));
+        }
+      } else {
+        s.life += (1 - s.life) * 0.03;
+      }
+
+      // release "closure": pull inward + fade quicker (句點感)
+      if(settling){
+        const sx = settleX - s.x;
+        const sy = settleY - s.y;
+        const d2 = Math.hypot(sx,sy) || 1;
+        const px = sx/d2, py = sy/d2;
+        s.vx += px * settlePull * 0.9;
+        s.vy += py * settlePull * 0.9;
+        s.a  *= 0.996;        // 更快安靜
+      } else {
+        s.a *= 0.9992;        // 平常慢慢淡
+      }
+
+      // damping
+      s.vx *= 0.92;
+      s.vy *= 0.92;
+
+      // bounds
+      if(s.x < 10){ s.x=10; s.vx*=-0.92; }
+      if(s.x > rightLimit){ s.x=rightLimit; s.vx*=-0.92; }
+      if(s.y < 10){ s.y=10; s.vy*=-0.92; }
+      if(s.y > H-10){ s.y=H-10; s.vy*=-0.92; }
+    }
+
+    // sparks
+    for(let i=0;i<spN;i++){
+      const p = sparks[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= p.drag;
+      p.vy *= p.drag;
+      p.vy += 0.02;      // tiny gravity
+      p.a  *= settling ? 0.90 : 0.93; // 收束時更快消失（乾淨）
+    }
+
+    // waves progress
+    for(let i=0;i<wvN;i++){
+      const w = waves[i];
+      w.t += 0.035 + 0.03*beat; // 速度跟律動
+    }
+
+    // cleanup (in-place compact)
+    // shapes
+    let j=0;
+    for(let i=0;i<shN;i++){
+      const s = shapes[i];
+      if(s.a > 0.07){
+        shapes[j++] = s;
+      }
+    }
+    shN = j;
+
+    // sparks
+    j=0;
+    for(let i=0;i<spN;i++){
+      const p = sparks[i];
+      if(p.a > 0.05){
+        sparks[j++] = p;
+      }
+    }
+    spN = j;
+
+    // waves
+    j=0;
+    for(let i=0;i<wvN;i++){
+      const w = waves[i];
+      if(w.t < 1){
+        waves[j++] = w;
+      }
+    }
+    wvN = j;
+
+    // settle decay
+    if(settling){
+      settling *= 0.94; // 很快回到 0（結束感）
+      if(settling < 0.02) settling = 0;
+    }
+
+    // flash decay
+    flash *= 0.88;
+    if(flash < 0.01) flash = 0;
+
+    // shake decay
+    screenShake *= 0.85;
+    if(screenShake < 0.2) screenShake = 0;
+  }
+
+  // ====== Render pipeline ======
+  function composite(){
+    // world -> main
+    mctx.clearRect(0,0,W,H);
+
+    // 左半像素化：把 world 左半縮到 pix，再放大貼到 main 左半
+    const pw = pix.width, ph = pix.height;
+
+    // 把 world 左半縮到 pix（低解析度）
+    pctx.clearRect(0,0,pw,ph);
+    pctx.drawImage(
+      world,
+      0, 0, MID*DPR, H*DPR,     // source in device pixels
+      0, 0, pw, ph              // dest low-res
+    );
+
+    // 放大回 main 左半（關閉平滑 => 像素風）
+    mctx.save();
+    mctx.imageSmoothingEnabled = false;
+    mctx.drawImage(pix, 0,0,pw,ph, 0,0, MID,H);
+    mctx.restore();
+
+    // 右半正常貼
+    mctx.imageSmoothingEnabled = true;
+    mctx.drawImage(
+      world,
+      MID*DPR, 0, (W-MID)*DPR, H*DPR,
+      MID, 0, (W-MID), H
+    );
+
+    // 中線：分割提示（很淡）
+    mctx.save();
+    mctx.globalAlpha = 0.18;
+    mctx.fillStyle = 'rgba(255,255,255,0.55)';
+    mctx.fillRect(MID-1, 0, 2, H);
+    mctx.restore();
+  }
+
+  function render(t, beat){
+    // world clear is handled by backdrop fill (trail)
+    // screen shake
+    let sx=0, sy=0;
+    if(screenShake){
+      sx = rnd(-1,1) * screenShake;
+      sy = rnd(-1,1) * screenShake;
+    }
+
+    wctx.save();
+    wctx.translate(sx, sy);
+
+    drawBackdrop(wctx, t, beat);
+
+    // sort by brightness (cheap: no sort, but still ok; keep stable for perf)
+    // draw shapes
+    for(let i=0;i<shN;i++){
+      drawShape(wctx, shapes[i], t, beat);
+    }
+
+    // sparks + waves
+    drawSparks(wctx, t, beat);
+    drawWaves(wctx, t, beat);
+
+    // click flash overlay (impact)
+    if(flash){
+      wctx.save();
+      wctx.globalCompositeOperation = 'screen';
+      wctx.globalAlpha = flash;
+      const g = wctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, Math.min(W,H)*0.45);
+      g.addColorStop(0, 'rgba(255,255,255,0.70)');
+      g.addColorStop(0.25, 'rgba(255,0,220,0.18)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      wctx.fillStyle = g;
+      wctx.fillRect(0,0,W,H);
+      wctx.restore();
+    }
+
+    // slight vignette (adds focus, cheap)
+    wctx.save();
+    wctx.globalAlpha = 0.22;
+    wctx.fillStyle = 'rgba(0,0,0,1)';
+    wctx.globalCompositeOperation = 'multiply';
+    const vg = wctx.createRadialGradient(W*0.5, H*0.5, Math.min(W,H)*0.20, W*0.5, H*0.5, Math.min(W,H)*0.85);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,'rgba(0,0,0,1)');
+    wctx.fillStyle = vg;
+    wctx.fillRect(0,0,W,H);
+    wctx.restore();
+
+    wctx.restore();
+
+    composite();
+  }
+
+  // ====== Seed initial scene ======
+  function seed(){
+    shN=0; spN=0; wvN=0;
+    const n = Math.round(clamp(W/24, 18, 54));
+    const t = performance.now()/1000;
+    for(let i=0;i<n;i++){
+      addShape(rnd(40, W*0.92), rnd(60, H-60), 0.85, t);
+    }
+  }
+  seed();
+
+  // ====== Main loop ======
+  function frame(){
+    const t = performance.now()/1000;
+    const raw = (Math.sin(t*omega) + 1)/2;
+    const beat = Math.pow(raw, 1.7); // 更有「砰」的律動
+
+    update(t, beat);
+    render(t, beat);
+
+    requestAnimationFrame(frame);
+  }
+  frame();
+
+})();
+</script>
+</body>
+</html>

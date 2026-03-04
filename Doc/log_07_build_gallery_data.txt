@@ -1,0 +1,10 @@
+Ignoring wrong pointing object 6 0 (offset 0)
+Ignoring wrong pointing object 8 0 (offset 0)
+Ignoring wrong pointing object 15 0 (offset 0)
+Ignoring wrong pointing object 16 0 (offset 0)
+Ignoring wrong pointing object 6 0 (offset 0)
+Ignoring wrong pointing object 8 0 (offset 0)
+Ignoring wrong pointing object 14 0 (offset 0)
+Ignoring wrong pointing object 15 0 (offset 0)
+已寫入 D:\Work\2026\TNDA_跨域工作坊\學生作業\Gallery\gallery_data.json，共 30 位學生。
+已寫入 D:\Work\2026\TNDA_跨域工作坊\學生作業\Gallery\gallery_embedded.js

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮粒子場 v11（點擊＋長按煙火）</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #eee;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      background: #000; /* 純黑背景 */
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform, opacity;
+      box-shadow: 0 0 18px rgba(0,0,0,0.55);
+    }
+
+    .shape-circle {
+      border-radius: 50%;
+    }
+
+    .shape-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .shape-star {
+      clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+      );
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <script>
+    const stage = document.getElementById("stage");
+
+    // 邊界自適應
+    let STAGE_WIDTH = stage.clientWidth;
+    let STAGE_HEIGHT = stage.clientHeight;
+    window.addEventListener("resize", () => {
+      STAGE_WIDTH = stage.clientWidth;
+      STAGE_HEIGHT = stage.clientHeight;
+    });
+
+    const MAX_PARTICLES = 400;
+
+    // 高飽和、高亮度色票（彩色階段用）
+    const colors = [
+      "#ff1744",
+      "#ffd600",
+      "#2979ff",
+      "#e040fb",
+      "#69f0ae",
+      "#ff9100"
+    ];
+    let colorIndex = 0;
+
+    const particles = [];
+    const shapeTypes = ["line", "triangle", "star", "circle"];
+
+    // ---------- 一般點擊模式：沿用原本煙火筆刷 ----------
+
+    function handleTap(x, y) {
+      const count = 30 + Math.floor(Math.random() * 20);
+      ensureCapacity(count);
+      for (let i = 0; i < count; i++) {
+        const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        createBurstParticle(x, y, shape);
+      }
+    }
+
+    // ---------- 長按模式：放開時發射火箭 ----------
+
+    let pressStart = null;
+
+    stage.addEventListener("mousedown", (event) => {
+      const rect = stage.getBoundingClientRect();
+      pressStart = {
+        t: performance.now(),
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    });
+
+    stage.addEventListener("mouseup", () => {
+      if (!pressStart) return;
+      const durationMs = performance.now() - pressStart.t;
+      const { x, y } = pressStart;
+      pressStart = null;
+
+      spawnFirework(x, y, durationMs);
+    });
+
+    // 點一下也要保留原本模式
+    stage.addEventListener("click", (event) => {
+      // 如果是很短的 click（按下馬上放開），才觸發一般點擊模式
+      // 避免和 mousedown/mouseup 的長按重複
+      if (pressStart) return;
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      handleTap(x, y);
+    });
+
+    // 長按時間 → 火箭數量與強度
+    function spawnFirework(x, y, durationMs) {
+      const minHold = 120;   // ms
+      const maxHold = 2000;  // ms
+      const clamped = Math.max(minHold, Math.min(maxHold, durationMs));
+      const strength = (clamped - minHold) / (maxHold - minHold); // 0~1
+
+      const rocketCount = 1 + Math.round(strength * 2); // 1~3 條火箭
+      ensureCapacity(rocketCount);
+
+      for (let i = 0; i < rocketCount; i++) {
+        createRocket(x, y, strength);
+      }
+    }
+
+    // ---------- 共用：容量控制 ----------
+
+    function ensureCapacity(needToAdd) {
+      const totalNeeded = particles.length + needToAdd;
+      if (totalNeeded > MAX_PARTICLES) {
+        const toRemove = totalNeeded - MAX_PARTICLES;
+        for (let i = 0; i < toRemove && particles.length > 0; i++) {
+          const old = particles.shift();
+          old.el.remove();
+        }
+      }
+    }
+
+    // ---------- 一般點擊用的爆炸粒子（v10 煙火版） ----------
+
+    function createBurstParticle(cx, cy, shape) {
+      const el = document.createElement("div");
+      el.classList.add("particle");
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;
+      el.style.backgroundColor = "#ffd700";  // 金黃種子
+
+      const baseAlpha = 0.85 + Math.random() * 0.1;
+      el.style.opacity = baseAlpha.toString();
+
+      let baseSpeed;
+      let w, h;
+
+      switch (shape) {
+        case "line": {
+          el.classList.add("shape-line");
+          const thicknessLevels = [2, 4, 7];
+          const tIndex = Math.floor(Math.random() * thicknessLevels.length);
+          h = thicknessLevels[tIndex];
+          w = 60 + Math.random() * 40;
+          baseSpeed = 1500 + Math.random() * 900;
+          break;
+        }
+        case "triangle": {
+          el.classList.add("shape-triangle");
+          const sizeLevels = [14, 20, 28];
+          const s = sizeLevels[Math.floor(Math.random() * sizeLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 900 + Math.random() * 480;
+          break;
+        }
+        case "star": {
+          el.classList.add("shape-star");
+          const sizeLevels = [16, 22, 30];
+          const s = sizeLevels[Math.floor(Math.random() * sizeLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 760 + Math.random() * 420;
+          break;
+        }
+        default: {
+          el.classList.add("shape-circle");
+          const sizeLevels = [10, 16, 22];
+          const s = sizeLevels[Math.floor(Math.random() * sizeLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 880 + Math.random() * 480;
+        }
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+
+      const size = (w + h) / 2;
+      const sizeFactor = 1.7 - Math.min(size / 80, 1.0);
+      let speed = baseSpeed * sizeFactor;
+
+      let x = cx;
+      let y = cy;
+
+      const angle = Math.random() * Math.PI * 2;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.3)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 2200 + Math.random() * 1000;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w,
+        h,
+        shape,
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: w,
+        baseAlpha,
+        type: "burst",
+        trailTimer: 0
+      });
+    }
+
+    // ---------- 長按用火箭 ----------
+
+    function createRocket(cx, cy, strength) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;
+      el.style.backgroundColor = "#ffd700";
+
+      const size = 10 + Math.random() * 6;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+
+      const baseAlpha = 0.9;
+      el.style.opacity = baseAlpha.toString();
+
+      // 往上飛，按越久飛越高
+      const baseSpeed = 1200 + strength * 800; // 1200~2000
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.2;
+      let vx = Math.cos(angle) * (150 * (Math.random() - 0.5)); // 稍微左右飄
+      let vy = Math.sin(angle) * baseSpeed;
+
+      let x = cx;
+      let y = cy;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.4)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 1300 + strength * 700; // 長按越久，火箭活越久
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha,
+        type: "rocket",
+        trailTimer: 0
+      });
+    }
+
+    function createTrailParticle(x, y, color) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      el.style.backgroundColor = color;
+
+      const size = 6 + Math.random() * 4;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+
+      const baseAlpha = 0.8;
+      el.style.opacity = baseAlpha.toString();
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 400 + Math.random() * 250;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha,
+        type: "trail",
+        trailTimer: 0
+      });
+    }
+
+    // ---------- 主動畫迴圈 ----------
+
+    let lastTime = null;
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      updateParticles(dt, timestamp);
+      requestAnimationFrame(animate);
+    }
+
+    function updateParticles(dt, now) {
+      const baseDrag = 0.97;
+      const wallDamping = 0.86;
+      const spinDecay = 0.94;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.createdAt;
+        const t = age / p.life;
+
+        if (t >= 1) {
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        // 拖尾不需要速度衰減與反彈，可簡化
+        if (p.type !== "trail") {
+          let localDrag = baseDrag;
+          if (p.shape === "line") localDrag = 0.975;
+          else if (p.shape === "star") localDrag = 0.965;
+
+          p.vx *= localDrag;
+          p.vy *= localDrag;
+
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          const halfW = p.w / 2;
+          const halfH = p.h / 2;
+          const minX = halfW;
+          const maxX = STAGE_WIDTH - halfW;
+          const minY = halfH;
+          const maxY = STAGE_HEIGHT - halfH;
+
+          let collided = false;
+
+          if (p.x < minX) {
+            p.x = minX;
+            p.vx = -p.vx * wallDamping;
+            collided = true;
+          } else if (p.x > maxX) {
+            p.x = maxX;
+            p.vx = -p.vx * wallDamping;
+            collided = true;
+          }
+
+          if (p.y < minY) {
+            p.y = minY;
+            p.vy = -p.vy * wallDamping;
+            collided = true;
+          } else if (p.y > maxY) {
+            p.y = maxY;
+            p.vy = -p.vy * wallDamping;
+            collided = true;
+          }
+
+          if (collided && p.type === "burst") {
+            const spinImpulse = 1080;
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            p.spin += spinImpulse * dir;
+
+            if (p.shape === "line" && !p.shrink) {
+              p.shrink = true;
+              p.targetW = p.w * 0.2;
+            }
+          }
+        } else {
+          // trail：只是輕微漂移（如果你想要完全靜止，可以註解掉）
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+        }
+
+        // 火箭產生拖尾
+        if (p.type === "rocket") {
+          p.trailTimer += dt;
+          if (p.trailTimer > 0.03) {
+            p.trailTimer = 0;
+            createTrailParticle(p.x, p.y, p.el.dataset.baseColor || "#ffffff");
+          }
+        }
+
+        p.spin *= spinDecay;
+        p.rotation += p.spin * dt;
+
+        const baseDirDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+
+        // 縮放與透明度邏輯
+        let scale;
+        let opacity;
+
+        if (p.type === "burst" || p.type === "rocket") {
+          // 前 20% 金黃，之後變彩色
+          if (t < 0.2) {
+            p.el.style.backgroundColor = "#ffd700";
+          } else {
+            p.el.style.backgroundColor = p.el.dataset.baseColor || "#ffffff";
+          }
+
+          if (t < 0.3) {
+            const k = t / 0.3;
+            scale = 0.3 + 0.9 * k;    // 0.3 -> 1.2
+          } else {
+            const k = (t - 0.3) / 0.7;
+            scale = 1.2 * (1 - k);    // 1.2 -> 0
+          }
+
+          opacity = p.baseAlpha * (1 - t);
+        } else if (p.type === "trail") {
+          // 拖尾：慢慢縮小、淡出
+          scale = 1 - t;
+          opacity = p.baseAlpha * (1 - t);
+        } else {
+          scale = 1;
+          opacity = p.baseAlpha * (1 - t);
+        }
+
+        const rotationDeg = baseDirDeg + p.rotation;
+
+        p.el.style.left = p.x + "px";
+        p.el.style.top = p.y + "px";
+        p.el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rotationDeg}deg)`;
+        p.el.style.opacity = opacity.toString();
+        p.el.style.filter = `saturate(${1 - t * 0.2}) brightness(${1 - t * 0.1})`;
+      }
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

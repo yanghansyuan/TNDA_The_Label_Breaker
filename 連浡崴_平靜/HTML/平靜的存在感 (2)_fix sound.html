@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic Presence | 聽覺與光影</title>
+    <style>
+        /* --- 基礎樣式 --- */
+        :root {
+            --bg-color: #0d0d0d;
+            --glass: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.15);
+            --text: #f0f0f0;
+            --accent: #e0c3fc;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            user-select: none; /* 防止選取文字破壞沉浸感 */
+        }
+
+        /* --- 3D 畫布 --- */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- 啟動畫面 (遮罩) --- */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 1.5s ease-out;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            border: 1px solid var(--text);
+            border-radius: 50px;
+            background: transparent;
+            color: var(--text);
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            pointer-events: none; /* 讓點擊事件穿透到父層 */
+        }
+
+        #start-screen:hover .start-btn {
+            background: var(--text);
+            color: var(--bg-color);
+            transform: scale(1.05);
+        }
+
+        .hint {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        /* --- 控制面板 UI --- */
+        #ui-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            opacity: 0;
+            transition: opacity 1s ease 1s; /* 延遲顯示 */
+            pointer-events: none; /* 讓滑鼠穿透非按鈕區域 */
+        }
+
+        .panel {
+            pointer-events: auto;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        /* 模式切換按鈕 */
+        .mode-switch {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-mode {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255,255,255,0.5);
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-mode:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+
+        .btn-mode.active {
+            background: rgba(255,255,255,0.15);
+            border-color: var(--border);
+            color: var(--text);
+            box-shadow: 0 0 15px rgba(255,255,255,0.05);
+        }
+
+        /* 音量滑桿 */
+        .volume-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 1px solid var(--border);
+            padding-left: 20px;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100px;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: var(--text);
+            cursor: pointer;
+            margin-top: -5px;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+        
+        .visualizer-info {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. 啟動頁面 (解決瀏覽器音訊限制) -->
+    <div id="start-screen">
+        <div class="start-btn">ENTER SPACE</div>
+        <div class="hint">請戴上耳機以獲得最佳體驗</div>
+    </div>
+
+    <!-- 2. 3D 場景容器 -->
+    <div id="canvas-container"></div>
+
+    <!-- 3. 控制介面 -->
+    <div id="ui-container">
+        <div class="visualizer-info">AUDIO REACTIVE ENVIRONMENT</div>
+        <div class="panel">
+            <div class="mode-switch">
+                <button class="btn-mode active" data-type="white">專注 (White)</button>
+                <button class="btn-mode" data-type="pink">放鬆 (Pink)</button>
+                <button class="btn-mode" data-type="brown">深眠 (Brown)</button>
+            </div>
+            
+            <div class="volume-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        /**
+         * 系統架構：
+         * 1. AudioController: 負責 Web Audio API，生成噪音與分析頻率。
+         * 2. VisualController: 負責 Three.js 場景，並將 Audio 的數據轉換為球體的變形。
+         * 3. Main: 綁定 DOM 事件。
+         */
+
+        // --- PART 1: AUDIO CONTROLLER ---
+        class AudioController {
+            constructor() {
+                this.ctx = null;
+                this.gainNode = null;
+                this.sourceNode = null;
+                this.analyser = null; // 用於視覺化分析
+                this.bufferSize = 0;
+                this.isPlaying = false;
+                this.volume = 0.5;
+                this.currentType = 'white';
+            }
+
+            // 初始化音訊環境 (必須在使用者點擊後呼叫)
+            init() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                
+                // 總音量控制
+                this.gainNode = this.ctx.createGain();
+                this.gainNode.gain.value = 0; // 初始靜音，待會淡入
+                this.gainNode.connect(this.ctx.destination);
+
+                // 分析器 (讓 3D 物體隨聲音跳動)
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 512; // 採樣大小
+                this.analyser.smoothingTimeConstant = 0.8; // 平滑度
+                
+                this.bufferSize = 2 * this.ctx.sampleRate; // 2秒緩衝
+            }
+
+            // 生成噪音 Buffer
+            createNoiseBuffer(type) {
+                const buffer = this.ctx.createBuffer(1, this.bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                let lastOut = 0;
+                
+                for (let i = 0; i < this.bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    
+                    if (type === 'white') {
+                        data[i] = white;
+                    } 
+                    else if (type === 'pink') {
+                        // Pink Noise 近似演算法 (Paul Kellet's method)
+                        let b0, b1, b2, b3, b4, b5, b6;
+                        b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+                        // 簡化版 1/f 濾波
+                        // 為了代碼簡潔，這裡使用簡單的積分濾波來模擬 "較柔和" 的聲音
+                        data[i] = (lastOut + (0.02 * white)) / 1.02;
+                        lastOut = data[i];
+                        data[i] *= 3.5; // 補償增益
+                    } 
+                    else if (type === 'brown') {
+                        // Brown Noise (布朗噪音) - 隨機漫步
+                        const brown = (lastOut + (0.02 * white)) / 1.02;
+                        lastOut = brown;
+                        data[i] = brown * 3.5; 
+                    }
+                }
+                return buffer;
+            }
+
+            play(type = 'white') {
+                if (!this.ctx) this.init();
+                
+                // 確保 Context 運行中
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+
+                // 停止舊聲音
+                if (this.sourceNode) {
+                    try { this.sourceNode.stop(); } catch(e){}
+                }
+
+                this.currentType = type;
+                const buffer = this.createNoiseBuffer(type);
+                
+                this.sourceNode = this.ctx.createBufferSource();
+                this.sourceNode.buffer = buffer;
+                this.sourceNode.loop = true;
+
+                // 串接：Source -> Analyser -> Gain -> Destination
+                this.sourceNode.connect(this.analyser);
+                this.analyser.connect(this.gainNode);
+                
+                this.sourceNode.start();
+                this.isPlaying = true;
+
+                // 淡入效果
+                this.fadeIn();
+            }
+
+            fadeIn() {
+                this.gainNode.gain.cancelScheduledValues(this.ctx.currentTime);
+                this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                this.gainNode.gain.linearRampToValueAtTime(this.volume, this.ctx.currentTime + 2); // 2秒淡入
+            }
+
+            setVolume(val) {
+                this.volume = val;
+                if (this.gainNode) {
+                    this.gainNode.gain.setTargetAtTime(val, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            // 取得音頻數據供 3D 使用 (0 ~ 255)
+            getAudioData() {
+                if (!this.analyser) return 0;
+                const array = new Uint8Array(this.analyser.frequencyBinCount);
+                this.analyser.getByteFrequencyData(array);
+                // 取平均值作為整體音量強度
+                let sum = 0;
+                for(let i = 0; i < array.length; i++) {
+                    sum += array[i];
+                }
+                return sum / array.length;
+            }
+        }
+
+        // --- PART 2: VISUAL CONTROLLER (Three.js) ---
+        class VisualController {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.sphere = null;
+                this.lights = [];
+            }
+
+            init() {
+                const container = document.getElementById('canvas-container');
+                
+                // 1. Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color('#0d0d0d');
+                this.scene.fog = new THREE.FogExp2('#0d0d0d', 0.035);
+
+                // 2. Camera
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.z = 4.5;
+
+                // 3. Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                container.appendChild(this.renderer.domElement);
+
+                // 4. Object (The Core)
+                const geometry = new THREE.IcosahedronGeometry(1.2, 20); // 細分度高一點以展現質感
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x222222,
+                    roughness: 0.6,
+                    metalness: 0.2,
+                    emissive: 0x000000,
+                    flatShading: false
+                });
+                this.sphere = new THREE.Mesh(geometry, material);
+                this.sphere.castShadow = true;
+                this.sphere.receiveShadow = true;
+                this.scene.add(this.sphere);
+
+                // 5. Lights
+                // 主光 (暖)
+                const light1 = new THREE.PointLight(0xffaa55, 1.2, 10);
+                light1.position.set(2, 3, 2);
+                light1.castShadow = true;
+                this.scene.add(light1);
+                this.lights.push(light1);
+
+                // 輔光 (冷/紫)
+                const light2 = new THREE.PointLight(0xaa55ff, 0.8, 10);
+                light2.position.set(-2, -1, 3);
+                this.scene.add(light2);
+                this.lights.push(light2);
+
+                // 環境光
+                const ambient = new THREE.AmbientLight(0x222222);
+                this.scene.add(ambient);
+
+                // Events
+                window.addEventListener('resize', this.onResize.bind(this));
+            }
+
+            animate(audioData) {
+                const time = Date.now() * 0.001;
+
+                // 基礎旋轉
+                this.sphere.rotation.x = time * 0.1;
+                this.sphere.rotation.y = time * 0.15;
+
+                // --- AUDIO REACTIVE EFFECT ---
+                // audioData 範圍約 0 ~ 128 (平均值)
+                // 將聲音強度轉換為縮放和發光
+                const baseScale = 1;
+                const audioScale = (audioData / 255) * 0.4; // 聲音越強，縮放越大
+                const targetScale = baseScale + audioScale;
+
+                // 平滑插值 (Lerp)
+                this.sphere.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+
+                // 聲音越強，球體發出微弱的光
+                const targetEmissive = (audioData / 255) * 0.2;
+                this.sphere.material.emissive.setScalar(targetEmissive);
+
+                // 燈光漂浮動畫
+                this.lights[0].position.x = Math.sin(time * 0.5) * 3;
+                this.lights[0].position.y = Math.cos(time * 0.3) * 3;
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        // --- PART 3: MAIN LOGIC ---
+        const app = {
+            audio: new AudioController(),
+            visual: new VisualController(),
+            
+            init() {
+                this.visual.init();
+                this.bindEvents();
+                this.loop();
+            },
+
+            bindEvents() {
+                const startScreen = document.getElementById('start-screen');
+                const uiContainer = document.getElementById('ui-container');
+                const modeBtns = document.querySelectorAll('.btn-mode');
+                const volInput = document.getElementById('volume');
+
+                // 1. 點擊啟動 (解決 Autoplay 問題)
+                startScreen.addEventListener('click', () => {
+                    // 啟動音訊 context
+                    this.audio.play('white'); 
+                    
+                    // UI 動畫
+                    startScreen.style.opacity = 0;
+                    setTimeout(() => startScreen.style.display = 'none', 1500);
+                    uiContainer.style.opacity = 1; // 顯示控制列
+                });
+
+                // 2. 切換模式
+                modeBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        modeBtns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        const type = e.target.dataset.type;
+                        this.audio.play(type);
+                    });
+                });
+
+                // 3. 音量控制
+                volInput.addEventListener('input', (e) => {
+                    this.audio.setVolume(parseFloat(e.target.value));
+                });
+            },
+
+            loop() {
+                requestAnimationFrame(this.loop.bind(this));
+                
+                // 取得音頻強度
+                const data = this.audio.getAudioData();
+                
+                // 更新視覺
+                this.visual.animate(data);
+            }
+        };
+
+        // 啟動程式
+        app.init();
+
+    </script>
+</body>
+</html>

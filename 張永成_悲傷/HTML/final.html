@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sadness - 空間撕裂與崩潰</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-family: "Courier New", Courier, monospace;
+            letter-spacing: 5px;
+            pointer-events: none;
+            transition: opacity 1s;
+            user-select: none;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .hidden {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hint" id="hintText">移動以喚醒<br>點擊以撕裂</div>
+    
+    <audio id="bgm" loop>
+        <source src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Gymnopedie_No_1.ogg" type="audio/ogg">
+    </audio>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const bgm = document.getElementById('bgm');
+        const hintText = document.getElementById('hintText');
+
+        let width, height;
+        let mouse = { x: -1000, y: -1000 };
+        let isMouseDown = false;
+        let holdTime = 0;
+        
+        // 淡入淡出控制
+        let lineOpacity = 0;
+        let targetLineOpacity = 0;
+        let moveTimeout;
+        let audioStarted = false;
+
+        // 離線畫布：雜訊生成
+        const noiseCanvas = document.createElement('canvas');
+        const noiseCtx = noiseCanvas.getContext('2d');
+        const noiseSize = 128; // 縮小畫布尺寸以放大顆粒感
+        const noiseScale = 4;  // 雜訊放大倍率
+
+        function initNoise() {
+            noiseCanvas.width = noiseSize;
+            noiseCanvas.height = noiseSize;
+            const imgData = noiseCtx.createImageData(noiseSize, noiseSize);
+            const buffer32 = new Uint32Array(imgData.data.buffer);
+            for (let i = 0; i < buffer32.length; i++) {
+                if (Math.random() < 0.15) { // 提高一點雜訊密度
+                    buffer32[i] = 0x22ffffff; 
+                }
+            }
+            noiseCtx.putImageData(imgData, 0, 0);
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // 關閉影像平滑，讓放大的雜訊保持粗糙的顆粒感 (Pixelated)
+            ctx.imageSmoothingEnabled = false; 
+        }
+
+        window.addEventListener('resize', resize);
+        
+        // 滑鼠移動：淡入線條
+        function handleMove(x, y) {
+            mouse.x = x;
+            mouse.y = y;
+            targetLineOpacity = 1;
+            
+            clearTimeout(moveTimeout);
+            // 滑鼠停止移動 1.5 秒後，開始淡出
+            moveTimeout = setTimeout(() => {
+                if (!isMouseDown) targetLineOpacity = 0;
+            }, 1500);
+        }
+
+        window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+
+        window.addEventListener('mousedown', () => {
+            isMouseDown = true;
+            targetLineOpacity = 1;
+            hintText.classList.add('hidden'); // 點擊後隱藏提示
+            
+            // 第一次點擊時播放音樂
+            if (!audioStarted) {
+                bgm.volume = 0.5; // 音量適中
+                bgm.play().catch(e => console.log("瀏覽器阻擋自動播放", e));
+                audioStarted = true;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            holdTime = 0;
+            // 若滑鼠沒動，放開後隨即準備淡出
+            handleMove(mouse.x, mouse.y); 
+        });
+
+        // 觸控支援
+        window.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.touches[0].clientY));
+        window.addEventListener('touchstart', (e) => {
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+            isMouseDown = true;
+            hintText.classList.add('hidden');
+            if (!audioStarted) {
+                bgm.volume = 0.5;
+                bgm.play().catch(e => console.log(e));
+                audioStarted = true;
+            }
+        });
+        window.addEventListener('touchend', () => {
+            isMouseDown = false;
+            holdTime = 0;
+        });
+
+        // 繪製不可預測扭曲的撕裂線條
+        function drawTearLine(startX, startY, endX, endY, segments, distortion) {
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+
+            const stepX = (endX - startX) / segments;
+            const stepY = (endY - startY) / segments;
+
+            for (let i = 1; i <= segments; i++) {
+                let currentX = startX + stepX * i;
+                let currentY = startY + stepY * i;
+
+                if (i !== segments) {
+                    // 加入混亂的數學函數，創造不可預測的毛刺感 (Glitch)
+                    let chaos = Math.sin(i * 0.8 + holdTime * 0.3) * distortion;
+                    let randomSpike = (Math.random() - 0.5) * distortion * 2;
+                    
+                    // 偶爾出現極端突變
+                    if (isMouseDown && Math.random() < 0.15) {
+                        randomSpike *= 4; 
+                    }
+
+                    // 根據線條方向決定扭曲軸向
+                    if (Math.abs(startX - endX) < 1) { // 垂直線，水平扭曲
+                        currentX += chaos + randomSpike;
+                    } else { // 水平線，垂直扭曲
+                        currentY += chaos + randomSpike;
+                    }
+                }
+
+                ctx.lineTo(currentX, currentY);
+            }
+            ctx.stroke();
+        }
+
+        // 隨機的巨大不規則撕裂粒子
+        function drawGlitchParticles() {
+            // 長按越久，撕裂粒子越多
+            let chance = isMouseDown ? 0.2 + (holdTime * 0.005) : 0.02;
+            
+            if (Math.random() < chance) {
+                const numParticles = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < numParticles; i++) {
+                    ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.9)';
+                    let w = Math.random() * 150 + 20; // 寬度變化大
+                    let h = Math.random() * 15 + 2;   // 高度扁平
+                    let x = Math.random() * width;
+                    let y = Math.random() * height;
+                    
+                    // 讓撕裂區塊稍微集中在滑鼠附近
+                    if (isMouseDown && Math.random() < 0.6) {
+                        x = mouse.x + (Math.random() - 0.5) * 300;
+                        y = mouse.y + (Math.random() - 0.5) * 300;
+                    }
+                    
+                    ctx.fillRect(x, y, w, h);
+                }
+            }
+        }
+
+        function animate() {
+            // 平滑過渡透明度 (淡入淡出)
+            lineOpacity += (targetLineOpacity - lineOpacity) * 0.05;
+
+            let r = 0, g = 0, b = 0;
+            let currentDistortion = 2;
+            let alpha = 0.8; 
+
+            if (isMouseDown) {
+                holdTime++;
+                // 更不可預測的扭曲基數
+                currentDistortion = 10 + Math.pow(holdTime, 1.3) * 0.4 + Math.random() * 10;
+                
+                r = Math.min(60, holdTime * 0.4);
+                g = Math.min(10, holdTime * 0.08);
+                b = Math.min(25, holdTime * 0.15);
+            } else {
+                holdTime = Math.max(0, holdTime - 5);
+            }
+
+            // 背景
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            ctx.fillRect(0, 0, width, height);
+
+            // 繪製放大的顆粒雜訊
+            ctx.globalAlpha = 1;
+            const noiseX = Math.random() * noiseSize * noiseScale;
+            const noiseY = Math.random() * noiseSize * noiseScale;
+            for (let x = -noiseX; x < width; x += noiseSize * noiseScale) {
+                for (let y = -noiseY; y < height; y += noiseSize * noiseScale) {
+                    ctx.drawImage(noiseCanvas, x, y, noiseSize * noiseScale, noiseSize * noiseScale);
+                }
+            }
+
+            // 繪製隨機巨大撕裂粒子
+            drawGlitchParticles();
+
+            // 如果線條幾乎看不見，就不進行計算與繪製以節省效能
+            if (lineOpacity > 0.01) {
+                ctx.globalAlpha = lineOpacity;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = isMouseDown ? (2 + Math.random() * 2) : 1; // 點擊時線條粗細也會閃爍
+                ctx.shadowBlur = isMouseDown ? 20 : 5;
+                ctx.shadowColor = 'white';
+                ctx.lineJoin = 'miter';
+
+                const segments = isMouseDown ? Math.floor(40 + holdTime * 0.8) : 15;
+
+                drawTearLine(mouse.x, 0, mouse.x, height, segments, currentDistortion);
+                drawTearLine(0, mouse.y, width, mouse.y, segments, currentDistortion);
+
+                if (isMouseDown && holdTime > 15) {
+                    const extraCracks = Math.min(15, Math.floor(holdTime / 15));
+                    for(let i=0; i < extraCracks; i++) {
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.8})`;
+                        ctx.lineWidth = Math.random() * 3;
+                        let angle = Math.random() * Math.PI * 2;
+                        let length = Math.random() * (holdTime * 8);
+                        let endX = mouse.x + Math.cos(angle) * length;
+                        let endY = mouse.y + Math.sin(angle) * length;
+                        drawTearLine(mouse.x, mouse.y, endX, endY, segments / 2, currentDistortion * 2);
+                    }
+                }
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.globalAlpha = 1; // 恢復透明度
+            requestAnimationFrame(animate);
+        }
+
+        initNoise();
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>

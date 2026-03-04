@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Happy Memory World</title>
+
+<style>
+html,body{
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    font-family:sans-serif;
+    background:#fffaf0;
+}
+
+canvas{
+    position:absolute;
+    top:0;
+    left:0;
+}
+
+#ui{
+    position:fixed;
+    top:20px;
+    left:20px;
+    background:rgba(255,255,255,0.85);
+    padding:14px;
+    border-radius:12px;
+    backdrop-filter: blur(6px);
+}
+
+button{
+    padding:8px 12px;
+    border:none;
+    background:#ffd84d;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+    <button onclick="addMemory()">加入你的快樂記憶</button>
+</div>
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let width,height;
+let blobs = [];
+let particles = [];
+let memories = JSON.parse(localStorage.getItem("happyMemories") || "[]");
+
+function resize(){
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+
+// 初始系統記憶
+const baseMemories = [
+    {text:"和朋友大笑的一天",color:"#FFD84D"},
+    {text:"海邊風吹",color:"#6EC5FF"},
+    {text:"被理解的瞬間",color:"#58D68D"},
+    {text:"第一次旅行",color:"#FF7A59"},
+    {text:"想像未來",color:"#B084F5"}
+];
+
+memories = baseMemories.concat(memories);
+
+
+// 色塊生成
+function createBlobs(){
+    blobs = memories.map(m => ({
+        x: Math.random()*width,
+        y: Math.random()*height,
+        r: 40+Math.random()*30,
+        color:m.color,
+        text:m.text
+    }));
+}
+createBlobs();
+
+
+// 點擊互動
+canvas.addEventListener("mousedown", e=>{
+    if(e.button!==0) return;
+
+    blobs.forEach(blob=>{
+        const dx = e.clientX - blob.x;
+        const dy = e.clientY - blob.y;
+        if(Math.sqrt(dx*dx+dy*dy) < blob.r){
+            showMemory(blob);
+            createParticles(blob.x,blob.y,blob.color);
+        }
+    });
+});
+
+
+// 顯示記憶
+function showMemory(blob){
+    const div = document.createElement("div");
+    div.style.position="fixed";
+    div.style.left="50%";
+    div.style.top="50%";
+    div.style.transform="translate(-50%,-50%)";
+    div.style.background="white";
+    div.style.padding="20px";
+    div.style.borderRadius="12px";
+    div.style.boxShadow="0 10px 30px rgba(0,0,0,0.2)";
+    div.innerText = blob.text;
+
+    document.body.appendChild(div);
+
+    setTimeout(()=>div.remove(),2000);
+}
+
+
+// 加入使用者記憶
+function addMemory(){
+    const text = prompt("寫下一個快樂回憶：");
+    if(!text) return;
+
+    const color = prompt("給它一個顏色(hex)：例如 #FFD84D");
+    if(!color) return;
+
+    memories.push({text,color});
+    localStorage.setItem("happyMemories",JSON.stringify(memories.slice(5)));
+
+    createBlobs();
+}
+
+
+// 粒子（世界成長）
+function createParticles(x,y,color){
+    for(let i=0;i<20;i++){
+        particles.push({
+            x,y,
+            vx:(Math.random()-0.5)*4,
+            vy:(Math.random()-0.5)*4,
+            life:100,
+            color
+        });
+    }
+}
+
+
+// 動畫
+function animate(){
+
+    // 世界會隨快樂變亮
+    let brightness = Math.min(memories.length*5,80);
+    ctx.fillStyle=`hsl(40,100%,${90-brightness}%)`;
+    ctx.fillRect(0,0,width,height);
+
+    // 色塊
+    blobs.forEach(b=>{
+        ctx.beginPath();
+        ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+        ctx.fillStyle=b.color;
+        ctx.fill();
+
+        b.x += Math.sin(Date.now()/1000 + b.r)*0.3;
+        b.y += Math.cos(Date.now()/1200 + b.r)*0.3;
+    });
+
+    // 粒子
+    particles.forEach((p,i)=>{
+        p.x+=p.vx;
+        p.y+=p.vy;
+        p.life--;
+
+        ctx.globalAlpha=p.life/100;
+        ctx.fillStyle=p.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,5,0,Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha=1;
+
+        if(p.life<=0) particles.splice(i,1);
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泡沫之境 | The Land of Foam</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f7;
+            --text-color: #1a1a1a;
+            --primary-blue: rgba(65, 105, 225, 0.6);
+            --secondary-blue: rgba(30, 144, 255, 0.5);
+            --accent-blue: rgba(0, 0, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 防止滾動 */
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* --- 互動背景層 (Canvas) --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            /* 關鍵：透過 CSS 濾鏡製造極致的模糊感，比 Canvas 運算更省效能 */
+            filter: blur(60px) contrast(1.2); 
+            opacity: 0.9;
+        }
+
+        /* --- 噪點紋理層 (Noise Overlay) --- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none; /* 讓滑鼠穿透 */
+            opacity: 0.12;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- UI 文字層 --- */
+        .ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            padding: 2rem;
+            pointer-events: none; /* 讓滑鼠可以直接與背景互動 */
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+
+        /* 定位個別文字元素 */
+        .top-left {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+        }
+
+        .bottom-left {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+        }
+
+        .bottom-right {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+        }
+
+        /* 垂直文字 */
+        .vertical-text-left {
+            position: absolute;
+            top: 50%;
+            left: 2rem;
+            transform: translateY(-50%) rotate(-180deg);
+            writing-mode: vertical-rl;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .vertical-text-right {
+            position: absolute;
+            top: 50%;
+            right: 2rem;
+            transform: translateY(-50%) rotate(0deg);
+            writing-mode: vertical-rl;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .ui-layer { padding: 1.5rem; }
+            .top-left, .top-right, .bottom-left, .bottom-right { top: 1.5rem; left: 1.5rem; right: 1.5rem; bottom: 1.5rem; }
+            .vertical-text-left, .vertical-text-right { display: none; } /* 手機版隱藏垂直文字以保持簡潔 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 背景畫布 -->
+    <canvas id="canvas-container"></canvas>
+
+    <!-- 噪點遮罩 -->
+    <div class="noise-overlay"></div>
+
+    <!-- 前景文字 -->
+    <main class="ui-layer">
+        <div class="top-left">
+            <span>POSTTER</span>
+            <span>32</span>
+        </div>
+
+        <div class="top-right">
+            <span>Today design</span>
+        </div>
+
+        <!-- 垂直文字：左側日期 -->
+        <div class="vertical-text-left">
+            OCTOBER / 19TH / 2025
+        </div>
+
+        <!-- 垂直文字：右側標語 -->
+        <div class="vertical-text-right">
+            FREEWILL IDEA
+        </div>
+
+        <div class="bottom-left">
+            <span>Let's Start Again</span>
+        </div>
+
+        <div class="bottom-right">
+            <span>©Rising Moon</span>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * 泡沫之境 - 互動核心邏輯
+         * 使用 HTML5 Canvas 繪製流動的圓形，配合 CSS Blur 產生瀰散感
+         */
+        
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+        
+        // 滑鼠位置追蹤
+        let mouse = { x: -1000, y: -1000 };
+
+        // 調整畫布大小
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+
+        // 監聽視窗大小改變
+        window.addEventListener('resize', resize);
+        
+        // 監聽滑鼠移動
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        // 粒子(泡沫)類別
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                // 隨機半徑，大一點才有暈染感
+                this.radius = Math.random() * 100 + 150; 
+                // 隨機速度
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                // 隨機選取藍色系顏色
+                const colors = ['#4169E1', '#1E90FF', '#6495ED', '#0000FF'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 原始半徑，用於互動恢復
+                this.baseRadius = this.radius;
+            }
+
+            update() {
+                // 基本移動
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 邊界反彈
+                if (this.x < -100 || this.x > width + 100) this.vx *= -1;
+                if (this.y < -100 || this.y > height + 100) this.vy *= -1;
+
+                // --- 互動邏輯 ---
+                // 計算滑鼠與粒子的距離
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const interactionRadius = 400; // 互動感應範圍
+
+                if (distance < interactionRadius) {
+                    // 斥力效果：滑鼠靠近時，粒子會稍微遠離
+                    const forceDirectionX = dx / distance;
+                    const forceDirectionY = dy / distance;
+                    const force = (interactionRadius - distance) / interactionRadius;
+                    
+                    // 輕微推開
+                    this.vx -= forceDirectionX * force * 0.05;
+                    this.vy -= forceDirectionY * force * 0.05;
+                    
+                    // 靠近時稍微變大，模擬泡沫受壓
+                    if(this.radius < this.baseRadius + 20) {
+                        this.radius += 1;
+                    }
+                } else {
+                    // 恢復原始大小
+                    if(this.radius > this.baseRadius) {
+                        this.radius -= 1;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            // 根據螢幕大小決定粒子數量，保持畫面乾淨
+            const particleCount = width < 768 ? 5 : 8; 
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            // 清除畫布 (使用輕微透明的白色覆蓋，製造拖影效果，更像流體)
+            // 如果想要純粹的清晰移動，用 ctx.clearRect(0,0,width,height)
+            ctx.fillStyle = 'rgba(244, 244, 247, 0.2)'; 
+            ctx.fillRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // 啟動
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>

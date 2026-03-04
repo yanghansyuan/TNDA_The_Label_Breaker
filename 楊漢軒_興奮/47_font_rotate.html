@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮粒子場 v30（文字亂數＋跑馬燈）</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #eee;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform, opacity;
+      box-shadow: 0 0 18px rgba(0,0,0,0.55);
+    }
+
+    .shape-circle { border-radius: 50%; }
+
+    .shape-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .shape-star {
+      clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+      );
+    }
+
+    .press-indicator {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 12px rgba(255,215,0,0.8);
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+
+    .bg-fade {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, #ffffff 0%, #000000 70%);
+      opacity: 0;
+      transition: opacity 1.2s ease-out;
+    }
+
+    /* 中央文字：由 JS 控制 transform */
+    #posterText {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      color: #ffffff;
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      pointer-events: none;
+      white-space: pre-wrap;
+      text-align: center;
+      z-index: 5;
+      user-select: none;
+      transform-origin: 50% 50%;
+    }
+
+    .poster-line {
+      display: inline-block;
+      transform-origin: 50% 50%;
+    }
+
+    #debugPanel {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      max-width: 280px;
+      z-index: 9999;
+      display: none;
+      user-select: text;
+    }
+
+    #debugPanel label {
+      display: block;
+      margin: 4px 0;
+    }
+
+    #debugPanel input[type="range"],
+    #debugPanel textarea,
+    #debugPanel select,
+    #debugPanel input[type="color"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #debugPanel textarea {
+      resize: vertical;
+      min-height: 40px;
+    }
+
+    #debugPanel .section-title {
+      margin-top: 6px;
+      font-weight: 600;
+      color: #ffd54f;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div id="bgFade" class="bg-fade"></div>
+    <div id="posterText"></div>
+  </div>
+
+  <div id="debugPanel">
+    <div style="font-weight:600;margin-bottom:6px;">
+      Debug Panel（按 D 顯示/隱藏）
+    </div>
+
+    <!-- 文字設定 -->
+    <div class="section-title">標題文字</div>
+    <label>
+      文本內容:
+      <textarea id="dbg_textInput" rows="3" placeholder="輸入標題文字"></textarea>
+    </label>
+    <label>
+      字體大小(px): <span id="dbg_textSize_val"></span>
+      <input id="dbg_textSize" type="range" min="20" max="200" value="72">
+    </label>
+    <label>
+      字體:
+      <select id="dbg_fontFamily">
+        <option value="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">系統預設</option>
+        <option value="'Noto Sans TC',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Noto Sans TC</option>
+        <option value="'PingFang TC','Heiti TC',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">蘋方 / Heiti</option>
+        <option value="'Microsoft JhengHei',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">微軟正黑體</option>
+        <option value="'Times New Roman',serif">Times New Roman</option>
+        <option value="'Courier New',monospace">Courier New</option>
+        <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica Neue</option>
+      </select>
+    </label>
+    <label>
+      字距(em): <span id="dbg_letterSpacing_val"></span>
+      <input id="dbg_letterSpacing" type="range" min="-0.10" max="0.50" step="0.01" value="0.08">
+    </label>
+    <label>
+      行距(倍數): <span id="dbg_lineHeight_val"></span>
+      <input id="dbg_lineHeight" type="range" min="0.80" max="2.00" step="0.05" value="1.20">
+    </label>
+    <label>
+      旋轉角度(deg): <span id="dbg_textRotate_val"></span>
+      <input id="dbg_textRotate" type="range" min="-180" max="180" step="1" value="0">
+    </label>
+    <label>
+      字體顏色:
+      <input id="dbg_textColor" type="color" value="#ffffff">
+    </label>
+
+    <!-- 文字亂數 -->
+    <div class="section-title">文字亂數</div>
+    <label>
+      大小亂數(±%): <span id="dbg_randSize_val"></span>
+      <input id="dbg_randSize" type="range" min="0" max="100" step="5" value="0">
+    </label>
+    <label>
+      旋轉亂數(±deg): <span id="dbg_randRotate_val"></span>
+      <input id="dbg_randRotate" type="range" min="0" max="90" step="5" value="0">
+    </label>
+    <label>
+      顏色明暗亂數(±%): <span id="dbg_colorJitter_val"></span>
+      <input id="dbg_colorJitter" type="range" min="0" max="40" step="2" value="0">
+    </label>
+
+    <!-- 文字動畫 -->
+    <div class="section-title">文字動畫</div>
+    <label>
+      跑馬燈啟用:
+      <input id="dbg_marqueeEnabled" type="checkbox">
+    </label>
+    <label>
+      跑馬燈速度(px/s): <span id="dbg_marqueeSpeed_val"></span>
+      <input id="dbg_marqueeSpeed" type="range" min="-200" max="200" step="10" value="0">
+    </label>
+
+    <!-- 背景顏色 -->
+    <div class="section-title">背景顏色</div>
+    <label>
+      背景顏色:
+      <input id="dbg_bgColor" type="color" value="#000000">
+    </label>
+
+    <!-- 粒子層級 -->
+    <div class="section-title">粒子層級</div>
+    <label>
+      粒子位置:
+      <select id="dbg_particleLayer">
+        <option value="behind">在文字後面</option>
+        <option value="front">在文字前面</option>
+      </select>
+    </label>
+
+    <!-- 點擊爆炸 -->
+    <div class="section-title">點擊爆炸</div>
+    <label>
+      粒子數量: <span id="dbg_tapCount_val"></span>
+      <input id="dbg_tapCount" type="range" min="10" max="500" value="50">
+    </label>
+    <label>
+      尺寸倍率: <span id="dbg_tapSizeMul_val"></span>
+      <input id="dbg_tapSizeMul" type="range" min="0.5" max="3" step="0.1" value="1">
+    </label>
+    <label>
+      速度倍率: <span id="dbg_tapSpeedMul_val"></span>
+      <input id="dbg_tapSpeedMul" type="range" min="0.5" max="3" step="0.1" value="1">
+    </label>
+    <label>
+      壽命倍率: <span id="dbg_tapLifeMul_val"></span>
+      <input id="dbg_tapLifeMul" type="range" min="0.3" max="50" step="0.1" value="1">
+    </label>
+
+    <!-- 火箭爆炸粒子 -->
+    <div class="section-title">火箭爆炸粒子</div>
+    <label>
+      尺寸倍率: <span id="dbg_burstSizeMul_val"></span>
+      <input id="dbg_burstSizeMul" type="range" min="0.5" max="3" step="0.1" value="1">
+    </label>
+    <label>
+      速度倍率: <span id="dbg_burstSpeedMul_val"></span>
+      <input id="dbg_burstSpeedMul" type="range" min="0.5" max="3" step="0.1" value="1">
+    </label>
+    <label>
+      壽命倍率: <span id="dbg_burstLifeMul_val"></span>
+      <input id="dbg_burstLifeMul" type="range" min="0.3" max="3" step="0.1" value="1">
+    </label>
+
+    <!-- 火箭本體 -->
+    <div class="section-title">火箭本體</div>
+    <label>
+      最大顆數: <span id="dbg_rocketCountMax_val"></span>
+      <input id="dbg_rocketCountMax" type="range" min="1" max="6" value="4">
+    </label>
+    <label>
+      速度倍率: <span id="dbg_rocketSpeedMul_val"></span>
+      <input id="dbg_rocketSpeedMul" type="range" min="0.5" max="2" step="0.1" value="1">
+    </label>
+    <label>
+      壽命倍率: <span id="dbg_rocketLifeMul_val"></span>
+      <input id="dbg_rocketLifeMul" type="range" min="0.3" max="3" step="0.1" value="1">
+    </label>
+
+    <!-- 仙女棒粒子 -->
+    <div class="section-title">仙女棒粒子</div>
+    <label>
+      尺寸倍率: <span id="dbg_sparkSizeMul_val"></span>
+      <input id="dbg_sparkSizeMul" type="range" min="0.5" max="3" step="0.1" value="1">
+    </label>
+    <label>
+      速度倍率: <span id="dbg_sparkSpeedMul_val"></span>
+      <input id="dbg_sparkSpeedMul" type="range" min="0.5" max="3" step="0.1" value="1">
+    </label>
+    <label>
+      壽命倍率: <span id="dbg_sparkLifeMul_val"></span>
+      <input id="dbg_sparkLifeMul" type="range" min="0.3" max="3" step="0.1" value="1">
+    </label>
+
+    <!-- 分鏡 -->
+    <div class="section-title">分鏡</div>
+    <label>
+      間隔(ms): <span id="dbg_storyboardInterval_val"></span>
+      <input id="dbg_storyboardInterval" type="range" min="500" max="5000" step="100" value="2000">
+    </label>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+    const bgFade = document.getElementById("bgFade");
+    const debugPanel = document.getElementById("debugPanel");
+    const posterTextEl = document.getElementById("posterText");
+
+    let STAGE_WIDTH = stage.clientWidth;
+    let STAGE_HEIGHT = stage.clientHeight;
+    window.addEventListener("resize", () => {
+      STAGE_WIDTH = stage.clientWidth;
+      STAGE_HEIGHT = stage.clientHeight;
+    });
+
+    const MAX_PARTICLES = 1200;
+    const LONG_PRESS_THRESHOLD = 1000;
+    const DRAG_DISTANCE_THRESHOLD = 20;
+
+    const POSTER = {
+      text: "",
+      fontSize: 72,
+      color: "#ffffff",
+      bgColor: "#000000",
+      fontFamily: "system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+      letterSpacing: 0.08,
+      lineHeight: 1.2,
+      rotateDeg: 0,
+
+      randSizePercent: 0,
+      randRotateDeg: 0,
+      colorJitter: 0,
+
+      marqueeEnabled: false,
+      marqueeSpeed: 0
+    };
+
+    let particleLayerMode = "behind";
+
+    const PARAMS = {
+      tapBurstCountMin: 30,
+      tapBurstCountMax: 50,
+      tapSizeMul: 1.0,
+      tapSpeedMul: 1.0,
+      tapLifeMul: 1.0,
+
+      burstSizeMul: 1.0,
+      burstSpeedMul: 1.0,
+      burstLifeMul: 1.0,
+      burstLifeBase: 2200,
+      burstLifeExtra: 1000,
+
+      rocketCountMax: 4,
+      rocketBaseSpeed: 1200,
+      rocketExtraSpeed: 800,
+      rocketSpeedMul: 1.0,
+      rocketLifeBase: 1300,
+      rocketLifeExtra: 700,
+      rocketLifeMul: 1.0,
+      rocketSpread: 1,
+
+      rocketBurstBaseCount: 30,
+      rocketBurstExtraCount: 20,
+      rocketBurstMultiplier: 5,
+
+      sparkSizeMul: 1.0,
+      sparkSpeedMul: 1.0,
+      sparkLifeMul: 1.0,
+      sparkCoreSpeedMin: 40,
+      sparkCoreSpeedExtra: 30,
+      sparkStreakSpeedMin: 60,
+      sparkStreakSpeedExtra: 40,
+      sparkCoreLifeBase: 400,
+      sparkCoreLifeExtra: 200,
+      sparkStreakLifeBase: 700,
+      sparkStreakLifeExtra: 400,
+
+      storyboardIntervalMs: 2000
+    };
+
+    const storyboardFrames = [
+      { src: "storyboard/1.png", width: 1297, height: 922, type: "image" },
+      { src: "storyboard/2.png", width: 681, height: 329, type: "image" },
+      { src: "storyboard/3.png", width: 375, height: 272, type: "image" },
+      { src: "storyboard/4.png", width: 590, height: 271, type: "image" },
+      { src: "storyboard/5.png", width: 395, height: 312, type: "image" },
+      { src: "storyboard/6.png", width: 963, height: 331, type: "image" },
+      { src: "storyboard/7.png", width: 414, height: 292, type: "image" },
+      { src: "storyboard/8.png", width: 346, height: 322, type: "image" },
+      { src: "storyboard/9.png", width: 708, height: 1304, type: "image" },
+      { src: "storyboard/11.png", width: 298, height: 384, type: "image" },
+      { src: "storyboard/12.png", width: 1184, height: 864, type: "image" },
+      { src: "storyboard/14.png", width: 960, height: 326, type: "image" },
+      { src: "storyboard/15.png", width: 130, height: 467, type: "image" },
+      { src: "storyboard/16.png", width: 542, height: 290, type: "image" },
+      { src: "storyboard/17.png", width: 800, height: 1280, type: "image" },
+      { src: "storyboard/18.png", width: 281, height: 455, type: "image" },
+      { src: "storyboard/19.png", width: 284, height: 237, type: "image" },
+      { src: "storyboard/20.png", width: 334, height: 312, type: "image" },
+      { src: "storyboard/21.png", width: 477, height: 289, type: "image" },
+      { src: "storyboard/22.png", width: 733, height: 312, type: "image" },
+      { src: "storyboard/23.mp4", width: 1920, height: 1080, type: "video" }
+    ];
+
+    let fireworkRound = 0;
+    let activeRockets = 0;
+    let rocketsFinishedThisRound = false;
+    let backgroundUpdatedThisRound = false;
+
+    let storyboardWindows = [];
+    let storyboardPlaying = false;
+    let storyboardTimerId = null;
+    let storyboardCleanupTimerId = null;
+    let storyboardAudio = null;
+
+    const colors = [
+      "#ff1744",
+      "#ffd600",
+      "#2979ff",
+      "#e040fb",
+      "#69f0ae",
+      "#ff9100"
+    ];
+    let colorIndex = 0;
+
+    const particles = [];
+    const shapeTypes = ["line", "triangle", "star", "circle"];
+
+    const pressIndicator = document.createElement("div");
+    pressIndicator.className = "press-indicator";
+    stage.appendChild(pressIndicator);
+
+    let pressInfo = null;
+    let pressAnimId = null;
+    let isSparkler = false;
+    let lastSparkX = null;
+    let lastSparkY = null;
+    let sparklerTimer = 0;
+
+    let debugVisible = false;
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "d" || e.key === "D") {
+        debugVisible = !debugVisible;
+        debugPanel.style.display = debugVisible ? "block" : "none";
+      }
+    });
+
+    function updatePosterTransform() {
+      posterTextEl.style.left = "50%";
+      posterTextEl.style.top = "50%";
+      posterTextEl.style.transform =
+        `translate(-50%, -50%) rotate(${POSTER.rotateDeg}deg)`;
+    }
+
+    function hexToHsl(hex) {
+      hex = hex.replace("#", "");
+      if (hex.length === 3) {
+        hex = hex.split("").map(c => c + c).join("");
+      }
+      const r = parseInt(hex.substring(0,2), 16) / 255;
+      const g = parseInt(hex.substring(2,4), 16) / 255;
+      const b = parseInt(hex.substring(4,6), 16) / 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, l;
+      l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+
+    function renderPosterText() {
+      posterTextEl.innerHTML = "";
+
+      const lines = POSTER.text.split(/\r?\n/);
+      lines.forEach((line, index) => {
+        const span = document.createElement("span");
+        span.textContent = line || " ";
+        span.classList.add("poster-line");
+        span.dataset.baseRotate = "0";
+        span.dataset.offsetX = "0";
+        posterTextEl.appendChild(span);
+        if (index < lines.length - 1) {
+          posterTextEl.appendChild(document.createElement("br"));
+        }
+      });
+
+      applyRandomToLines();
+      applyRandomColorToLines();
+      resetMarqueeOffsets();
+    }
+
+    function applyRandomToLines() {
+      const lines = posterTextEl.querySelectorAll(".poster-line");
+      lines.forEach(lineEl => {
+        const baseSize = POSTER.fontSize;
+        const sizeRange = POSTER.randSizePercent;
+        const rotateRange = POSTER.randRotateDeg;
+
+        const sizeFactor = sizeRange > 0
+          ? 1 + (Math.random() * 2 - 1) * (sizeRange / 100)
+          : 1;
+        const fontSizePx = baseSize * sizeFactor;
+
+        const rotateOffset = rotateRange > 0
+          ? (Math.random() * 2 - 1) * rotateRange
+          : 0;
+
+        lineEl.style.display = "inline-block";
+        lineEl.style.fontSize = fontSizePx + "px";
+        lineEl.dataset.baseRotate = rotateOffset.toString();
+
+        const offsetX = parseFloat(lineEl.dataset.offsetX || "0");
+        lineEl.style.transform =
+          `translateX(${offsetX}px) rotate(${rotateOffset}deg)`;
+      });
+    }
+
+    function applyRandomColorToLines() {
+      const jitter = POSTER.colorJitter;
+      const lines = posterTextEl.querySelectorAll(".poster-line");
+      if (jitter <= 0 || !POSTER.color) {
+        lines.forEach(lineEl => {
+          lineEl.style.color = POSTER.color;
+        });
+        return;
+      }
+
+      const baseHsl = hexToHsl(POSTER.color);
+      lines.forEach(lineEl => {
+        const deltaL = (Math.random() * 2 - 1) * jitter;
+        let l = baseHsl.l + deltaL;
+        l = Math.max(0, Math.min(100, l));
+        const h = baseHsl.h;
+        const s = baseHsl.s;
+        lineEl.style.color =
+          `hsl(${h.toFixed(1)}deg ${s.toFixed(1)}% ${l.toFixed(1)}%)`;
+      });
+    }
+
+    function resetMarqueeOffsets() {
+      const lines = posterTextEl.querySelectorAll(".poster-line");
+      lines.forEach(lineEl => {
+        lineEl.dataset.offsetX = "0";
+        const baseRotate = parseFloat(lineEl.dataset.baseRotate || "0");
+        lineEl.style.transform = `translateX(0px) rotate(${baseRotate}deg)`;
+      });
+    }
+
+    function updateBackgroundBrightnessByRound() {
+      if (!bgFade) return;
+      let current = parseFloat(bgFade.style.opacity || "0");
+      let target = current;
+
+      if (fireworkRound < 4) {
+        target = Math.min(current + 0.1, 0.3);
+      } else {
+        target = 1.0;
+      }
+
+      bgFade.style.opacity = target.toString();
+    }
+
+    function stopStoryboardPlayback(resetRound = false) {
+      storyboardPlaying = false;
+
+      if (storyboardTimerId) {
+        clearTimeout(storyboardTimerId);
+        storyboardTimerId = null;
+      }
+      if (storyboardCleanupTimerId) {
+        clearTimeout(storyboardCleanupTimerId);
+        storyboardCleanupTimerId = null;
+      }
+
+      storyboardWindows.forEach(win => {
+        if (win && !win.closed) {
+          try { win.close(); } catch (e) {}
+        }
+      });
+      storyboardWindows = [];
+
+      if (storyboardAudio) {
+        try {
+          storyboardAudio.pause();
+          storyboardAudio.currentTime = 0;
+        } catch (e) {}
+        storyboardAudio = null;
+      }
+
+      if (resetRound) {
+        fireworkRound = 0;
+        if (bgFade) bgFade.style.opacity = "0";
+      }
+    }
+
+    function clearForegroundParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        if (p.type === "burst" || p.type === "rocket") {
+          p.el.remove();
+          particles.splice(i, 1);
+        }
+      }
+      activeRockets = 0;
+      rocketsFinishedThisRound = false;
+      backgroundUpdatedThisRound = false;
+    }
+
+    function startStoryboardSequence() {
+      if (!storyboardFrames.length) return;
+
+      clearForegroundParticles();
+
+      storyboardPlaying = true;
+      let index = 0;
+
+      try {
+        storyboardAudio = new Audio("storyboard/Spiegel im Spiegel.mp3");
+        storyboardAudio.loop = false;
+        storyboardAudio.play().catch(() => {});
+      } catch (e) {}
+
+      function grayOutOldWindows() {
+        storyboardWindows.forEach(win => {
+          try {
+            if (win && !win.closed) {
+              const img   = win.document.querySelector("img");
+              const video = win.document.querySelector("video");
+              if (img)   img.style.filter = "grayscale(100%) brightness(70%)";
+              if (video) video.style.filter = "grayscale(100%) brightness(70%)";
+            }
+          } catch (e) {}
+        });
+      }
+
+      function openOne(frameIndex) {
+        if (!storyboardPlaying) return;
+        if (frameIndex >= storyboardFrames.length) return;
+
+        const frame = storyboardFrames[frameIndex];
+        const w = frame.width;
+        const h = frame.height;
+
+        const maxLeft = Math.max(0, window.screen.availWidth - w);
+        const maxTop  = Math.max(0, window.screen.availHeight - h);
+        const left = Math.floor(Math.random() * (maxLeft + 1));
+        const top  = Math.floor(Math.random() * (maxTop + 1));
+
+        const features =
+          `width=${w},height=${h},left=${left},top=${top},` +
+          `resizable=yes,scrollbars=no`;
+
+        grayOutOldWindows();
+
+        const win = window.open("", "_blank", features);
+        if (!win) {
+          console.warn("瀏覽器阻擋了 storyboard 視窗。");
+          return;
+        }
+
+        let contentHtml = "";
+        if (frame.type === "video") {
+          contentHtml = `
+            <video width="${w}" height="${h}" autoplay muted controls>
+              <source src="${frame.src}" type="video/mp4">
+              你的瀏覽器不支援 HTML5 影片標籤。
+            </video>
+          `;
+        } else {
+          contentHtml = `
+            <img src="${frame.src}" alt="Storyboard ${frameIndex + 1}"
+                 style="width:${w}px;height:${h}px;">
+          `;
+        }
+
+        win.document.write(`
+          <!DOCTYPE html>
+          <html lang="zh-Hant">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Storyboard ${frameIndex + 1}</title>
+            <style>
+              html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              }
+            </style>
+          </head>
+          <body>
+            ${contentHtml}
+          </body>
+          </html>
+        `);
+        win.document.close();
+        win.focus();
+
+        storyboardWindows.push(win);
+      }
+
+      function scheduleNext() {
+        if (!storyboardPlaying) return;
+
+        if (index >= storyboardFrames.length) {
+          storyboardCleanupTimerId = setTimeout(() => {
+            stopStoryboardPlayback(true);
+          }, 5000);
+          return;
+        }
+
+        openOne(index);
+        index++;
+
+        storyboardTimerId = setTimeout(scheduleNext, PARAMS.storyboardIntervalMs);
+      }
+
+      scheduleNext();
+    }
+
+    stage.addEventListener("mousedown", (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      pressInfo = {
+        t: performance.now(),
+        startX: x,
+        startY: y,
+        x,
+        y,
+        exceeded: false
+      };
+
+      isSparkler = false;
+      lastSparkX = x;
+      lastSparkY = y;
+      sparklerTimer = 0;
+
+      pressIndicator.style.left = x + "px";
+      pressIndicator.style.top = y + "px";
+      pressIndicator.style.width = "120px";
+      pressIndicator.style.height = "120px";
+      pressIndicator.style.opacity = "1";
+      pressIndicator.style.transform = "translate(-50%, -50%) scale(0.2)";
+
+      const startT = performance.now();
+      function grow() {
+        if (!pressInfo || isSparkler) return;
+        const nowT = performance.now();
+        const elapsed = nowT - startT;
+
+        let scale;
+        if (elapsed < LONG_PRESS_THRESHOLD) {
+          const t = elapsed / LONG_PRESS_THRESHOLD;
+          const clamped = Math.min(t, 1);
+          scale = 0.2 + 0.8 * clamped;
+        } else {
+          const wiggle = 0.05 * Math.sin((elapsed - LONG_PRESS_THRESHOLD) / 80);
+          scale = 1.0 + wiggle;
+          if (!pressInfo.exceeded) pressInfo.exceeded = true;
+        }
+
+        pressIndicator.style.transform =
+          `translate(-50%, -50%) scale(${scale})`;
+        pressAnimId = requestAnimationFrame(grow);
+      }
+      grow();
+    });
+
+    stage.addEventListener("mousemove", (event) => {
+      if (!pressInfo) return;
+
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      pressInfo.x = x;
+      pressInfo.y = y;
+
+      const dx = x - pressInfo.startX;
+      const dy = y - pressInfo.startY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (!isSparkler && dist > DRAG_DISTANCE_THRESHOLD) {
+        isSparkler = true;
+        if (pressAnimId) {
+          cancelAnimationFrame(pressAnimId);
+          pressAnimId = null;
+        }
+        pressIndicator.style.opacity = "0";
+        pressIndicator.style.transform =
+          "translate(-50%, -50%) scale(0)";
+
+        stopStoryboardPlayback(true);
+      }
+    });
+
+    stage.addEventListener("mouseup", () => {
+      if (!pressInfo) return;
+      const durationMs = performance.now() - pressInfo.t;
+      const { startX, startY } = pressInfo;
+      pressInfo = null;
+
+      if (pressAnimId) {
+        cancelAnimationFrame(pressAnimId);
+        pressAnimId = null;
+      }
+
+      pressIndicator.style.transform =
+        "translate(-50%, -50%) scale(0)";
+      pressIndicator.style.opacity = "0";
+
+      if (isSparkler) {
+        isSparkler = false;
+        return;
+      }
+
+      if (durationMs >= LONG_PRESS_THRESHOLD) {
+        stopStoryboardPlayback(false);
+
+        fireworkRound = Math.min(fireworkRound + 1, 4);
+        spawnFireworkRockets(startX, startY, durationMs);
+      } else {
+        handleTap(startX, startY);
+      }
+    });
+
+    function spawnSparkler(x, y) {
+      let dist = Infinity;
+      if (lastSparkX !== null) {
+        const dx = x - lastSparkX;
+        const dy = y - lastSparkY;
+        dist = Math.sqrt(dx*dx + dy*dy);
+      }
+      lastSparkX = x;
+      lastSparkY = y;
+
+      drawHalo(x, y);
+
+      const shouldEmit =
+        dist > 2 || Math.random() < 0.4;
+
+      if (!shouldEmit) return;
+
+      ensureCapacity(24);
+
+      const coreCount = 12 + Math.floor(Math.random() * 6);
+      for (let i = 0; i < coreCount; i++) {
+        createSparkParticle(x, y, "core");
+      }
+
+      const streakCount = 6 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < streakCount; i++) {
+        createSparkParticle(x, y, "streak");
+      }
+    }
+
+    function setParticleZ(el) {
+      if (particleLayerMode === "behind") {
+        el.style.zIndex = "1";
+      } else {
+        el.style.zIndex = "10";
+      }
+    }
+
+    function drawHalo(x, y) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      setParticleZ(el);
+      el.style.backgroundColor = "#fffbe5";
+      const baseSize = 26 + Math.random() * 16;
+      const size = baseSize * PARAMS.sparkSizeMul;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+      el.style.opacity = "0.95";
+      el.style.boxShadow = "0 0 40px rgba(255,255,210,0.95)";
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const baseLife = 180 + Math.random() * 120;
+      const life = baseLife * PARAMS.sparkLifeMul;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha: 0.95,
+        type: "spark",
+        mode: "halo",
+        splitDone: true
+      });
+    }
+
+    function createSparkParticle(x, y, mode) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      setParticleZ(el);
+
+      const sparkColor = mode === "core" ? "#fff9dd" : "#ffd900";
+      el.style.backgroundColor = sparkColor;
+
+      const baseSize =
+        mode === "core"
+          ? 3 + Math.random() * 2
+          : 2 + Math.random() * 2;
+      const size = baseSize * PARAMS.sparkSizeMul;
+
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+      el.style.opacity = "1";
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const angle = Math.random() * Math.PI * 2;
+      const baseSpeed =
+        mode === "core"
+          ? PARAMS.sparkCoreSpeedMin + Math.random() * PARAMS.sparkCoreSpeedExtra
+          : PARAMS.sparkStreakSpeedMin + Math.random() * PARAMS.sparkStreakSpeedExtra;
+      const speed = baseSpeed * PARAMS.sparkSpeedMul;
+
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+
+      const now = performance.now();
+      const baseLife =
+        mode === "core"
+          ? PARAMS.sparkCoreLifeBase + Math.random() * PARAMS.sparkCoreLifeExtra
+          : PARAMS.sparkStreakLifeBase + Math.random() * PARAMS.sparkStreakLifeExtra;
+      const life = baseLife * PARAMS.sparkLifeMul;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha: 1,
+        type: "spark",
+        mode,
+        splitDone: false
+      });
+    }
+
+    function handleTap(x, y) {
+      const extra = PARAMS.tapBurstCountMax - PARAMS.tapBurstCountMin;
+      const baseCount = PARAMS.tapBurstCountMin + Math.floor(Math.random() * Math.max(extra, 1));
+      createBurstAt(x, y, baseCount);
+    }
+
+    function createBurstAt(cx, cy, count) {
+      ensureCapacity(count);
+      for (let i = 0; i < count; i++) {
+        const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        createBurstParticle(cx, cy, shape, "tap");
+      }
+    }
+
+    function spawnFireworkRockets(x, y, durationMs) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const t = particles[i].type;
+        if (t === "rocket" || t === "burst") {
+          particles[i].el.remove();
+          particles.splice(i, 1);
+        }
+      }
+      activeRockets = 0;
+      rocketsFinishedThisRound = false;
+      backgroundUpdatedThisRound = false;
+
+      const minHold = LONG_PRESS_THRESHOLD;
+      const maxHold = 4000;
+      const clamped = Math.max(minHold, Math.min(maxHold, durationMs));
+      const strength = (clamped - minHold) / (maxHold - minHold);
+
+      const rocketsThisRound = Math.max(
+        1,
+        Math.min(fireworkRound, PARAMS.rocketCountMax)
+      );
+
+      activeRockets = rocketsThisRound;
+
+      const baseDelay = 80;
+      const baseAngle = -Math.PI / 2;
+      const spread = PARAMS.rocketSpread;
+
+      for (let i = 0; i < rocketsThisRound; i++) {
+        const t = rocketsThisRound === 1 ? 0.5 : i / (rocketsThisRound - 1);
+        const angleOffset = (t - 0.5) * spread;
+        const finalAngle = baseAngle + angleOffset;
+
+        setTimeout(() => {
+          createRocketWithAngle(x, y, strength, finalAngle);
+        }, i * baseDelay);
+      }
+    }
+
+    function ensureCapacity(needToAdd) {
+      const totalNeeded = particles.length + needToAdd;
+      if (totalNeeded > MAX_PARTICLES) {
+        const toRemove = totalNeeded - MAX_PARTICLES;
+        for (let i = 0; i < toRemove && particles.length > 0; i++) {
+          const old = particles.shift();
+          old.el.remove();
+        }
+      }
+    }
+
+    function createBurstParticle(cx, cy, shape, sourceType) {
+      const el = document.createElement("div");
+      el.classList.add("particle");
+      setParticleZ(el);
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;
+      el.style.backgroundColor = "#ffd700";
+
+      const baseAlpha = 0.85 + Math.random() * 0.1;
+      el.style.opacity = baseAlpha.toString();
+
+      let baseSpeed;
+      let w, h;
+
+      switch (shape) {
+        case "line": {
+          el.classList.add("shape-line");
+          let sLevels;
+          if (sourceType === "tap") {
+            sLevels = [3, 5, 7];
+          } else {
+            sLevels = [2, 4, 7];
+          }
+          const tIndex = Math.floor(Math.random() * sLevels.length);
+          h = sLevels[tIndex];
+          if (sourceType === "tap") {
+            w = 80 + Math.random() * 60;
+          } else {
+            w = 60 + Math.random() * 40;
+          }
+          baseSpeed = 1500 + Math.random() * 900;
+          break;
+        }
+        case "triangle": {
+          el.classList.add("shape-triangle");
+          let sLevels;
+          if (sourceType === "tap") {
+            sLevels = [24, 36, 50];
+          } else {
+            sLevels = [14, 20, 28];
+          }
+          const s = sLevels[Math.floor(Math.random() * sLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 900 + Math.random() * 480;
+          break;
+        }
+        case "star": {
+          el.classList.add("shape-star");
+          let sLevels;
+          if (sourceType === "tap") {
+            sLevels = [24, 36, 50];
+          } else {
+            sLevels = [16, 22, 30];
+          }
+          const s = sLevels[Math.floor(Math.random() * sLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 760 + Math.random() * 420;
+          break;
+        }
+        default: {
+          el.classList.add("shape-circle");
+          let sLevels;
+          if (sourceType === "tap") {
+            sLevels = [24, 35, 50];
+          } else {
+            sLevels = [10, 16, 22];
+          }
+          const s = sLevels[Math.floor(Math.random() * sLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 880 + Math.random() * 480;
+        }
+      }
+
+      if (sourceType === "tap") {
+        w *= PARAMS.tapSizeMul;
+        h *= PARAMS.tapSizeMul;
+      } else {
+        w *= PARAMS.burstSizeMul;
+        h *= PARAMS.burstSizeMul;
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+
+      const size = (w + h) / 2;
+      const sizeFactor = 1.7 - Math.min(size / 80, 1.0);
+
+      let speed = baseSpeed * sizeFactor;
+      if (sourceType === "tap") {
+        speed *= PARAMS.tapSpeedMul;
+      } else {
+        speed *= PARAMS.burstSpeedMul;
+      }
+
+      let x = cx;
+      let y = cy;
+
+      const angle = Math.random() * Math.PI * 2;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.3)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      let baseLife = PARAMS.burstLifeBase + Math.random() * PARAMS.burstLifeExtra;
+      if (sourceType === "tap") {
+        baseLife *= PARAMS.tapLifeMul;
+      } else {
+        baseLife *= PARAMS.burstLifeMul;
+      }
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w,
+        h,
+        shape,
+        life: baseLife,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: w,
+        baseAlpha,
+        type: "burst",
+        trailTimer: 0
+      });
+    }
+
+    function createRocketWithAngle(cx, cy, strength, angle) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      setParticleZ(el);
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;
+      el.style.backgroundColor = "#ffd700";
+
+      const size = 10 + Math.random() * 6;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+
+      const baseAlpha = 0.9;
+      el.style.opacity = baseAlpha.toString();
+
+      const baseSpeed = (PARAMS.rocketBaseSpeed + strength * PARAMS.rocketExtraSpeed) * PARAMS.rocketSpeedMul;
+      let vx = Math.cos(angle) * (150 * (Math.random() - 0.5));
+      let vy = Math.sin(angle) * baseSpeed;
+
+      let x = cx;
+      let y = cy;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.4)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const baseLife = (PARAMS.rocketLifeBase + strength * PARAMS.rocketLifeExtra) * PARAMS.rocketLifeMul;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w: size,
+        h: size,
+        shape: "circle",
+        life: baseLife,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha,
+        type: "rocket",
+        trailTimer: 0
+      });
+    }
+
+    function createTrailParticle(x, y, color) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      setParticleZ(el);
+      el.style.backgroundColor = color;
+
+      const size = 6 + Math.random() * 4;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+
+      const baseAlpha = 0.8;
+      el.style.opacity = baseAlpha.toString();
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 400 + Math.random() * 250;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha,
+        type: "trail",
+        trailTimer: 0
+      });
+    }
+
+    let lastTime = null;
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      if (pressInfo && isSparkler) {
+        const x = pressInfo.x ?? pressInfo.startX;
+        const y = pressInfo.y ?? pressInfo.startY;
+        sparklerTimer += dt;
+        const interval = 1 / 60;
+        while (sparklerTimer >= interval) {
+          sparklerTimer -= interval;
+          spawnSparkler(x, y);
+        }
+      } else {
+        sparklerTimer = 0;
+      }
+
+      if (POSTER.marqueeEnabled && POSTER.marqueeSpeed !== 0) {
+        const lines = posterTextEl.querySelectorAll(".poster-line");
+        lines.forEach(lineEl => {
+          let off = parseFloat(lineEl.dataset.offsetX || "0");
+          off += POSTER.marqueeSpeed * dt;
+          lineEl.dataset.offsetX = off.toString();
+
+          const baseRotate = parseFloat(lineEl.dataset.baseRotate || "0");
+          lineEl.style.transform =
+            `translateX(${off}px) rotate(${baseRotate}deg)`;
+        });
+      }
+
+      updateParticles(dt, timestamp);
+      requestAnimationFrame(animate);
+    }
+
+    function updateParticles(dt, now) {
+      const baseDrag = 0.97;
+      const wallDamping = 0.86;
+      const spinDecay = 0.94;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.createdAt;
+        const t = age / p.life;
+
+        if (p.type === "spark" && !p.splitDone && p.mode !== "halo") {
+          const ageRatio = age / p.life;
+          if (ageRatio > 0.35 && ageRatio < 0.55) {
+            p.splitDone = true;
+
+            const splitCount = 3 + Math.floor(Math.random() * 3);
+            for (let s = 0; s < splitCount; s++) {
+              const el2 = document.createElement("div");
+              el2.classList.add("particle", "shape-circle");
+              setParticleZ(el2);
+              el2.style.backgroundColor = "#ffd900";
+              const size2 = (1.5 + Math.random() * 1.5) * PARAMS.sparkSizeMul;
+              el2.style.width = size2 + "px";
+              el2.style.height = size2 + "px";
+              el2.style.opacity = "0.85";
+              el2.style.transform = "translate(-50%, -50%) scale(1)";
+              stage.appendChild(el2);
+
+              const angle2 = Math.random() * Math.PI * 2;
+              const baseSpeed2 = 320 + Math.random() * 260;
+              const speed2 = baseSpeed2 * PARAMS.sparkSpeedMul;
+              const vx2 = Math.cos(angle2) * speed2;
+              const vy2 = Math.sin(angle2) * speed2;
+
+              const now2 = performance.now();
+              const baseLife2 = 900 + Math.random() * 700;
+              const life2 = baseLife2 * PARAMS.sparkLifeMul;
+
+              particles.push({
+                el: el2,
+                x: p.x,
+                y: p.y,
+                vx: vx2,
+                vy: vy2,
+                w: size2,
+                h: size2,
+                shape: "circle",
+                life: life2,
+                createdAt: now2,
+                spin: 0,
+                rotation: 0,
+                shrink: false,
+                targetW: size2,
+                baseAlpha: 0.85,
+                type: "spark",
+                mode: "child",
+                splitDone: true
+              });
+            }
+          }
+        }
+
+        if (t >= 1.05) {
+          if (p.type === "rocket") {
+            const baseCount =
+              PARAMS.rocketBurstBaseCount +
+              Math.floor(Math.random() * PARAMS.rocketBurstExtraCount);
+            for (let k = 0; k < baseCount * PARAMS.rocketBurstMultiplier; k++) {
+              const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+              createBurstParticle(p.x, p.y, shape, "rocket");
+            }
+
+            if (!backgroundUpdatedThisRound) {
+              updateBackgroundBrightnessByRound();
+              backgroundUpdatedThisRound = true;
+            }
+
+            activeRockets--;
+            if (activeRockets <= 0) {
+              rocketsFinishedThisRound = true;
+            }
+          }
+
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        if (p.type !== "trail" && p.type !== "spark") {
+          let localDrag = baseDrag;
+          if (p.shape === "line") localDrag = 0.975;
+          else if (p.shape === "star") localDrag = 0.965;
+
+          p.vx *= localDrag;
+          p.vy *= localDrag;
+
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          const halfW = p.w / 2;
+          const halfH = p.h / 2;
+          const minX = halfW;
+          const maxX = STAGE_WIDTH - halfW;
+          const minY = halfH;
+          const maxY = STAGE_HEIGHT - halfH;
+
+          let collided = false;
+
+          if (p.x < minX) {
+            p.x = minX;
+            p.vx = -p.vx * wallDamping;
+            collided = true;
+          } else if (p.x > maxX) {
+            p.x = maxX;
+            p.vx = -p.vx * wallDamping;
+            collided = true;
+          }
+
+          if (p.y < minY) {
+            p.y = minY;
+            p.vy = -p.vy * wallDamping;
+            collided = true;
+          } else if (p.y > maxY) {
+            p.y = maxY;
+            p.vy = -p.vy * wallDamping;
+            collided = true;
+          }
+
+          if (collided && p.type === "burst") {
+            const spinImpulse = 1080;
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            p.spin += spinImpulse * dir;
+
+            if (p.shape === "line" && !p.shrink) {
+              p.shrink = true;
+              p.targetW = p.w * 0.2;
+            }
+          }
+        } else {
+          const drag = p.type === "spark" ? 0.993 : 0.985;
+          p.vx *= drag;
+          p.vy *= drag;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+        }
+
+        if (p.type === "rocket") {
+          p.trailTimer += dt;
+          if (p.trailTimer > 0.03) {
+            p.trailTimer = 0;
+            createTrailParticle(p.x, p.y, p.el.dataset.baseColor || "#ffffff");
+          }
+        }
+
+        p.spin *= spinDecay;
+        p.rotation += p.spin * dt;
+
+        const baseDirDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+
+        let scale;
+        let opacity;
+
+        if (p.type === "burst" || p.type === "rocket") {
+          if (t < 0.2) {
+            p.el.style.backgroundColor = "#ffd700";
+          } else {
+            p.el.style.backgroundColor = p.el.dataset.baseColor || "#ffffff";
+          }
+
+          if (t < 0.3) {
+            const k = t / 0.3;
+            scale = 0.3 + 0.9 * k;
+          } else {
+            const k = (t - 0.3) / 0.7;
+            scale = 1.2 * (1 - k);
+          }
+
+          opacity = p.baseAlpha * (1 - t);
+        } else if (p.type === "trail" || p.type === "spark") {
+          if (p.type === "spark" && p.mode === "core") {
+            scale = 1 - t * 0.8;
+            opacity = p.baseAlpha * (1 - t * 1.3);
+          } else {
+            scale = 1 - t * 0.4;
+            opacity = p.baseAlpha * (1 - t * 0.85);
+          }
+        } else {
+          scale = 1;
+          opacity = p.baseAlpha * (1 - t);
+        }
+
+        const rotationDeg = baseDirDeg + p.rotation;
+
+        p.el.style.left = p.x + "px";
+        p.el.style.top = p.y + "px";
+        p.el.style.transform =
+          `translate(-50%, -50%) scale(${scale}) rotate(${rotationDeg}deg)`;
+        p.el.style.opacity = opacity.toString();
+        p.el.style.filter =
+          `saturate(${1 - t * 0.1}) brightness(${1 - t * 0.05})`;
+      }
+
+      let hasFireworkParticles = false;
+      for (let i = 0; i < particles.length; i++) {
+        const type = particles[i].type;
+        if (type === "rocket" || type === "burst") {
+          hasFireworkParticles = true;
+          break;
+        }
+      }
+
+      if (rocketsFinishedThisRound &&
+          activeRockets === 0 &&
+          !hasFireworkParticles) {
+
+        rocketsFinishedThisRound = false;
+
+        if (fireworkRound >= 4 && !storyboardPlaying) {
+          startStoryboardSequence();
+        }
+      }
+    }
+
+    function initTextControls() {
+      const textInput = document.getElementById("dbg_textInput");
+      const textSizeInput = document.getElementById("dbg_textSize");
+      const textSizeVal = document.getElementById("dbg_textSize_val");
+      const textColorInput = document.getElementById("dbg_textColor");
+      const bgColorInput = document.getElementById("dbg_bgColor");
+      const fontFamilySelect = document.getElementById("dbg_fontFamily");
+      const letterSpacingInput = document.getElementById("dbg_letterSpacing");
+      const letterSpacingVal = document.getElementById("dbg_letterSpacing_val");
+      const lineHeightInput = document.getElementById("dbg_lineHeight");
+      const lineHeightVal = document.getElementById("dbg_lineHeight_val");
+      const textRotateInput = document.getElementById("dbg_textRotate");
+      const textRotateVal = document.getElementById("dbg_textRotate_val");
+
+      const randSizeInput = document.getElementById("dbg_randSize");
+      const randSizeVal = document.getElementById("dbg_randSize_val");
+      const randRotateInput = document.getElementById("dbg_randRotate");
+      const randRotateVal = document.getElementById("dbg_randRotate_val");
+      const colorJitterInput = document.getElementById("dbg_colorJitter");
+      const colorJitterVal = document.getElementById("dbg_colorJitter_val");
+
+      const marqueeEnabledInput = document.getElementById("dbg_marqueeEnabled");
+      const marqueeSpeedInput = document.getElementById("dbg_marqueeSpeed");
+      const marqueeSpeedVal = document.getElementById("dbg_marqueeSpeed_val");
+
+      textInput.addEventListener("input", () => {
+        POSTER.text = textInput.value;
+        renderPosterText();
+      });
+
+      textSizeInput.value = POSTER.fontSize;
+      textSizeVal.textContent = POSTER.fontSize;
+      posterTextEl.style.fontSize = POSTER.fontSize + "px";
+      textSizeInput.addEventListener("input", () => {
+        POSTER.fontSize = parseInt(textSizeInput.value, 10);
+        textSizeVal.textContent = POSTER.fontSize;
+        posterTextEl.style.fontSize = POSTER.fontSize + "px";
+        applyRandomToLines();
+      });
+
+      textColorInput.value = POSTER.color;
+      posterTextEl.style.color = POSTER.color;
+      textColorInput.addEventListener("input", () => {
+        POSTER.color = textColorInput.value;
+        posterTextEl.style.color = POSTER.color;
+        applyRandomColorToLines();
+      });
+
+      bgColorInput.value = POSTER.bgColor;
+      document.body.style.backgroundColor = POSTER.bgColor;
+      stage.style.backgroundColor = POSTER.bgColor;
+      bgColorInput.addEventListener("input", () => {
+        POSTER.bgColor = bgColorInput.value;
+        document.body.style.backgroundColor = POSTER.bgColor;
+        stage.style.backgroundColor = POSTER.bgColor;
+      });
+
+      fontFamilySelect.value = POSTER.fontFamily;
+      posterTextEl.style.fontFamily = POSTER.fontFamily;
+      fontFamilySelect.addEventListener("change", () => {
+        POSTER.fontFamily = fontFamilySelect.value;
+        posterTextEl.style.fontFamily = POSTER.fontFamily;
+      });
+
+      letterSpacingInput.value = POSTER.letterSpacing;
+      letterSpacingVal.textContent = POSTER.letterSpacing.toFixed(2);
+      posterTextEl.style.letterSpacing = POSTER.letterSpacing + "em";
+      letterSpacingInput.addEventListener("input", () => {
+        POSTER.letterSpacing = parseFloat(letterSpacingInput.value);
+        letterSpacingVal.textContent = POSTER.letterSpacing.toFixed(2);
+        posterTextEl.style.letterSpacing = POSTER.letterSpacing + "em";
+      });
+
+      lineHeightInput.value = POSTER.lineHeight;
+      lineHeightVal.textContent = POSTER.lineHeight.toFixed(2);
+      posterTextEl.style.lineHeight = POSTER.lineHeight;
+      lineHeightInput.addEventListener("input", () => {
+        POSTER.lineHeight = parseFloat(lineHeightInput.value);
+        lineHeightVal.textContent = POSTER.lineHeight.toFixed(2);
+        posterTextEl.style.lineHeight = POSTER.lineHeight;
+      });
+
+      textRotateInput.value = POSTER.rotateDeg;
+      textRotateVal.textContent = POSTER.rotateDeg;
+      updatePosterTransform();
+      textRotateInput.addEventListener("input", () => {
+        POSTER.rotateDeg = parseInt(textRotateInput.value, 10);
+        textRotateVal.textContent = POSTER.rotateDeg;
+        updatePosterTransform();
+      });
+
+      randSizeInput.value = POSTER.randSizePercent;
+      randSizeVal.textContent = POSTER.randSizePercent;
+      randRotateInput.value = POSTER.randRotateDeg;
+      randRotateVal.textContent = POSTER.randRotateDeg;
+      colorJitterInput.value = POSTER.colorJitter;
+      colorJitterVal.textContent = POSTER.colorJitter;
+
+      randSizeInput.addEventListener("input", () => {
+        POSTER.randSizePercent = parseInt(randSizeInput.value, 10);
+        randSizeVal.textContent = POSTER.randSizePercent;
+        applyRandomToLines();
+      });
+
+      randRotateInput.addEventListener("input", () => {
+        POSTER.randRotateDeg = parseInt(randRotateInput.value, 10);
+        randRotateVal.textContent = POSTER.randRotateDeg;
+        applyRandomToLines();
+      });
+
+      colorJitterInput.addEventListener("input", () => {
+        POSTER.colorJitter = parseInt(colorJitterInput.value, 10);
+        colorJitterVal.textContent = POSTER.colorJitter;
+        applyRandomColorToLines();
+      });
+
+      marqueeEnabledInput.checked = POSTER.marqueeEnabled;
+      marqueeSpeedInput.value = POSTER.marqueeSpeed;
+      marqueeSpeedVal.textContent = POSTER.marqueeSpeed;
+      marqueeEnabledInput.addEventListener("change", () => {
+        POSTER.marqueeEnabled = marqueeEnabledInput.checked;
+        resetMarqueeOffsets();
+      });
+      marqueeSpeedInput.addEventListener("input", () => {
+        POSTER.marqueeSpeed = parseInt(marqueeSpeedInput.value, 10);
+        marqueeSpeedVal.textContent = POSTER.marqueeSpeed;
+      });
+    }
+
+    function initLayerControls() {
+      const select = document.getElementById("dbg_particleLayer");
+      select.value = particleLayerMode;
+
+      select.addEventListener("change", () => {
+        particleLayerMode = select.value;
+      });
+
+      posterTextEl.style.zIndex = "5";
+    }
+
+    function initDebugPanel() {
+      const tapCountInput = document.getElementById("dbg_tapCount");
+      const tapCountVal = document.getElementById("dbg_tapCount_val");
+      tapCountInput.value = PARAMS.tapBurstCountMax;
+      tapCountVal.textContent = PARAMS.tapBurstCountMax;
+      tapCountInput.addEventListener("input", () => {
+        const maxCount = parseInt(tapCountInput.value, 10);
+        PARAMS.tapBurstCountMax = maxCount;
+        PARAMS.tapBurstCountMin = Math.floor(maxCount / 2);
+        tapCountVal.textContent = maxCount;
+      });
+
+      const tapSizeMulInput = document.getElementById("dbg_tapSizeMul");
+      const tapSizeMulVal = document.getElementById("dbg_tapSizeMul_val");
+      tapSizeMulVal.textContent = "1.0";
+      tapSizeMulInput.addEventListener("input", () => {
+        const v = parseFloat(tapSizeMulInput.value);
+        PARAMS.tapSizeMul = v;
+        tapSizeMulVal.textContent = v.toFixed(1);
+      });
+
+      const tapSpeedMulInput = document.getElementById("dbg_tapSpeedMul");
+      const tapSpeedMulVal = document.getElementById("dbg_tapSpeedMul_val");
+      tapSpeedMulVal.textContent = "1.0";
+      tapSpeedMulInput.addEventListener("input", () => {
+        const v = parseFloat(tapSpeedMulInput.value);
+        PARAMS.tapSpeedMul = v;
+        tapSpeedMulVal.textContent = v.toFixed(1);
+      });
+
+      const tapLifeMulInput = document.getElementById("dbg_tapLifeMul");
+      const tapLifeMulVal = document.getElementById("dbg_tapLifeMul_val");
+      tapLifeMulVal.textContent = "1.0";
+      tapLifeMulInput.addEventListener("input", () => {
+        const v = parseFloat(tapLifeMulInput.value);
+        PARAMS.tapLifeMul = v;
+        tapLifeMulVal.textContent = v.toFixed(1);
+      });
+
+      const burstSizeMulInput = document.getElementById("dbg_burstSizeMul");
+      const burstSizeMulVal = document.getElementById("dbg_burstSizeMul_val");
+      burstSizeMulVal.textContent = "1.0";
+      burstSizeMulInput.addEventListener("input", () => {
+        const v = parseFloat(burstSizeMulInput.value);
+        PARAMS.burstSizeMul = v;
+        burstSizeMulVal.textContent = v.toFixed(1);
+      });
+
+      const burstSpeedMulInput = document.getElementById("dbg_burstSpeedMul");
+      const burstSpeedMulVal = document.getElementById("dbg_burstSpeedMul_val");
+      burstSpeedMulVal.textContent = "1.0";
+      burstSpeedMulInput.addEventListener("input", () => {
+        const v = parseFloat(burstSpeedMulInput.value);
+        PARAMS.burstSpeedMul = v;
+        burstSpeedMulVal.textContent = v.toFixed(1);
+      });
+
+      const burstLifeMulInput = document.getElementById("dbg_burstLifeMul");
+      const burstLifeMulVal = document.getElementById("dbg_burstLifeMul_val");
+      burstLifeMulVal.textContent = "1.0";
+      burstLifeMulInput.addEventListener("input", () => {
+        const v = parseFloat(burstLifeMulInput.value);
+        PARAMS.burstLifeMul = v;
+        burstLifeMulVal.textContent = v.toFixed(1);
+      });
+
+      const rocketCountInput = document.getElementById("dbg_rocketCountMax");
+      const rocketCountVal = document.getElementById("dbg_rocketCountMax_val");
+      rocketCountInput.value = PARAMS.rocketCountMax;
+      rocketCountVal.textContent = PARAMS.rocketCountMax;
+      rocketCountInput.addEventListener("input", () => {
+        PARAMS.rocketCountMax = parseInt(rocketCountInput.value, 10);
+        rocketCountVal.textContent = PARAMS.rocketCountMax;
+      });
+
+      const rocketSpeedMulInput = document.getElementById("dbg_rocketSpeedMul");
+      const rocketSpeedMulVal = document.getElementById("dbg_rocketSpeedMul_val");
+      rocketSpeedMulVal.textContent = "1.0";
+      rocketSpeedMulInput.addEventListener("input", () => {
+        const v = parseFloat(rocketSpeedMulInput.value);
+        PARAMS.rocketSpeedMul = v;
+        rocketSpeedMulVal.textContent = v.toFixed(1);
+      });
+
+      const rocketLifeMulInput = document.getElementById("dbg_rocketLifeMul");
+      const rocketLifeMulVal = document.getElementById("dbg_rocketLifeMul_val");
+      rocketLifeMulVal.textContent = "1.0";
+      rocketLifeMulInput.addEventListener("input", () => {
+        const v = parseFloat(rocketLifeMulInput.value);
+        PARAMS.rocketLifeMul = v;
+        rocketLifeMulVal.textContent = v.toFixed(1);
+      });
+
+      const sparkSizeMulInput = document.getElementById("dbg_sparkSizeMul");
+      const sparkSizeMulVal = document.getElementById("dbg_sparkSizeMul_val");
+      sparkSizeMulVal.textContent = "1.0";
+      sparkSizeMulInput.addEventListener("input", () => {
+        const v = parseFloat(sparkSizeMulInput.value);
+        PARAMS.sparkSizeMul = v;
+        sparkSizeMulVal.textContent = v.toFixed(1);
+      });
+
+      const sparkSpeedMulInput = document.getElementById("dbg_sparkSpeedMul");
+      const sparkSpeedMulVal = document.getElementById("dbg_sparkSpeedMul_val");
+      sparkSpeedMulVal.textContent = "1.0";
+      sparkSpeedMulInput.addEventListener("input", () => {
+        const v = parseFloat(sparkSpeedMulInput.value);
+        PARAMS.sparkSpeedMul = v;
+        sparkSpeedMulVal.textContent = v.toFixed(1);
+      });
+
+      const sparkLifeMulInput = document.getElementById("dbg_sparkLifeMul");
+      const sparkLifeMulVal = document.getElementById("dbg_sparkLifeMul_val");
+      sparkLifeMulVal.textContent = "1.0";
+      sparkLifeMulInput.addEventListener("input", () => {
+        const v = parseFloat(sparkLifeMulInput.value);
+        PARAMS.sparkLifeMul = v;
+        sparkLifeMulVal.textContent = v.toFixed(1);
+      });
+
+      const sbIntInput = document.getElementById("dbg_storyboardInterval");
+      const sbIntVal = document.getElementById("dbg_storyboardInterval_val");
+      sbIntInput.value = PARAMS.storyboardIntervalMs;
+      sbIntVal.textContent = PARAMS.storyboardIntervalMs;
+      sbIntInput.addEventListener("input", () => {
+        PARAMS.storyboardIntervalMs = parseInt(sbIntInput.value, 10);
+        sbIntVal.textContent = PARAMS.storyboardIntervalMs;
+      });
+
+      initTextControls();
+      initLayerControls();
+    }
+
+    initDebugPanel();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

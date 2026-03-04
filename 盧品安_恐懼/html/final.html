@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear - 1-test.html</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a; /* 暗色系 */
+            cursor: crosshair;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let audioCtx = null;
+
+    // 自適應調整大小
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 隨機整數
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    // 繪製背景質感 (雜點)
+    function drawGrain() {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        for (let i = 0; i < 5000; i++) {
+            ctx.fillRect(rand(0, width), rand(0, height), 1, 1);
+        }
+    }
+
+    // 繪製尖銳三角形 (恐懼的防禦)
+    function drawTriangle() {
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = rand(0.5, 2);
+        ctx.beginPath();
+        ctx.moveTo(rand(0, width), rand(0, height));
+        ctx.lineTo(rand(0, width), rand(0, height));
+        ctx.lineTo(rand(0, width), rand(0, height));
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    // 初始化背景
+    function init() {
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, width, height);
+        drawGrain();
+        for (let i = 0; i < 30; i++) drawTriangle();
+    }
+
+    // 混亂線條繪製 (互動觸發)
+    function drawChaos(x, y) {
+        ctx.strokeStyle = `rgba(${rand(100, 200)}, 0, 0, 0.5)`; // 暗紅/灰色線條
+        ctx.lineWidth = rand(1, 3);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let i = 0; i < 15; i++) {
+            ctx.lineTo(x + rand(-100, 100), y + rand(-100, 100));
+        }
+        ctx.stroke();
+    }
+
+    // 初始化音訊 (產生煩躁的雜訊)
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = 2 * audioCtx.sampleRate,
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate),
+        output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 400;
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.05; // 初始音量較小
+
+        whiteNoise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        whiteNoise.start();
+
+        return { filter, gainNode };
+    }
+
+    let audio;
+
+    // 滑鼠點擊互動
+    window.addEventListener('mousedown', (e) => {
+        if (!audio) audio = initAudio();
+        
+        // 增加音量與頻率使人煩躁
+        if (audio) {
+            audio.gainNode.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.1);
+            audio.filter.frequency.setTargetAtTime(rand(1000, 3000), audioCtx.currentTime, 0.1);
+        }
+
+        // 視覺混亂與震動
+        document.body.style.transform = `translate(${rand(-10, 10)}px, ${rand(-10, 10)}px)`;
+        for(let i=0; i<5; i++) drawChaos(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (audio) {
+            audio.gainNode.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.5);
+            audio.filter.frequency.setTargetAtTime(400, audioCtx.currentTime, 0.5);
+        }
+        document.body.style.transform = 'translate(0, 0)';
+    });
+
+    init();
+</script>
+</body>
+</html>

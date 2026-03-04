@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>情緒實驗室：平靜與混亂</title>
+
+    <style>
+
+        /* 禁止頁面捲動與邊距重置 */
+
+        body, html {
+
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            background-color: #000;
+
+        }
+
+
+
+        /* 激動狀態背景層：Pantone Marsala (#955251) */
+
+        #bg-agitated {
+
+            position: absolute;
+
+            top: 0; left: 0; 
+
+            width: 100%; height: 100%;
+
+            background-color: #955251;
+
+            z-index: 1;
+
+            transition: opacity 2.5s linear; /* 線性過渡 */
+
+        }
+
+
+
+        /* 平靜狀態背景層：藍綠色漸層 */
+
+        #bg-calm {
+
+            position: absolute;
+
+            top: 0; left: 0; 
+
+            width: 100%; height: 100%;
+
+            /* 從 Cloud Dancer 米白到互補藍綠色的線性漸層 */
+
+            background: linear-gradient(135deg, #F0EEE9 0%, #A4C3C4 50%, #519495 100%);
+
+            z-index: 0;
+
+            opacity: 0;
+
+            transition: opacity 2.5s linear; /* 線性過渡 */
+
+        }
+
+
+
+        /* 當 body 標籤帶有 .calm-state 類別時的背景切換 */
+
+        body.calm-state #bg-agitated { opacity: 0; }
+
+        body.calm-state #bg-calm { opacity: 1; }
+
+
+
+        canvas {
+
+            position: relative;
+
+            z-index: 10;
+
+            display: block;
+
+            width: 100vw;
+
+            height: 100vh;
+
+            cursor: crosshair;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div id="bg-agitated"></div>
+
+    <div id="bg-calm"></div>
+
+
+
+    <canvas id="emotionCanvas"></canvas>
+
+
+
+    <script>
+
+        const canvas = document.getElementById('emotionCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        let lines = [];
+
+        let stars = [];
+
+        let isCalm = false;
+
+        let width, height;
+
+        let mouse = { x: -999, y: -999, lerpX: 0, lerpY: 0 };
+
+
+
+        const COLORS = {
+
+            agitatedLine: '#F0EEE9', // Cloud Dancer (淺色線條在深紅底)
+
+            starLight: '#519495',    // 互補藍綠色
+
+            starCore: '#FFFFFF'
+
+        };
+
+
+
+        // --- 3D 閃爍星芒類別 ---
+
+        class Star {
+
+            constructor() {
+
+                this.init();
+
+            }
+
+            init() {
+
+                this.x = Math.random() * width;
+
+                this.y = Math.random() * height;
+
+                this.z = Math.random() * 2 + 0.5; // 深度感
+
+                this.baseSize = Math.random() * 12 + 4;
+
+                this.phase = Math.random() * Math.PI * 2;
+
+                this.pulseSpeed = Math.random() * 0.05 + 0.02; // 閃爍頻率
+
+                this.opacity = 0;
+
+                this.rotation = Math.random() * Math.PI;
+
+            }
+
+            draw() {
+
+                // 視差計算
+
+                const px = this.x + (mouse.lerpX - width/2) * (this.z * 0.04);
+
+                const py = this.y + (mouse.lerpY - height/2) * (this.z * 0.04);
+
+                
+
+                // 3D 閃爍邏輯 (Sin 波控制)
+
+                const twinkle = Math.sin(Date.now() * this.pulseSpeed + this.phase);
+
+                const currentSize = this.baseSize * (1 + twinkle * 0.3) * this.z;
+
+                
+
+                this.opacity += isCalm ? 0.02 : -0.05;
+
+                this.opacity = Math.max(0, Math.min(this.opacity, 1));
+
+
+
+                if (this.opacity <= 0) return;
+
+
+
+                ctx.save();
+
+                ctx.translate(px, py);
+
+                ctx.rotate(this.rotation + Date.now() * 0.0003);
+
+                ctx.globalAlpha = this.opacity * (0.5 + (twinkle + 1) / 4);
+
+
+
+                // 星芒光暈
+
+                ctx.shadowBlur = 10 * this.z;
+
+                ctx.shadowColor = COLORS.starLight;
+
+
+
+                // 繪製十字星芒結構
+
+                ctx.beginPath();
+
+                ctx.strokeStyle = COLORS.starLight;
+
+                ctx.lineWidth = 1 * this.z;
+
+                
+
+                ctx.moveTo(-currentSize, 0); ctx.lineTo(currentSize, 0);
+
+                ctx.moveTo(0, -currentSize); ctx.lineTo(0, currentSize);
+
+                
+
+                ctx.rotate(Math.PI / 4);
+
+                const shortSize = currentSize * 0.4;
+
+                ctx.moveTo(-shortSize, 0); ctx.lineTo(shortSize, 0);
+
+                ctx.moveTo(0, -shortSize); ctx.lineTo(0, shortSize);
+
+                
+
+                ctx.stroke();
+
+
+
+                // 星芒核心
+
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = COLORS.starCore;
+
+                ctx.beginPath();
+
+                ctx.arc(0, 0, 1.2 * this.z * (1 + twinkle * 0.2), 0, Math.PI * 2);
+
+                ctx.fill();
+
+
+
+                ctx.restore();
+
+            }
+
+        }
+
+
+
+        // --- 雜訊線條類別 ---
+
+        class Line {
+
+            constructor(index, total) {
+
+                this.index = index;
+
+                this.total = total;
+
+                this.reset();
+
+            }
+
+            reset() {
+
+                this.thickness = Math.random() * 4 + 0.5;
+
+                this.points = [];
+
+                this.segments = 50;
+
+                this.baseY = (height / (this.total + 1)) * (this.index + 1);
+
+                this.alpha = 1;
+
+                for (let i = 0; i <= this.segments; i++) {
+
+                    this.points.push({ x: (i / this.segments) * width, y: this.baseY });
+
+                }
+
+            }
+
+            update() {
+
+                this.alpha += isCalm ? -0.04 : 0.04;
+
+                this.alpha = Math.max(0, Math.min(this.alpha, 1));
+
+
+
+                this.points.forEach((p, i) => {
+
+                    p.x = (i / this.segments) * width;
+
+                    let targetY = this.baseY;
+
+
+
+                    // Hover 觸發的原地抖動邏輯
+
+                    if (!isCalm) {
+
+                        const dx = p.x - mouse.x;
+
+                        const dy = this.baseY - mouse.y;
+
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 140) {
+
+                            const intensity = 1 - dist / 140;
+
+                            targetY += (Math.random() - 0.5) * 55 * intensity;
+
+                        }
+
+                    }
+
+                    p.y += (targetY - p.y) * 0.1;
+
+                });
+
+            }
+
+            draw() {
+
+                if (this.alpha <= 0) return;
+
+                ctx.save();
+
+                ctx.globalAlpha = this.alpha;
+
+                ctx.beginPath();
+
+                ctx.lineWidth = this.thickness;
+
+                ctx.strokeStyle = COLORS.agitatedLine;
+
+                ctx.moveTo(this.points[0].x, this.points[0].y);
+
+                for (let i = 1; i < this.points.length - 1; i++) {
+
+                    let xc = (this.points[i].x + this.points[i + 1].x) / 2;
+
+                    let yc = (this.points[i].y + this.points[i + 1].y) / 2;
+
+                    ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+
+                }
+
+                ctx.stroke();
+
+                ctx.restore();
+
+            }
+
+        }
+
+
+
+        // 初始化環境
+
+        function init() {
+
+            width = canvas.width = window.innerWidth;
+
+            height = canvas.height = window.innerHeight;
+
+            lines = [];
+
+            stars = [];
+
+            // 設定線條與星芒數量
+
+            for (let i = 0; i < 22; i++) lines.push(new Line(i, 22));
+
+            for (let i = 0; i < 45; i++) stars.push(new Star());
+
+        }
+
+
+
+        // 動畫循環
+
+        function animate() {
+
+            ctx.clearRect(0, 0, width, height);
+
+            
+
+            // 滑鼠平滑位移 (Lerp)
+
+            mouse.lerpX += (mouse.x - mouse.lerpX) * 0.07;
+
+            mouse.lerpY += (mouse.y - mouse.lerpY) * 0.07;
+
+
+
+            // 繪製順序：星芒在後，線條在前
+
+            stars.forEach(s => s.draw());
+
+            lines.forEach(l => {
+
+                l.update();
+
+                l.draw();
+
+            });
+
+            
+
+            requestAnimationFrame(animate);
+
+        }
+
+
+
+        // 視窗自適應 (RWD)
+
+        window.addEventListener('resize', init);
+
+
+
+        // 滑鼠移動監測
+
+        window.addEventListener('mousemove', e => {
+
+            mouse.x = e.clientX;
+
+            mouse.y = e.clientY;
+
+        });
+
+
+
+        // 點擊切換狀態
+
+        window.addEventListener('mousedown', e => {
+
+            if (e.button === 0) { // 左鍵
+
+                isCalm = !isCalm;
+
+                document.body.classList.toggle('calm-state');
+
+            }
+
+        });
+
+
+
+        // 啟動程式
+
+        init();
+
+        animate();
+
+    </script>
+
+</body>
+
+</html>

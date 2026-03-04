@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮粒子場 v4</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: white;
+    }
+
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      background: radial-gradient(circle at 30% 20%, #222 0, #050505 60%, #000 100%);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .shape-circle {
+      border-radius: 50%;
+    }
+
+    .shape-line,
+    .shape-wave-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .shape-star {
+      clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+      );
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="hint">
+      <div>點擊畫布</div>
+      <div>直線最快最遠，波浪線次之，其他形狀依大小決定慣性與距離</div>
+    </div>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+    const STAGE_SIZE = 1024;
+
+    const colors = [
+      "#FF1744",
+      "#FFEA00",
+      "#00E5FF",
+      "#E040FB",
+      "#76FF03"
+    ];
+    let colorIndex = 0;
+
+    const particles = [];
+
+    const shapeTypes = ["line", "wave-line", "triangle", "star", "circle"];
+
+    stage.addEventListener("click", (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const count = 30 + Math.floor(Math.random() * 20); // 30~49 個
+
+      for (let i = 0; i < count; i++) {
+        const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        createParticle(x, y, shape);
+      }
+    });
+
+    function createParticle(cx, cy, shape) {
+      const el = document.createElement("div");
+      el.classList.add("particle");
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.style.backgroundColor = baseColor;
+
+      let baseSpeed;
+      let w, h;
+
+      switch (shape) {
+        case "line": {
+          el.classList.add("shape-line");
+          w = 90 + Math.random() * 60;
+          h = 3 + Math.random() * 2;
+          // 最快、跑最遠（整體 *3）
+          baseSpeed = 1600 + Math.random() * 900;
+          break;
+        }
+        case "wave-line": {
+          el.classList.add("shape-wave-line");
+          w = 70 + Math.random() * 50;
+          h = 5 + Math.random() * 3;
+          // 次快
+          baseSpeed = 1350 + Math.random() * 750;
+          break;
+        }
+        case "triangle": {
+          el.classList.add("shape-triangle");
+          w = 24 + Math.random() * 24;
+          h = w;
+          baseSpeed = 960 + Math.random() * 480; // 固體中偏快
+          break;
+        }
+        case "star": {
+          el.classList.add("shape-star");
+          w = 30 + Math.random() * 26;
+          h = w;
+          baseSpeed = 780 + Math.random() * 420; // 固體中偏慢
+          break;
+        }
+        default: {
+          el.classList.add("shape-circle");
+          const radius = 8 + Math.random() * 10;
+          w = radius * 2;
+          h = radius * 2;
+          baseSpeed = 900 + Math.random() * 480; // 中間
+        }
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+
+      // 大小 → 速度微調：越大越重，越小越快
+      const size = (w + h) / 2;
+      const sizeFactor = 1.6 - Math.min(size / 80, 1.0); // size 小 -> 約1.6, size 大 -> 約0.6
+      let speed = baseSpeed * sizeFactor;
+
+      let x = cx;
+      let y = cy;
+
+      const angle = Math.random() * Math.PI * 2;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+
+      el.style.opacity = "1";
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 1400 + Math.random() * 700; // 1.4~2.1 秒，稍微拉長一點尾巴
+
+      const baseAngleDeg = (angle * 180) / Math.PI;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w,
+        h,
+        shape,
+        life,
+        createdAt: now,
+        baseAngleDeg,
+        wavePhase: Math.random() * Math.PI * 2 // 給波浪線一個起始相位
+      });
+    }
+
+    let lastTime = null;
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      updateParticles(dt, timestamp);
+      requestAnimationFrame(animate);
+    }
+
+    function updateParticles(dt, now) {
+      const baseDrag = 0.97;       // 阻力更小、速度保持更久
+      const wallDamping = 0.86;    // 撞牆後保留較多能量
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.createdAt;
+        const t = age / p.life;
+
+        if (t >= 1) {
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        let localDrag = baseDrag;
+
+        if (p.shape === "line") {
+          localDrag = 0.975; // 最滑
+        } else if (p.shape === "wave-line") {
+          localDrag = 0.972;
+        } else if (p.shape === "star") {
+          localDrag = 0.965;
+        }
+
+        p.vx *= localDrag;
+        p.vy *= localDrag;
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        const halfW = p.w / 2;
+        const halfH = p.h / 2;
+        const minX = halfW;
+        const maxX = STAGE_SIZE - halfW;
+        const minY = halfH;
+        const maxY = STAGE_SIZE - halfH;
+
+        if (p.x < minX) {
+          p.x = minX;
+          p.vx = -p.vx * wallDamping;
+        } else if (p.x > maxX) {
+          p.x = maxX;
+          p.vx = -p.vx * wallDamping;
+        }
+
+        if (p.y < minY) {
+          p.y = minY;
+          p.vy = -p.vy * wallDamping;
+        } else if (p.y > maxY) {
+          p.y = maxY;
+          p.vy = -p.vy * wallDamping;
+        }
+
+        const easeOut = 1 - Math.pow(1 - t, 2);
+        const scale = 0.85 + (1.2 - 0.85) * (1 - easeOut);
+        const opacity = 1 - easeOut;
+
+        let rotationDeg = 0;
+        let extraTranslateX = 0;
+        let extraTranslateY = 0;
+
+        if (p.shape === "line") {
+          // 直線：完全不抖動，只跟速度方向
+          rotationDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+        } else if (p.shape === "wave-line") {
+          // 波浪線：沿著速度方向飛，但在法線方向做正弦波
+          const speedDirAngle = Math.atan2(p.vy, p.vx);
+          rotationDeg = speedDirAngle * 180 / Math.PI;
+
+          const normalAngle = speedDirAngle + Math.PI / 2;
+          const waveFreq = 20; // 頻率
+          const waveAmp = 22;  // 幅度
+          const phase = p.wavePhase;
+          const wave = Math.sin(age / 1000 * waveFreq + phase) * waveAmp * (1 - t);
+
+          extraTranslateX = Math.cos(normalAngle) * wave;
+          extraTranslateY = Math.sin(normalAngle) * wave;
+        } else if (p.shape === "triangle" || p.shape === "star" || p.shape === "circle") {
+          rotationDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+        }
+
+        const tx = p.x + extraTranslateX;
+        const ty = p.y + extraTranslateY;
+
+        p.el.style.left = tx + "px";
+        p.el.style.top = ty + "px";
+        p.el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rotationDeg}deg)`;
+        p.el.style.opacity = opacity.toString();
+        p.el.style.filter = `saturate(${1 - t * 0.6}) brightness(${1 - t * 0.15})`;
+      }
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

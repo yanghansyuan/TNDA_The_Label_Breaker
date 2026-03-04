@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泡沫之境 | The Land of Foam</title>
+    <style>
+        /* 定義動態變數，讓 JS 可以輕鬆修改主題顏色 */
+        :root {
+            --bg-color: #f4f4f7;
+            --text-color: #1a1a1a;
+            --main-hues: #4169E1, #1E90FF, #6495ED; /* 預設藍色系 */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 1s ease, color 1s ease;
+        }
+
+        /* --- 啟動遮罩 (Start Overlay) --- */
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease;
+            cursor: pointer;
+        }
+        #start-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .start-btn {
+            border: 1px solid #333;
+            padding: 15px 40px;
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            background: transparent;
+            transition: all 0.3s;
+        }
+        .start-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        /* --- 視覺層 --- */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            /* 模糊濾鏡創造泡沫感 */
+            filter: blur(60px) contrast(1.2); 
+            opacity: 0.9;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.12;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- UI 文字層 --- */
+        .ui-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 3;
+            padding: 2rem;
+            pointer-events: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+
+        /* 文字佈局 */
+        .top-left { position: absolute; top: 2rem; left: 2rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .top-right { position: absolute; top: 2rem; right: 2rem; text-align: right; }
+        .bottom-left { position: absolute; bottom: 2rem; left: 2rem; }
+        .bottom-right { position: absolute; bottom: 2rem; right: 2rem; }
+
+        /* 垂直文字 */
+        .vertical-text-left {
+            position: absolute;
+            top: 50%; left: 2rem;
+            transform: translateY(-50%) rotate(-180deg);
+            writing-mode: vertical-rl;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            letter-spacing: 0.15em;
+        }
+        .vertical-text-right {
+            position: absolute;
+            top: 50%; right: 2rem;
+            transform: translateY(-50%) rotate(0deg);
+            writing-mode: vertical-rl;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .ui-layer { padding: 1.5rem; }
+            .top-left, .top-right, .bottom-left, .bottom-right { top: 1.5rem; left: 1.5rem; right: 1.5rem; bottom: 1.5rem; }
+            .vertical-text-left, .vertical-text-right { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 啟動按鈕 (因應瀏覽器音效政策) -->
+    <div id="start-overlay">
+        <div style="margin-bottom: 20px; font-size: 0.8rem; color: #666;">建議佩戴耳機體驗</div>
+        <button class="start-btn">Enter The Foam</button>
+    </div>
+
+    <!-- 畫布 -->
+    <canvas id="canvas-container"></canvas>
+    <div class="noise-overlay"></div>
+
+    <!-- UI 文字 -->
+    <main class="ui-layer">
+        <div class="top-left">
+            <span id="theme-name">POSTTER</span>
+            <span id="day-number">32</span>
+        </div>
+
+        <div class="top-right">
+            <span id="dynamic-mood">Today design</span>
+        </div>
+
+        <div class="vertical-text-left" id="date-text">
+            OCTOBER / 19TH / 2025
+        </div>
+
+        <div class="vertical-text-right" id="quote-text">
+            FREEWILL IDEA
+        </div>
+
+        <div class="bottom-left">
+            <span id="status-text">Waiting for input...</span>
+        </div>
+
+        <div class="bottom-right">
+            <span>©Rising Moon</span>
+        </div>
+    </main>
+
+    <script>
+        // --- 設定：每日主題系統 ---
+        const themes = [
+            { day: "Sunday",    colors: ["#B0C4DE", "#778899", "#E6E6FA"], mood: "Rest & Reset",    quote: "SILENCE IS GOLDEN", bg: "#f8f9fa" },
+            { day: "Monday",    colors: ["#4169E1", "#1E90FF", "#6495ED"], mood: "Deep Focus",      quote: "START AGAIN",       bg: "#f4f4f7" },
+            { day: "Tuesday",   colors: ["#2E8B57", "#3CB371", "#8FBC8F"], mood: "Growth Energy",   quote: "NATURE SPEAKS",     bg: "#f0f7f0" },
+            { day: "Wednesday", colors: ["#FF7F50", "#FFA07A", "#FF6347"], mood: "Warm Balance",    quote: "MIDWEEK FLOW",      bg: "#fff5f2" },
+            { day: "Thursday",  colors: ["#9370DB", "#8A2BE2", "#BA55D3"], mood: "Mystic Mind",     quote: "UNKOWN FUTURE",     bg: "#f6f0fa" },
+            { day: "Friday",    colors: ["#FFD700", "#FFA500", "#F0E68C"], mood: "Golden Hour",     quote: "LET IT GO",         bg: "#fffff0" },
+            { day: "Saturday",  colors: ["#483D8B", "#6A5ACD", "#7B68EE"], mood: "Midnight Calm",   quote: "DREAM SPACE",       bg: "#f0f0f5" }
+        ];
+
+        // 取得今日資訊
+        const today = new Date();
+        const dayIndex = today.getDay(); // 0 = Sunday, 1 = Monday...
+        const currentTheme = themes[dayIndex];
+
+        // --- 1. 初始化頁面內容 ---
+        function initTheme() {
+            // 更新背景色
+            document.documentElement.style.setProperty('--bg-color', currentTheme.bg);
+            
+            // 更新文字
+            document.getElementById('theme-name').innerText = currentTheme.day.toUpperCase();
+            document.getElementById('day-number').innerText = today.getDate().toString().padStart(2, '0');
+            document.getElementById('dynamic-mood').innerText = currentTheme.mood;
+            document.getElementById('quote-text').innerText = currentTheme.quote;
+
+            // 格式化日期： MARCH / 02 / 2026
+            const months = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+            const dateStr = `${months[today.getMonth()]} / ${today.getDate()}TH / ${today.getFullYear()}`;
+            document.getElementById('date-text').innerText = dateStr;
+        }
+        initTheme();
+
+        // --- 2. 音訊系統 (Web Audio API) ---
+        let audioCtx, analyser, dataArray;
+        let isAudioPlaying = false;
+        
+        function setupAudio() {
+            // 創建 AudioContext
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            // 創建分析器 (用於視覺化)
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 64; // 不需要太細，只需抓大概音量
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            // --- 生成式環境音 (Ambient Drone) ---
+            // 創建三個振盪器產生和聲
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const osc3 = audioCtx.createOscillator();
+            
+            // 設定頻率 (低頻、冥想感)
+            // 根據星期幾稍微改變基頻，讓聲音也有「每日感」
+            const baseFreq = 180 + (dayIndex * 20); 
+            osc1.frequency.value = baseFreq; 
+            osc2.frequency.value = baseFreq * 1.5; // 5度音
+            osc3.frequency.value = baseFreq * 0.5; // 低8度
+
+            // 輕微去諧 (Detune) 創造波動感
+            osc1.detune.value = -10;
+            osc2.detune.value = 15;
+
+            // 增益節點 (控制音量)
+            const masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.15; // 預設音量小一點，不刺耳
+
+            // 連接線路: Oscillator -> Gain -> Analyser -> Speaker
+            osc1.connect(masterGain);
+            osc2.connect(masterGain);
+            osc3.connect(masterGain);
+            masterGain.connect(analyser);
+            analyser.connect(audioCtx.destination); // 輸出到喇叭
+
+            // 啟動聲音
+            osc1.start();
+            osc2.start();
+            osc3.start();
+
+            // 淡入效果
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            masterGain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 3);
+
+            isAudioPlaying = true;
+            document.getElementById('status-text').innerText = "Sound On: Generative Drone";
+        }
+
+        // --- 3. 視覺與互動邏輯 (Canvas) ---
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mouse = { x: -1000, y: -1000 };
+        let audioVolume = 0; // 用於縮放效果
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.baseRadius = Math.random() * 100 + 120;
+                this.radius = this.baseRadius;
+                this.vx = (Math.random() - 0.5) * 1.0;
+                this.vy = (Math.random() - 0.5) * 1.0;
+                
+                // 從今日色票中隨機選色
+                const colorSet = currentTheme.colors;
+                this.color = colorSet[Math.floor(Math.random() * colorSet.length)];
+            }
+
+            update() {
+                // 移動
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 邊界反彈
+                if (this.x < -150 || this.x > width + 150) this.vx *= -1;
+                if (this.y < -150 || this.y > height + 150) this.vy *= -1;
+
+                // --- 音訊反應邏輯 ---
+                // audioVolume 範圍大約 0 ~ 255
+                // 將其映射為縮放比例，例如 1.0 ~ 1.3
+                const audioScale = 1 + (audioVolume / 255) * 0.4; 
+                
+                // --- 滑鼠互動邏輯 ---
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const interactDist = 400;
+
+                // 目標半徑 = 基礎大小 * 聲音縮放
+                let targetRadius = this.baseRadius * audioScale;
+
+                if (dist < interactDist) {
+                    const force = (interactDist - dist) / interactDist;
+                    this.vx -= (dx / dist) * force * 0.08;
+                    this.vy -= (dy / dist) * force * 0.08;
+                    // 滑鼠靠近時，泡沫稍微變大
+                    targetRadius += 20 * force;
+                }
+
+                // 平滑過渡半徑 (Lerp)
+                this.radius += (targetRadius - this.radius) * 0.1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = width < 768 ? 5 : 9;
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            // 取得音頻數據
+            if (isAudioPlaying && analyser) {
+                analyser.getByteFrequencyData(dataArray);
+                // 計算平均音量
+                let sum = 0;
+                for(let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                audioVolume = sum / dataArray.length; // 更新全域音量變數
+            }
+
+            // 清除畫布 (保留殘影以製造流體感)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // 這裡用白色有點太亮，改用透明
+            // 為了配合背景色改變，這裡用簡單的 clearRect 配合 CSS 背景色即可
+            // 如果想要拖影效果，要用當前的背景色
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // --- 啟動邏輯 ---
+        const startOverlay = document.getElementById('start-overlay');
+        startOverlay.addEventListener('click', () => {
+            startOverlay.classList.add('hidden');
+            setupAudio(); // 啟動聲音
+            document.getElementById('status-text').innerText = "Playing...";
+        });
+
+        // 開始
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>

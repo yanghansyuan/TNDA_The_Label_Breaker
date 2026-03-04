@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒互動：怪誕的生鐵之眼</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #C8C9C7; cursor: crosshair; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+    const { Engine, Render, Runner, Bodies, Composite, Vector, Body } = Matter;
+
+    const colors = {
+        background: '#C8C9C7', // Pantone Cool Gray 3 C
+        main: '#1D2327',       // Pantone 433 C
+        accent: '#591014'      // Pantone 1817 C
+    };
+
+    // 怪誕表情清單
+    const weirdFaces = ['👁️', '👄', '🌚', '🫠', '😵‍💫', '👹', '👺', '💀', '👽'];
+
+    const engine = Engine.create();
+    engine.world.gravity.y = 1.6;
+
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let width, height, ground, wallLeft, wallRight;
+    const ironStones = [];
+    const shockwaves = [];
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        if (ground) Composite.remove(engine.world, [ground, wallLeft, wallRight]);
+        ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+        wallLeft = Bodies.rectangle(-50, height / 2, 100, height * 2, { isStatic: true });
+        wallRight = Bodies.rectangle(width + 50, height / 2, 100, height * 2, { isStatic: true });
+        Composite.add(engine.world, [ground, wallLeft, wallRight]);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 建立帶有表情的生鐵石
+    function createIronStone(x, y) {
+        const radius = Math.random() * 30 + 20;
+        const sides = 14;
+        const body = Bodies.polygon(x, y, sides, radius, {
+            density: 0.25,
+            friction: 0.9,
+            restitution: 0.02,
+            render: { visible: false }
+        });
+
+        const stone = {
+            body: body,
+            radius: radius,
+            offsets: Array.from({ length: sides }, () => Math.random() * 5),
+            face: weirdFaces[Math.floor(Math.random() * weirdFaces.length)],
+            alpha: 0.6 + Math.random() * 0.4, // 隨機透明度
+            crumbleTimer: 0, // 崩裂倒數 (毫秒)
+            vibration: 0
+        };
+
+        ironStones.push(stone);
+        Composite.add(engine.world, body);
+    }
+
+    // 點擊觸發不規則餘震
+    window.addEventListener('mousedown', (e) => {
+        const pos = { x: e.clientX, y: e.clientY };
+
+        // 主震
+        shockwaves.push({ x: pos.x, y: pos.y, r: 0, maxR: 400, speed: 10, opacity: 0.8, weight: 6 });
+        
+        // 餘震 (隨機延遲與不規則速度)
+        for (let i = 0; i < 4; i++) {
+            setTimeout(() => {
+                shockwaves.push({
+                    x: pos.x,
+                    y: pos.y,
+                    r: 0,
+                    maxR: 300 + Math.random() * 200,
+                    speed: 5 + Math.random() * 8,
+                    opacity: 0.5,
+                    weight: Math.random() * 3 + 1
+                });
+            }, Math.random() * 600);
+        }
+
+        // 觸發物體崩裂
+        ironStones.forEach(s => {
+            const dist = Vector.magnitude(Vector.sub(s.body.position, pos));
+            if (dist < 400) {
+                s.vibration = 15;
+                s.crumbleTimer = 10000; // 持續 10 秒
+                const force = Vector.mult(Vector.normalise(Vector.sub(s.body.position, pos)), 0.1);
+                Body.applyForce(s.body, s.body.position, force);
+            }
+        });
+    });
+
+    setInterval(() => {
+        if (ironStones.length < 120) createIronStone(Math.random() * width, -100);
+    }, 1500);
+
+    let lastTime = 0;
+    (function render(time) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(0, 0, width, height);
+
+        Engine.update(engine);
+
+        // 繪製震盪波 (漣漪)
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+            const sw = shockwaves[i];
+            sw.r += sw.speed;
+            sw.opacity -= 0.01;
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(29, 35, 39, ${sw.opacity})`; // 使用 Pantone 433 C
+            ctx.lineWidth = sw.weight;
+            ctx.stroke();
+            if (sw.opacity <= 0) shockwaves.splice(i, 1);
+        }
+
+        // 繪製鐵石
+        ironStones.forEach(s => {
+            const { position, angle } = s.body;
+            ctx.save();
+            ctx.translate(position.x, position.y);
+            
+            if (s.vibration > 0) {
+                ctx.translate((Math.random()-0.5)*s.vibration, (Math.random()-0.5)*s.vibration);
+                s.vibration *= 0.9;
+            }
+            
+            ctx.rotate(angle);
+
+            // 更新崩裂狀態
+            if (s.crumbleTimer > 0) s.crumbleTimer -= deltaTime;
+            const isCrumbling = s.crumbleTimer > 0;
+
+            // 繪製生鐵本體 (多邊形)
+            ctx.beginPath();
+            const sides = s.offsets.length;
+            for (let i = 0; i < sides; i++) {
+                const ang = (i / sides) * Math.PI * 2;
+                // 如果在崩裂狀態，噪點會劇烈跳動
+                const crumbleNoise = isCrumbling ? (Math.random() * 12) : 0;
+                const r = s.radius + s.offsets[i] + crumbleNoise;
+                const x = Math.cos(ang) * r;
+                const y = Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+
+            // 設定 Pantone 433 C 與隨機透明度
+            ctx.fillStyle = `rgba(29, 35, 39, ${s.alpha})`;
+            ctx.fill();
+
+            // 崩裂時的視覺強化 (邊緣泛紅)
+            if (isCrumbling) {
+                ctx.strokeStyle = colors.accent;
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = (s.crumbleTimer / 10000);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+
+            // 繪製怪誕表情
+            ctx.rotate(-angle); // 讓表情保持正向
+            ctx.font = `${s.radius * 0.9}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // 表情顏色稍微去飽和
+            ctx.globalAlpha = 0.7;
+            ctx.fillText(s.face, 0, 0);
+            
+            ctx.restore();
+        });
+
+        requestAnimationFrame(render);
+    })(0);
+</script>
+
+</body>
+</html>

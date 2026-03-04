@@ -1,0 +1,2165 @@
+============================================================
+學生／資料夾: 王建勛_恐懼
+擷取之連結數: 1
+============================================================
+
+----------------------------------------
+[連結 1] https://chatgpt.com/share/6995244c-128c-800e-913d-80b549277aa2
+----------------------------------------
+跳至內容
+聊天歷程紀錄
+新對話
+Ctrl
+Shift
+O
+搜尋對話
+Ctrl
+K
+圖像
+應用程式
+深入研究
+健康
+
+取得為你度身設計的回應
+
+登入即可取得以儲存的聊天為基礎的回答，還可以創作圖像並上傳檔案。
+
+登入
+ChatGPT
+登入
+免費註冊
+
+這是 ChatGPT 和匿名之間的對話副本。
+
+檢舉對話
+你說：
+已上傳一個圖像
+已上傳一個檔案
+幫我把我的情緒靈感做成html
+
+
+ChatGPT 說：
+已思考 1m 2s
+
+下面給你一個「把情緒靈感做成 HTML」的完整單檔作品（含 CSS + JS）。它用**點/線/面（圓、三角形、線段）**去表達「光照下的平靜裡帶一點壓力滲出」的感覺：
+
+背景有像窗光一樣的光束
+
+情緒物件（形狀）會緩慢漂浮
+
+滑鼠靠近/滑過會讓形狀「緊繃、擴散、變亮」
+
+點一下會丟下一顆「壓力泡泡」往下沉（像落進心裡）
+
+把下面整段存成 final_yourEmail.html（或你要的檔名）直接打開就能跑。
+
+HTML
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>看不見的色彩：光下的滲出</title>
+  <style>
+    :root{
+      --bg1:#0b0f17;
+      --bg2:#0f1a2b;
+      --paper:#f3f1eb;
+      --ink: rgba(255,255,255,.85);
+
+      /* 情緒色 */
+      --calm:#7fd1ff;   /* 冷靜 */
+      --warm:#ffb85c;   /* 光/甜 */
+      --stress:#ff5fa2; /* 壓力滲出 */
+      --shadow:#2b2f3a;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+    body{
+      overflow:hidden;
+      background: radial-gradient(1200px 900px at 20% 10%, rgba(255,255,255,.08), transparent 55%),
+                  radial-gradient(900px 700px at 80% 40%, rgba(255,184,92,.12), transparent 60%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      color: var(--ink);
+    }
+
+    /* 舞台 */
+    .stage{
+      position:relative;
+      height:100%;
+      width:100%;
+      isolation:isolate;
+    }
+
+    /* 光束（像窗光） */
+    .light{
+      position:absolute;
+      inset:-20%;
+      pointer-events:none;
+      z-index:0;
+      filter: blur(0px);
+      opacity:.9;
+      transform: rotate(-12deg);
+      background:
+        linear-gradient(90deg,
+          transparent 0%,
+          rgba(255,248,220,.08) 10%,
+          rgba(255,248,220,.22) 18%,
+          rgba(255,248,220,.06) 26%,
+          transparent 34%,
+          transparent 44%,
+          rgba(255,204,140,.10) 52%,
+          rgba(255,204,140,.20) 60%,
+          rgba(255,204,140,.06) 68%,
+          transparent 76%,
+          rgba(180,210,255,.06) 86%,
+          transparent 100%);
+      animation: drift 10s ease-in-out infinite alternate;
+      mix-blend-mode: screen;
+    }
+    @keyframes drift{
+      from{ transform: rotate(-12deg) translate3d(-2vw,-1vh,0) scale(1.02); }
+      to  { transform: rotate(-10deg) translate3d( 2vw, 1vh,0) scale(1.05); }
+    }
+
+    /* UI：小標題 + 提示 */
+    .hud{
+      position:absolute;
+      inset: 0;
+      padding: clamp(14px, 2.2vw, 28px);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      pointer-events:none;
+      z-index:4;
+    }
+    .title{
+      pointer-events:none;
+      max-width:min(520px, 70vw);
+    }
+    .title h1{
+      margin:0 0 8px 0;
+      font-size: clamp(18px, 2.2vw, 28px);
+      letter-spacing:.04em;
+      font-weight:700;
+    }
+    .title p{
+      margin:0;
+      line-height:1.6;
+      font-size: clamp(12px, 1.35vw, 14px);
+      opacity:.8;
+    }
+    .tip{
+      text-align:right;
+      font-size: clamp(12px, 1.35vw, 14px);
+      opacity:.75;
+    }
+    .tip b{ opacity:.95; }
+
+    /* 情緒層 */
+    .field{
+      position:absolute;
+      inset:0;
+      z-index:1;
+    }
+
+    /* 形狀基本 */
+    .shape{
+      position:absolute;
+      left: var(--x);
+      top:  var(--y);
+      width: var(--s);
+      height: var(--s);
+      transform: translate(-50%,-50%) rotate(var(--r));
+      opacity: var(--o);
+      filter: blur(var(--b));
+      transition: transform .35s ease, filter .35s ease, opacity .35s ease;
+      animation: float var(--t) ease-in-out infinite alternate;
+      will-change: transform;
+      mix-blend-mode: screen;
+    }
+    @keyframes float{
+      from { transform: translate(-50%,-50%) rotate(var(--r)) translate3d(-0.8vw,-0.6vh,0); }
+      to   { transform: translate(-50%,-50%) rotate(calc(var(--r) + 12deg)) translate3d(0.8vw,0.6vh,0); }
+    }
+
+    /* 圓（點） */
+    .dot{
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.55), rgba(255,255,255,.05) 55%, transparent 70%),
+                  radial-gradient(circle at 60% 70%, color-mix(in srgb, var(--c) 65%, transparent), transparent 60%);
+      box-shadow:
+        0 0 0.8rem color-mix(in srgb, var(--c) 40%, transparent),
+        0 0 2.2rem color-mix(in srgb, var(--c) 22%, transparent);
+    }
+
+    /* 線（線段） */
+    .line{
+      width: calc(var(--s) * 1.9);
+      height: max(2px, calc(var(--s) * 0.08));
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c) 70%, transparent), transparent);
+      box-shadow: 0 0 2rem color-mix(in srgb, var(--c) 18%, transparent);
+      filter: blur(calc(var(--b) * 0.9));
+    }
+
+    /* 面（三角形） */
+    .tri{
+      width:0; height:0;
+      border-left:  calc(var(--s) * 0.62) solid transparent;
+      border-right: calc(var(--s) * 0.62) solid transparent;
+      border-bottom: var(--s) solid color-mix(in srgb, var(--c) 55%, transparent);
+      filter: drop-shadow(0 0 1.6rem color-mix(in srgb, var(--c) 22%, transparent));
+      opacity: calc(var(--o) * .9);
+    }
+
+    /* hover：情緒被碰到 -> 緊繃/擴散/變亮 */
+    .shape:hover{
+      transform: translate(-50%,-50%) rotate(calc(var(--r) - 10deg)) scale(1.12);
+      filter: blur(calc(var(--b) * .7));
+      opacity: min(1, calc(var(--o) + .25));
+    }
+
+    /* 右側：像一杯琥珀的容器（情緒被裝著） */
+    .glass{
+      position:absolute;
+      right: clamp(14px, 2vw, 22px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: min(240px, 34vw);
+      height: min(380px, 54vw);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+        radial-gradient(140px 120px at 70% 20%, rgba(255,255,255,.18), transparent 55%),
+        radial-gradient(140px 140px at 30% 85%, rgba(255,184,92,.10), transparent 60%);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      overflow:hidden;
+      z-index:3;
+      backdrop-filter: blur(8px);
+    }
+    .glass::before{
+      content:"";
+      position:absolute;
+      inset: 10px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      opacity:.8;
+      pointer-events:none;
+    }
+    .liquid{
+      position:absolute;
+      left: 10px;
+      right:10px;
+      bottom:10px;
+      height: 52%;
+      border-radius: 16px;
+      background:
+        radial-gradient(120px 80px at 60% 10%, rgba(255,255,255,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,184,92,.78), rgba(255,120,40,.48));
+      box-shadow: inset 0 0 30px rgba(0,0,0,.18);
+      opacity:.88;
+    }
+    .ice{
+      position:absolute;
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255,255,255,.28), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 25px rgba(0,0,0,.22);
+      transform: rotate(18deg);
+      opacity:.9;
+      filter: blur(.1px);
+    }
+    .ice.i1{ left: 26px; top: 54px; }
+    .ice.i2{ left: 78px; top: 92px; transform: rotate(-10deg); }
+    .ice.i3{ left: 140px; top: 66px; transform: rotate(28deg); }
+
+    /* 點擊掉落的「壓力泡泡」 */
+    .drop{
+      position:absolute;
+      width: 14px; height:14px;
+      border-radius:999px;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.65), rgba(255,95,162,.55) 40%, rgba(255,95,162,.05) 70%);
+      box-shadow: 0 0 18px rgba(255,95,162,.25);
+      transform: translate(-50%,-50%);
+      pointer-events:none;
+      z-index:2;
+      animation: fall 1.2s ease-in forwards;
+    }
+    @keyframes fall{
+      0%   { opacity:0; transform: translate(-50%,-50%) scale(.6); }
+      15%  { opacity:1; }
+      100% { opacity:0; transform: translate(-50%, calc(-50% + 52vh)) scale(1.0); filter: blur(1px); }
+    }
+
+    /* 小螢幕：把杯子縮小，不擋畫面 */
+    @media (max-width: 720px){
+      .glass{
+        top:auto;
+        bottom: 14px;
+        right: 14px;
+        transform:none;
+        width: 44vw;
+        height: 34vh;
+        border-radius: 18px;
+      }
+      .ice{ display:none; }
+      .title p{ max-width: 62vw; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage" id="stage">
+    <div class="light"></div>
+
+    <div class="hud">
+      <div class="title">
+        <h1>光下的滲出</h1>
+        <p>有些情緒看起來像安靜，但只要被碰到，就會用很小的方式擴散。</p>
+      </div>
+      <div class="tip">
+        <div>滑過形狀：<b>緊繃 / 變亮</b></div>
+        <div>點一下畫面：<b>丟一顆壓力泡泡</b></div>
+      </div>
+    </div>
+
+    <div class="field" id="field" aria-hidden="true"></div>
+
+    <aside class="glass" aria-label="情緒容器">
+      <div class="ice i1"></div>
+      <div class="ice i2"></div>
+      <div class="ice i3"></div>
+      <div class="liquid"></div>
+    </aside>
+  </div>
+
+  <script>
+    const field = document.getElementById('field');
+    const stage = document.getElementById('stage');
+
+    // 依螢幕大小決定形狀數量（自適應）
+    const count = Math.round(Math.max(16, Math.min(42, window.innerWidth / 28)));
+
+    // 三種情緒層：冷靜(藍) / 光(橘) / 壓力滲出(粉)
+    const palette = [
+      { c: getCSS('--calm'),   w: 0.44 },
+      { c: getCSS('--warm'),   w: 0.38 },
+      { c: getCSS('--stress'), w: 0.18 },
+    ];
+
+    function getCSS(v){
+      return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    }
+
+    function pickColor(){
+      const r = Math.random();
+      let acc = 0;
+      for (const p of palette){
+        acc += p.w;
+        if (r <= acc) return p.c;
+      }
+      return palette[0].c;
+    }
+
+    function rnd(min,max){ return min + Math.random()*(max-min); }
+
+    function makeShape(i){
+      const typeRoll = Math.random();
+      const el = document.createElement('div');
+      el.classList.add('shape');
+
+      if (typeRoll < 0.5) el.classList.add('dot');
+      else if (typeRoll < 0.78) el.classList.add('line');
+      else el.classList.add('tri');
+
+      const s = rnd(16, 64) * (window.innerWidth < 720 ? 0.85 : 1);
+      const x = rnd(6, 84);             // 留右邊杯子空間
+      const y = rnd(10, 92);
+      const r = rnd(-28, 28) + 'deg';
+      const o = rnd(0.25, 0.85).toFixed(2);
+      const b = rnd(0.0, 1.6).toFixed(2) + 'px';
+      const t = rnd(3.2, 8.5).toFixed(2) + 's';
+      const c = pickColor();
+
+      el.style.setProperty('--s', s + 'px');
+      el.style.setProperty('--x', x + 'vw');
+      el.style.setProperty('--y', y + 'vh');
+      el.style.setProperty('--r', r);
+      el.style.setProperty('--o', o);
+      el.style.setProperty('--b', b);
+      el.style.setProperty('--t', t);
+      el.style.setProperty('--c', c);
+
+      // 小小的互動：滑過時，讓「壓力色」更容易被看見
+      el.addEventListener('mouseenter', () => {
+        if (Math.random() < 0.22) el.style.setProperty('--c', getCSS('--stress'));
+      });
+
+      return el;
+    }
+
+    function seed(){
+      field.innerHTML = '';
+      for(let i=0;i<count;i++){
+        field.appendChild(makeShape(i));
+      }
+    }
+
+    // 點擊：丟一顆「壓力泡泡」往下沉
+    stage.addEventListener('pointerdown', (e) => {
+      const d = document.createElement('div');
+      d.className = 'drop';
+      d.style.left = e.clientX + 'px';
+      d.style.top  = e.clientY + 'px';
+      stage.appendChild(d);
+      d.addEventListener('animationend', ()=> d.remove());
+    });
+
+    // 視窗改變：重排（自適應）
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(seed, 160);
+    });
+
+    seed();
+  </script>
+</body>
+</html>
+
+如果你想更「像你的情緒靈感」一點（例如：更焦躁、或更療癒、更像你《看不見的色彩》的壓力角色系統），你只要回我兩句就好：
+
+你現在這份靈感比較偏：平靜/焦慮/疲憊/興奮/壓抑/釋放（選 1~2 個）
+
+你想要主色偏：藍、橘、粉、紫、黑白（選 1~2 個）
+
+我就直接把上面這份 HTML 改成更貼你的版本。
+
+
+
+你說：
+要能用滑鼠左鍵跟網頁互動  網頁大小要自道應
+
+
+ChatGPT 說：
+
+好，我把它改成「滑鼠左鍵互動很明確」＋「網頁大小自動適應」的版本：
+
+左鍵點一下：在滑鼠位置「生成情緒形狀」
+
+左鍵按住拖曳：像在畫畫一樣「連續生成」
+
+滑鼠移動靠近：形狀會被推開、抖一下、亮一下（互動感更強）
+
+自動適應：視窗變大/變小會自動重排與縮放（手機也能用）
+
+直接存成一個 final.html 打開即可：
+
+HTML
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>情緒靈感互動｜自適應</title>
+  <style>
+    :root{
+      --bg1:#0b0f17;
+      --bg2:#0f1a2b;
+      --ink: rgba(255,255,255,.88);
+
+      --calm:#7fd1ff;
+      --warm:#ffb85c;
+      --stress:#ff5fa2;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1100px 800px at 18% 8%, rgba(255,255,255,.08), transparent 55%),
+        radial-gradient(900px 700px at 80% 45%, rgba(255,184,92,.12), transparent 60%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      color: var(--ink);
+    }
+
+    .stage{ position:relative; height:100%; width:100%; isolation:isolate; }
+    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+    .hud{
+      position:absolute; inset:0;
+      padding: clamp(14px, 2.2vw, 28px);
+      display:flex; justify-content:space-between; align-items:flex-start;
+      pointer-events:none; z-index:3;
+    }
+    .hud h1{
+      margin:0 0 8px 0;
+      font-size: clamp(18px, 2.2vw, 28px);
+      letter-spacing:.04em;
+    }
+    .hud p{ margin:0; opacity:.78; line-height:1.6; font-size: clamp(12px, 1.35vw, 14px); }
+    .tip{ text-align:right; opacity:.78; font-size: clamp(12px, 1.35vw, 14px); }
+    .tip b{ opacity:.95; }
+
+    /* 右側「容器」：不影響互動，只是氛圍 */
+    .glass{
+      position:absolute;
+      right: clamp(12px, 2vw, 18px);
+      top:50%;
+      transform: translateY(-50%);
+      width: min(240px, 34vw);
+      height: min(380px, 54vw);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+        radial-gradient(140px 120px at 70% 20%, rgba(255,255,255,.18), transparent 55%),
+        radial-gradient(140px 140px at 30% 85%, rgba(255,184,92,.10), transparent 60%);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      overflow:hidden;
+      z-index:2;
+      pointer-events:none;
+      backdrop-filter: blur(8px);
+    }
+    .liquid{
+      position:absolute; left:10px; right:10px; bottom:10px;
+      height:52%; border-radius:16px;
+      background:
+        radial-gradient(120px 80px at 60% 10%, rgba(255,255,255,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,184,92,.78), rgba(255,120,40,.48));
+      box-shadow: inset 0 0 30px rgba(0,0,0,.18);
+      opacity:.86;
+    }
+
+    @media (max-width: 720px){
+      .glass{
+        top:auto; bottom: 12px; right: 12px;
+        transform:none;
+        width: 44vw; height: 34vh;
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+
+    <div class="hud">
+      <div>
+        <h1>情緒靈感互動場</h1>
+        <p>用左鍵把情緒「放進畫面」：點一下生成、按住拖曳會連續生成。移動滑鼠會推開它們。</p>
+      </div>
+      <div class="tip">
+        <div>左鍵點：<b>生成形狀</b></div>
+        <div>左鍵拖：<b>連續生成</b></div>
+        <div>移動滑鼠：<b>推開/發亮</b></div>
+      </div>
+    </div>
+
+    <div class="glass"><div class="liquid"></div></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // ====== 自適應：真正改 canvas 像素尺寸（避免模糊）======
+    function resize(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width  = Math.floor(window.innerWidth  * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width  = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr,0,0,dpr,0,0); // 讓繪圖用 CSS 像素座標
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ====== 情緒色盤（可自己改權重）======
+    const COLORS = [
+      { c: getCSS('--calm'),   w: 0.45 },
+      { c: getCSS('--warm'),   w: 0.35 },
+      { c: getCSS('--stress'), w: 0.20 },
+    ];
+    function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+    function pickColor(){
+      const r = Math.random();
+      let acc = 0;
+      for(const p of COLORS){ acc += p.w; if(r <= acc) return p.c; }
+      return COLORS[0].c;
+    }
+    const rnd = (a,b)=> a + Math.random()*(b-a);
+
+    // ====== 物件（點/線/三角形）======
+    const shapes = [];
+    const MAX = 220; // 避免太多卡
+
+    function spawn(x,y, intensity=1){
+      if(shapes.length > MAX) shapes.splice(0, shapes.length - MAX);
+
+      const typeRoll = Math.random();
+      const type = (typeRoll < 0.52) ? 'dot' : (typeRoll < 0.80) ? 'line' : 'tri';
+
+      // 依螢幕寬度自動調整大小
+      const scale = Math.min(1.0, Math.max(0.75, window.innerWidth / 1200));
+      const sizeBase = (type === 'line') ? rnd(26, 90) : rnd(16, 64);
+      const s = sizeBase * scale * rnd(0.9, 1.15);
+
+      shapes.push({
+        type,
+        x, y,
+        vx: rnd(-0.25,0.25) * intensity,
+        vy: rnd(-0.22,0.22) * intensity,
+        r: rnd(-Math.PI, Math.PI),
+        vr: rnd(-0.012, 0.012),
+        s,
+        o: rnd(0.25, 0.9),
+        blur: rnd(0, 1.4),
+        c: pickColor(),
+        life: 1, // 會慢慢淡出（但不會一下消失）
+      });
+    }
+
+    // 初始鋪一些
+    function seed(){
+      shapes.length = 0;
+      const n = Math.round(Math.max(18, Math.min(46, window.innerWidth / 26)));
+      for(let i=0;i<n;i++){
+        spawn(rnd(40, window.innerWidth * 0.82), rnd(60, window.innerHeight - 60), 0.8);
+      }
+    }
+    seed();
+    window.addEventListener('resize', () => { resize(); seed(); });
+
+    // ====== 滑鼠互動（推開 + 發亮）======
+    const mouse = { x: -9999, y: -9999, down:false, lastSpawn:0 };
+
+    window.addEventListener('pointermove', (e)=>{
+      mouse.x = e.clientX; mouse.y = e.clientY;
+
+      // 按住左鍵拖曳：連續生成（節流）
+      if(mouse.down){
+        const now = performance.now();
+        if(now - mouse.lastSpawn > 18){
+          spawn(mouse.x + rnd(-8,8), mouse.y + rnd(-8,8), 1.2);
+          mouse.lastSpawn = now;
+        }
+      }
+    });
+
+    window.addEventListener('pointerdown', (e)=>{
+      if(e.button !== 0) return; // 只要左鍵
+      mouse.down = true;
+      mouse.lastSpawn = performance.now();
+      spawn(e.clientX, e.clientY, 1.6);
+    });
+
+    window.addEventListener('pointerup', (e)=>{
+      if(e.button !== 0) return;
+      mouse.down = false;
+    });
+
+    window.addEventListener('pointerleave', ()=>{
+      mouse.x = -9999; mouse.y = -9999; mouse.down = false;
+    });
+
+    // ====== 繪圖工具 ======
+    function hexToRgba(hex, a){
+      // 支援 #rrggbb
+      const h = hex.replace('#','');
+      const r = parseInt(h.slice(0,2),16);
+      const g = parseInt(h.slice(2,4),16);
+      const b = parseInt(h.slice(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function drawLightBeams(){
+      // 光束（自適應）
+      const w = window.innerWidth, h = window.innerHeight;
+      ctx.save();
+      ctx.translate(w*0.15, h*0.05);
+      ctx.rotate(-0.22);
+
+      const grad = ctx.createLinearGradient(0,0,w,0);
+      grad.addColorStop(0.00, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.12, 'rgba(255,248,220,0.10)');
+      grad.addColorStop(0.20, 'rgba(255,248,220,0.22)');
+      grad.addColorStop(0.28, 'rgba(255,248,220,0.06)');
+      grad.addColorStop(0.38, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.52, 'rgba(255,204,140,0.14)');
+      grad.addColorStop(0.60, 'rgba(255,204,140,0.22)');
+      grad.addColorStop(0.70, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.86, 'rgba(180,210,255,0.08)');
+      grad.addColorStop(1.00, 'rgba(255,255,255,0)');
+
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = grad;
+      ctx.fillRect(-w*0.3, -h*0.3, w*1.6, h*1.6);
+      ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function drawShape(s){
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.r);
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.o * s.life));
+      ctx.shadowBlur = s.blur * 14;
+      ctx.shadowColor = hexToRgba(s.c, 0.22);
+
+      if(s.type === 'dot'){
+        const r = s.s * 0.5;
+        const g = ctx.createRadialGradient(-r*0.2, -r*0.2, r*0.1, 0,0,r);
+        g.addColorStop(0, 'rgba(255,255,255,0.55)');
+        g.addColorStop(0.35, hexToRgba(s.c, 0.42));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      if(s.type === 'line'){
+        const w = s.s * 1.9;
+        const h = Math.max(2, s.s * 0.08);
+        const g = ctx.createLinearGradient(-w/2,0,w/2,0);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(0.5, hexToRgba(s.c, 0.60));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        roundRect(-w/2, -h/2, w, h, 999);
+        ctx.fill();
+      }
+
+      if(s.type === 'tri'){
+        const a = s.s;
+        ctx.fillStyle = hexToRgba(s.c, 0.44);
+        ctx.beginPath();
+        ctx.moveTo(0, -a*0.62);
+        ctx.lineTo( a*0.58, a*0.45);
+        ctx.lineTo(-a*0.58, a*0.45);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function roundRect(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ====== 更新物理 + 互動力 ======
+    function step(){
+      const w = window.innerWidth, h = window.innerHeight;
+
+      // 背景清空
+      ctx.clearRect(0,0,w,h);
+
+      // 光束
+      drawLightBeams();
+
+      // 更新與互動
+      for(const s of shapes){
+        // 浮動
+        s.x += s.vx;
+        s.y += s.vy;
+        s.r += s.vr;
+
+        // 邊界反彈（留右側杯子空間）
+        const rightLimit = w * 0.86;
+        if(s.x < 10) { s.x = 10; s.vx *= -1; }
+        if(s.x > rightLimit) { s.x = rightLimit; s.vx *= -1; }
+        if(s.y < 10) { s.y = 10; s.vy *= -1; }
+        if(s.y > h-10) { s.y = h-10; s.vy *= -1; }
+
+        // 滑鼠推開力（近的更強）
+        const dx = s.x - mouse.x;
+        const dy = s.y - mouse.y;
+        const dist = Math.hypot(dx,dy);
+        const radius = Math.max(90, s.s * 2.2);
+
+        if(dist < radius){
+          const f = (1 - dist / radius);
+          const nx = dx / (dist || 1);
+          const ny = dy / (dist || 1);
+
+          // 推開 + 輕微抖動
+          s.vx += nx * f * 0.65;
+          s.vy += ny * f * 0.65;
+
+          // 互動時變亮（life > 1 的感覺）
+          s.life = Math.min(1.25, s.life + f * 0.06);
+
+          // 偶爾把顏色拉向壓力色（像滲出）
+          if(Math.random() < 0.010 * f){
+            s.c = getCSS('--stress');
+          }
+        } else {
+          // 慢慢回到正常亮度
+          s.life += (1 - s.life) * 0.03;
+        }
+
+        // 阻尼（避免越推越飛）
+        s.vx *= 0.94;
+        s.vy *= 0.94;
+
+        // 很慢的淡出（保持畫面乾淨）
+        s.o *= 0.9996;
+      }
+
+      // 畫形狀
+      // 先畫淡的再畫亮的（視覺更乾淨）
+      shapes
+        .slice()
+        .sort((a,b)=> (a.life*a.o) - (b.life*b.o))
+        .forEach(drawShape);
+
+      // 清掉太淡的
+      for(let i=shapes.length-1;i>=0;i--){
+        if(shapes[i].o < 0.08) shapes.splice(i,1);
+      }
+
+      requestAnimationFrame(step);
+    }
+    step();
+  </script>
+</body>
+</html>
+
+如果你希望更貼近你那張「指引」裡的作業要求（例如：要有鍵盤互動、或「點/線/面要分別可切換」），我也可以直接幫你加：
+
+1 點模式、2 線模式、3 面模式
+
+C 清空、S 截圖下載（或輸出背景圖）
+你說要不要加，我就直接改。
+
+
+
+你說：
+我要多億點特效與律動 色彩鮮豔一點 
+
+
+ChatGPT 說：
+
+可以，我直接把它升級成「更有律動 + 更鮮豔 + 更多特效」的版本（仍然單檔 HTML 可直接跑、而且自動適應視窗大小）：
+
+你會看到：
+
+節拍律動（BPM）：整個場景會跟著節奏呼吸
+
+霓虹殘影／拖尾：移動、推開時有流動感
+
+發光粒子爆裂：左鍵點一下會炸出一圈粒子＋生成形狀
+
+拖曳噴灑：按住左鍵拖曳會像噴漆一樣連續噴出
+
+色相流動：顏色會隨時間微妙變化（更鮮艷）
+
+把下面存成 final.html 打開就行：
+
+HTML
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>情緒靈感互動｜霓虹律動版</title>
+  <style>
+    :root{
+      --bg1:#060615;
+      --bg2:#0a1030;
+      --ink: rgba(255,255,255,.88);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: radial-gradient(1200px 900px at 20% 10%, rgba(255,255,255,.06), transparent 60%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      color: var(--ink);
+    }
+    .stage{ position:relative; height:100%; width:100%; isolation:isolate; }
+    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+    .hud{
+      position:absolute; inset:0;
+      padding: clamp(14px, 2.2vw, 28px);
+      display:flex; justify-content:space-between; align-items:flex-start;
+      pointer-events:none; z-index:3;
+      text-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .hud h1{
+      margin:0 0 8px 0;
+      font-size: clamp(18px, 2.2vw, 28px);
+      letter-spacing:.05em;
+    }
+    .hud p{ margin:0; opacity:.78; line-height:1.6; font-size: clamp(12px, 1.35vw, 14px); }
+    .tip{ text-align:right; opacity:.78; font-size: clamp(12px, 1.35vw, 14px); }
+    .tip b{ opacity:.95; }
+
+    /* 氛圍玻璃（不影響互動） */
+    .glass{
+      position:absolute;
+      right: clamp(12px, 2vw, 18px);
+      top:50%;
+      transform: translateY(-50%);
+      width: min(240px, 34vw);
+      height: min(380px, 54vw);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02)),
+        radial-gradient(140px 120px at 70% 20%, rgba(255,255,255,.20), transparent 55%),
+        radial-gradient(200px 160px at 30% 85%, rgba(255,80,200,.12), transparent 60%);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 18px 60px rgba(0,0,0,.40);
+      overflow:hidden;
+      z-index:2;
+      pointer-events:none;
+      backdrop-filter: blur(10px);
+    }
+    .liquid{
+      position:absolute; left:10px; right:10px; bottom:10px;
+      height:52%; border-radius:16px;
+      background:
+        radial-gradient(140px 100px at 60% 10%, rgba(255,255,255,.28), transparent 60%),
+        linear-gradient(180deg, rgba(255,210,60,.82), rgba(255,70,200,.44));
+      box-shadow: inset 0 0 40px rgba(0,0,0,.18);
+      opacity:.86;
+    }
+    @media (max-width: 720px){
+      .glass{
+        top:auto; bottom: 12px; right: 12px;
+        transform:none;
+        width: 44vw; height: 34vh;
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+
+    <div class="hud">
+      <div>
+        <h1>霓虹律動｜情緒落點</h1>
+        <p>左鍵點：爆裂 + 生成。左鍵拖：噴灑。滑鼠移動：推開、發亮、拉出殘影。</p>
+      </div>
+      <div class="tip">
+        <div>左鍵點：<b>爆裂生成</b></div>
+        <div>左鍵拖：<b>連續噴灑</b></div>
+        <div>移動滑鼠：<b>推開律動</b></div>
+      </div>
+    </div>
+
+    <div class="glass"><div class="liquid"></div></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    // ====== 自適應：改 canvas 像素尺寸（清晰）======
+    let DPR = 1;
+    function resize(){
+      DPR = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width  = Math.floor(window.innerWidth  * DPR);
+      canvas.height = Math.floor(window.innerHeight * DPR);
+      canvas.style.width  = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    window.addEventListener('resize', () => { resize(); seed(true); });
+    resize();
+
+    // ====== 節拍（律動）======
+    const BPM = 108;                        // 想更快可調：120 / 132
+    const beatOmega = (Math.PI * 2) * (BPM / 60); // 每秒角速度
+
+    // ====== 色彩：用 HSL 做更鮮豔、會流動 ======
+    function vividColor(t, bias=0){
+      // hue 跟時間走，飽和度高、亮度偏亮
+      const hue = (t * 28 + bias) % 360;   // 速度越大越跳
+      return `hsl(${hue} 95% 62%)`;
+    }
+    const rnd = (a,b)=> a + Math.random()*(b-a);
+
+    // ====== 物件 ======
+    const shapes = [];
+    const sparks = [];
+    const MAX_SHAPES = 260;
+    const MAX_SPARKS = 520;
+
+    function spawnShape(x,y, energy=1, t=0){
+      if(shapes.length > MAX_SHAPES) shapes.splice(0, shapes.length - MAX_SHAPES);
+
+      const typeRoll = Math.random();
+      const type = (typeRoll < 0.50) ? 'dot' : (typeRoll < 0.78) ? 'line' : 'tri';
+
+      const scale = Math.min(1.05, Math.max(0.72, window.innerWidth / 1150));
+      const sizeBase = (type === 'line') ? rnd(30, 110) : rnd(18, 72);
+      const s = sizeBase * scale * rnd(0.9, 1.2);
+
+      shapes.push({
+        type,
+        x, y,
+        vx: rnd(-0.55,0.55) * energy,
+        vy: rnd(-0.50,0.50) * energy,
+        r: rnd(-Math.PI, Math.PI),
+        vr: rnd(-0.020, 0.020),
+        s,
+        o: rnd(0.35, 0.95),
+        glow: rnd(0.8, 2.0),
+        hueBias: rnd(0, 360),
+        life: 1,
+        pop: 0,            // 生成瞬間的跳動
+      });
+    }
+
+    function burst(x,y, power=1, time=0){
+      // 生成形狀 + 粒子爆裂
+      const nShape = Math.round(rnd(2,4) * power);
+      for(let i=0;i<nShape;i++) spawnShape(x + rnd(-10,10), y + rnd(-10,10), 1.2*power, time);
+
+      const n = Math.round(rnd(16, 28) * power);
+      for(let i=0;i<n;i++){
+        if(sparks.length > MAX_SPARKS) sparks.splice(0, sparks.length - MAX_SPARKS);
+        const ang = Math.random() * Math.PI * 2;
+        const sp = rnd(1.6, 5.2) * power;
+        sparks.push({
+          x, y,
+          vx: Math.cos(ang)*sp,
+          vy: Math.sin(ang)*sp,
+          r: rnd(1.5, 3.6),
+          a: 1,
+          drag: rnd(0.92, 0.96),
+          hueBias: rnd(0, 360),
+        });
+      }
+    }
+
+    // 初始鋪一點（自動適應）
+    function seed(keep=false){
+      if(!keep) shapes.length = 0;
+      sparks.length = 0;
+
+      const n = Math.round(Math.max(18, Math.min(56, window.innerWidth / 22)));
+      for(let i=0;i<n;i++){
+        spawnShape(
+          rnd(40, window.innerWidth * 0.82),
+          rnd(60, window.innerHeight - 60),
+          0.85,
+          performance.now()/1000
+        );
+      }
+    }
+    seed();
+
+    // ====== 互動（左鍵點/拖、滑鼠推開）======
+    const mouse = { x:-9999, y:-9999, down:false, last:0 };
+
+    window.addEventListener('pointermove', (e)=>{
+      mouse.x = e.clientX; mouse.y = e.clientY;
+
+      if(mouse.down){
+        const now = performance.now();
+        // 噴灑節流：快但不炸
+        if(now - mouse.last > 14){
+          spawnShape(mouse.x + rnd(-10,10), mouse.y + rnd(-10,10), 1.1, now/1000);
+          // 小小火花拖尾
+          if(Math.random() < 0.45) burst(mouse.x, mouse.y, 0.38, now/1000);
+          mouse.last = now;
+        }
+      }
+    });
+
+    window.addEventListener('pointerdown', (e)=>{
+      if(e.button !== 0) return;
+      mouse.down = true;
+      mouse.last = performance.now();
+      burst(e.clientX, e.clientY, 1.05, mouse.last/1000);
+    });
+
+    window.addEventListener('pointerup', (e)=>{
+      if(e.button !== 0) return;
+      mouse.down = false;
+    });
+
+    window.addEventListener('pointerleave', ()=>{
+      mouse.x = -9999; mouse.y = -9999; mouse.down = false;
+    });
+
+    // ====== 背景：霓虹雲 + 光束 ======
+    function drawBackdrop(t){
+      const w = window.innerWidth, h = window.innerHeight;
+
+      // 1) 透明黑遮罩：形成拖尾殘影（數字越小拖尾越強）
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(6, 6, 21, 0.10)`; // 殘影強度：0.08~0.16
+      ctx.fillRect(0,0,w,h);
+
+      // 2) 霓虹雲（screen 疊加）
+      ctx.globalCompositeOperation = 'screen';
+      const g1 = ctx.createRadialGradient(w*0.22, h*0.18, 10, w*0.22, h*0.18, Math.min(w,h)*0.78);
+      g1.addColorStop(0.0, `hsla(${(t*30)%360} 95% 60% / 0.22)`);
+      g1.addColorStop(0.6, `hsla(${(t*30+80)%360} 95% 60% / 0.06)`);
+      g1.addColorStop(1.0, `hsla(${(t*30+140)%360} 95% 60% / 0.00)`);
+      ctx.fillStyle = g1;
+      ctx.fillRect(0,0,w,h);
+
+      const g2 = ctx.createRadialGradient(w*0.80, h*0.52, 10, w*0.80, h*0.52, Math.min(w,h)*0.72);
+      g2.addColorStop(0.0, `hsla(${(t*28+200)%360} 95% 60% / 0.18)`);
+      g2.addColorStop(0.65, `hsla(${(t*28+260)%360} 95% 60% / 0.05)`);
+      g2.addColorStop(1.0, `hsla(${(t*28+320)%360} 95% 60% / 0.00)`);
+      ctx.fillStyle = g2;
+      ctx.fillRect(0,0,w,h);
+
+      // 3) 光束
+      ctx.save();
+      ctx.translate(w*0.12, h*0.06);
+      ctx.rotate(-0.22 + Math.sin(t*0.6)*0.03);
+      const beam = ctx.createLinearGradient(0,0,w,0);
+      beam.addColorStop(0.00, 'rgba(255,255,255,0)');
+      beam.addColorStop(0.14, 'rgba(255,255,255,0.08)');
+      beam.addColorStop(0.20, 'rgba(255,250,220,0.20)');
+      beam.addColorStop(0.28, 'rgba(255,250,220,0.05)');
+      beam.addColorStop(0.38, 'rgba(255,255,255,0)');
+      beam.addColorStop(0.52, 'rgba(255,120,220,0.12)');
+      beam.addColorStop(0.60, 'rgba(90,220,255,0.14)');
+      beam.addColorStop(0.72, 'rgba(255,255,255,0)');
+      ctx.fillStyle = beam;
+      ctx.fillRect(-w*0.3, -h*0.3, w*1.7, h*1.7);
+      ctx.restore();
+
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ====== 畫形狀（帶 glow + 律動）======
+    function drawShape(s, t, beat){
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.r);
+
+      const pulse = 1 + 0.10*beat + 0.08*Math.sin(t*3 + s.hueBias);
+      const pop = 1 + s.pop;
+      const alpha = Math.max(0, Math.min(1, s.o * s.life));
+
+      // 讓顏色會流動（更鮮豔）
+      const col = vividColor(t, s.hueBias);
+
+      ctx.globalAlpha = alpha;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.shadowBlur = s.glow * 22 * (0.85 + 0.45*beat);
+      ctx.shadowColor = col;
+
+      if(s.type === 'dot'){
+        const r = (s.s * 0.5) * pulse * pop;
+        const g = ctx.createRadialGradient(-r*0.2, -r*0.2, r*0.12, 0,0,r);
+        g.addColorStop(0, 'rgba(255,255,255,0.70)');
+        g.addColorStop(0.32, col.replace('hsl','hsla').replace(')', ' / 0.55)'));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      if(s.type === 'line'){
+        const w = (s.s * 2.0) * pulse * pop;
+        const h = Math.max(2, s.s * 0.09);
+        const g = ctx.createLinearGradient(-w/2,0,w/2,0);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(0.5, col.replace('hsl','hsla').replace(')', ' / 0.70)'));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        roundRect(-w/2, -h/2, w, h, 999);
+        ctx.fill();
+      }
+
+      if(s.type === 'tri'){
+        const a = (s.s) * pulse * pop;
+        ctx.fillStyle = col.replace('hsl','hsla').replace(')', ' / 0.55)');
+        ctx.beginPath();
+        ctx.moveTo(0, -a*0.62);
+        ctx.lineTo( a*0.58, a*0.45);
+        ctx.lineTo(-a*0.58, a*0.45);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function roundRect(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ====== 粒子 ======
+    function drawSparks(t, beat){
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      for(const p of sparks){
+        const col = vividColor(t, p.hueBias);
+        ctx.globalAlpha = Math.max(0, p.a);
+        ctx.fillStyle = col.replace('hsl','hsla').replace(')', ` / ${0.55 + 0.25*beat})`);
+        ctx.shadowBlur = 18 * (0.7 + 0.6*beat);
+        ctx.shadowColor = col;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ====== 物理更新 + 互動推開 ======
+    function update(t, beat){
+      const w = window.innerWidth, h = window.innerHeight;
+      const rightLimit = w * 0.86; // 留杯子空間
+
+      // shapes
+      for(const s of shapes){
+        // 生成瞬間的 pop 慢慢回去
+        s.pop += (0 - s.pop) * 0.10;
+
+        // 自然漂動 + 律動小加成
+        s.x += s.vx + Math.sin(t*1.2 + s.hueBias)*0.08*beat;
+        s.y += s.vy + Math.cos(t*1.1 + s.hueBias)*0.06*beat;
+        s.r += s.vr;
+
+        // 邊界
+        if(s.x < 10) { s.x = 10; s.vx *= -0.92; }
+        if(s.x > rightLimit) { s.x = rightLimit; s.vx *= -0.92; }
+        if(s.y < 10) { s.y = 10; s.vy *= -0.92; }
+        if(s.y > h-10) { s.y = h-10; s.vy *= -0.92; }
+
+        // 滑鼠推開（近的更強）
+        const dx = s.x - mouse.x;
+        const dy = s.y - mouse.y;
+        const dist = Math.hypot(dx,dy);
+        const radius = Math.max(120, s.s * 2.4);
+
+        if(dist < radius){
+          const f = (1 - dist / radius);
+          const nx = dx / (dist || 1);
+          const ny = dy / (dist || 1);
+
+          // 推開 + 旋轉感
+          s.vx += nx * f * (0.95 + 0.65*beat);
+          s.vy += ny * f * (0.95 + 0.65*beat);
+          s.vr += (Math.random()-0.5) * 0.0025 * f;
+
+          // 被碰到更亮（像情緒被觸發）
+          s.life = Math.min(1.25, s.life + f * 0.06);
+
+          // 偶爾冒出小火花
+          if(Math.random() < 0.012 * f){
+            sparks.push({
+              x: s.x + rnd(-4,4),
+              y: s.y + rnd(-4,4),
+              vx: rnd(-1.8,1.8),
+              vy: rnd(-1.8,1.8),
+              r: rnd(1.2,2.8),
+              a: 1,
+              drag: rnd(0.90, 0.95),
+              hueBias: s.hueBias + rnd(-30,30),
+            });
+          }
+        } else {
+          s.life += (1 - s.life) * 0.03;
+        }
+
+        // 阻尼
+        s.vx *= 0.92;
+        s.vy *= 0.92;
+
+        // 緩慢淡出，保持乾淨
+        s.o *= 0.9994;
+      }
+
+      // sparks
+      for(const p of sparks){
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= p.drag;
+        p.vy *= p.drag;
+        p.a  *= 0.94;
+        // 重力一點點
+        p.vy += 0.02;
+      }
+
+      // 清掉太淡的
+      for(let i=shapes.length-1;i>=0;i--){
+        if(shapes[i].o < 0.07) shapes.splice(i,1);
+      }
+      for(let i=sparks.length-1;i>=0;i--){
+        if(sparks[i].a < 0.04) sparks.splice(i,1);
+      }
+
+      // 限制上限
+      if(sparks.length > MAX_SPARKS) sparks.splice(0, sparks.length - MAX_SPARKS);
+      if(shapes.length > MAX_SHAPES) shapes.splice(0, shapes.length - MAX_SHAPES);
+    }
+
+    // ====== 主循環 ======
+    let lastT = performance.now()/1000;
+    function frame(){
+      const t = performance.now()/1000;
+
+      // beat：0~1（更像音樂呼吸）
+      const raw = (Math.sin(t*beatOmega) + 1) / 2;
+      const beat = Math.pow(raw, 1.6); // 讓拍點更有「砰」的感覺
+
+      drawBackdrop(t);
+      update(t, beat);
+
+      // 先畫暗的再畫亮的（視覺更立體）
+      const ordered = shapes.slice().sort((a,b)=> (a.o*a.life) - (b.o*b.life));
+      for(const s of ordered) drawShape(s, t, beat);
+
+      drawSparks(t, beat);
+
+      lastT = t;
+      requestAnimationFrame(frame);
+    }
+    frame();
+
+    // 點擊時讓新生成的形狀有 pop
+    window.addEventListener('pointerdown', (e)=>{
+      if(e.button !== 0) return;
+      // 讓最近生成的 shape pop 一下
+      const t = performance.now()/1000;
+      for(let i=Math.max(0, shapes.length-6); i<shapes.length; i++){
+        shapes[i].pop = Math.max(shapes[i].pop, rnd(0.08, 0.16));
+        shapes[i].hueBias += rnd(-20, 20);
+      }
+    });
+  </script>
+</body>
+</html>
+
+如果你想再更「炸」一點，我也可以再加兩個超有感的效果（不會很難、但視覺會更猛）：
+
+波紋衝擊波：點一下會有一圈霓虹波往外擴散
+
+鍵盤節奏切換：按 1/2/3 切 BPM（慢／中／快）＋按 C 清空
+
+你想要哪一個？我可以直接幫你加進去。
+
+
+
+你說：
+檔案有點大有點卡ㄟ 少了互動後的結束的感覺 還有可以一辦改成像素風 另一伴維持 特效還是不夠有視覺衝擊 吸引人 在加在加 但最重要的是要能夠有順暢的遊戲體驗
+
+
+ChatGPT 說：
+已思考 13s
+
+懂你在意的點：順暢最重要、還要更有衝擊、而且要互動有「結束感」，再加上左半像素風 / 右半維持原本。
+
+我下面直接給你一個「效能優先」的版本（單檔 HTML）：
+
+✅ 順暢：限制粒子數、物件池（重複利用）、DPR 上限、固定成本的後處理
+
+✅ 更衝擊：點擊有 衝擊波 + 震動 + 高亮閃，拖曳有霓虹噴灑但不會爆卡
+
+✅ 結束感：放開左鍵會觸發「收束結尾」：衝擊波反向收縮 + 物件快速安靜淡出（像一段句子的句點）
+
+✅ 左半像素風：左半把畫面用低解析度重繪後放大（imageSmoothingEnabled=false），右半維持細緻霓虹
+
+✅ 自動適應：視窗大小變更會自動重算
+
+把下面存成 final.html，直接開就能玩：
+
+HTML
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>情緒靈感互動｜像素 × 霓虹（順暢版）</title>
+  <style>
+    :root{
+      --bg1:#050611;
+      --bg2:#0b1440;
+      --ink: rgba(255,255,255,.90);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1100px 900px at 18% 10%, rgba(255,255,255,.06), transparent 60%),
+        radial-gradient(900px 800px at 75% 50%, rgba(255,0,180,.08), transparent 62%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      color:var(--ink);
+    }
+    .stage{position:relative;height:100%;width:100%}
+    canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+    .hud{
+      position:absolute; inset:0;
+      padding: clamp(12px, 2.0vw, 22px);
+      pointer-events:none;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      z-index:3;
+      text-shadow: 0 12px 32px rgba(0,0,0,.45);
+    }
+    .hud h1{
+      margin:0 0 6px 0;
+      font-size: clamp(16px, 2.0vw, 26px);
+      letter-spacing:.05em;
+    }
+    .hud p{
+      margin:0;
+      opacity:.78;
+      line-height:1.55;
+      font-size: clamp(12px, 1.25vw, 14px);
+      max-width:min(56vw, 560px);
+    }
+    .tip{
+      text-align:right;
+      opacity:.80;
+      font-size: clamp(12px, 1.25vw, 14px);
+    }
+    .tip b{opacity:.98}
+    .splitHint{
+      margin-top:8px;
+      opacity:.65;
+      font-size: clamp(11px, 1.1vw, 12px);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="main"></canvas>
+
+    <div class="hud">
+      <div>
+        <h1>左半像素風｜右半霓虹風</h1>
+        <p>左鍵點：衝擊波＋爆亮生成｜按住拖：霓虹噴灑｜放開：收束結尾（有句點感）。滑鼠靠近會推開、律動發光。</p>
+        <div class="splitHint">效能：已限制粒子/物件、DPR 上限、像素化用低解析度重繪（更順）。</div>
+      </div>
+      <div class="tip">
+        <div>左鍵點：<b>衝擊波</b></div>
+        <div>左鍵拖：<b>噴灑</b></div>
+        <div>放開：<b>收束結尾</b></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ====== Canvas setup (效能優先) ======
+  const main = document.getElementById('main');
+  const mctx = main.getContext('2d', { alpha:true });
+
+  // world：先畫完整畫面，再把左半做像素化，右半直接貼
+  const world = document.createElement('canvas');
+  const wctx = world.getContext('2d', { alpha:true });
+
+  // pixel buffer：低解析度（像素風），再放大到左半
+  const pix = document.createElement('canvas');
+  const pctx = pix.getContext('2d', { alpha:true });
+
+  let W=0, H=0, DPR=1, MID=0;
+  let pixelScale = 6; // 像素大小（越大越像素、也越省）
+  const DPR_CAP = 1.6; // 卡就把它降到 1.2
+
+  function resize(){
+    DPR = Math.min(DPR_CAP, Math.max(1, window.devicePixelRatio || 1));
+    W = window.innerWidth;
+    H = window.innerHeight;
+    MID = Math.floor(W/2);
+
+    main.width  = Math.floor(W * DPR);
+    main.height = Math.floor(H * DPR);
+    mctx.setTransform(DPR,0,0,DPR,0,0);
+
+    world.width  = Math.floor(W * DPR);
+    world.height = Math.floor(H * DPR);
+    wctx.setTransform(DPR,0,0,DPR,0,0);
+
+    // pixel buffer size（只做左半）
+    // 低解析度尺寸 = 左半 / pixelScale
+    const pw = Math.max(1, Math.floor(MID / pixelScale));
+    const ph = Math.max(1, Math.floor(H   / pixelScale));
+    pix.width = pw;
+    pix.height= ph;
+
+    // 像素風：放大時關閉平滑
+    mctx.imageSmoothingEnabled = true; // 右半正常
+    pctx.imageSmoothingEnabled = true; // buffer 內可平滑（不重要）
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ====== Utility ======
+  const rnd = (a,b)=> a + Math.random()*(b-a);
+  const clamp = (v,a,b)=> Math.max(a, Math.min(b,v));
+
+  // 鮮豔霓虹：HSL 動態色相（衝擊感更強）
+  function neon(t, bias){
+    const h = (t*55 + bias) % 360;      // 色相流動速度
+    return `hsl(${h} 98% 62%)`;
+  }
+  function hsla(t, bias, a){
+    const h = (t*55 + bias) % 360;
+    return `hsla(${h} 98% 62% / ${a})`;
+  }
+
+  // ====== Rhythm (律動) ======
+  const BPM = 112;
+  const omega = Math.PI*2*(BPM/60);
+
+  // ====== Object pools (避免一直 new，順很多) ======
+  const SH_MAX = 170;   // 形狀上限（卡就再降）
+  const SP_MAX = 260;   // 粒子上限
+  const WAV_MAX= 6;     // 衝擊波上限
+
+  const shapes = new Array(SH_MAX);
+  const sparks = new Array(SP_MAX);
+  const waves  = new Array(WAV_MAX);
+  let shN=0, spN=0, wvN=0;
+
+  function addShape(x,y, energy, t){
+    if(shN >= SH_MAX) shN = SH_MAX-1; // 直接頂住（不新增）
+    const s = shapes[shN] || (shapes[shN] = {});
+    shN++;
+
+    const r = Math.random();
+    s.type = (r<0.50) ? 0 : (r<0.80) ? 1 : 2; // 0 dot 1 line 2 tri
+
+    const scale = clamp(W/1200, 0.72, 1.05);
+    const base = (s.type===1) ? rnd(34, 110) : rnd(18, 72);
+    s.size = base * scale * rnd(0.92, 1.18);
+
+    s.x=x; s.y=y;
+    s.vx = rnd(-0.65,0.65)*energy;
+    s.vy = rnd(-0.60,0.60)*energy;
+    s.rot= rnd(-Math.PI, Math.PI);
+    s.vr = rnd(-0.020, 0.020);
+    s.a  = rnd(0.35, 0.95);
+    s.life = 1;
+    s.bias = rnd(0,360);
+    s.pop = 0.18; // 生成瞬間跳一下
+  }
+
+  function addSpark(x,y, vx,vy, r, a, bias){
+    if(spN >= SP_MAX) return;
+    const p = sparks[spN] || (sparks[spN] = {});
+    spN++;
+    p.x=x; p.y=y;
+    p.vx=vx; p.vy=vy;
+    p.r=r;
+    p.a=a;
+    p.bias=bias;
+    p.drag = rnd(0.90, 0.95);
+  }
+
+  function addWave(x,y, dir){ // dir: +1 擴散, -1 收縮
+    if(wvN >= WAV_MAX) return;
+    const w = waves[wvN] || (waves[wvN] = {});
+    wvN++;
+    w.x=x; w.y=y;
+    w.t = 0;        // 0..1
+    w.dir = dir;
+    w.bias = rnd(0,360);
+  }
+
+  function burst(x,y, power, t){
+    const nS = Math.round(2 + power*2);
+    for(let i=0;i<nS;i++){
+      addShape(x + rnd(-10,10), y + rnd(-10,10), 1.25*power, t);
+    }
+    const nP = Math.round(12 + power*18);
+    for(let i=0;i<nP;i++){
+      const ang = Math.random()*Math.PI*2;
+      const sp = rnd(1.7, 5.0)*power;
+      addSpark(x, y, Math.cos(ang)*sp, Math.sin(ang)*sp, rnd(1.2, 2.8), 1, rnd(0,360));
+    }
+    addWave(x,y, +1); // 擴散衝擊波
+    screenShake = Math.max(screenShake, 10*power); // 震動
+    flash = Math.max(flash, 0.55*power);           // 閃光
+  }
+
+  // ====== Interaction ======
+  const mouse = { x:-9999, y:-9999, down:false, last:0 };
+  let settling = 0;     // 放開後的「收束」狀態 0..1
+  let settleX=0, settleY=0;
+
+  window.addEventListener('pointermove', (e)=>{
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    if(mouse.down){
+      const now = performance.now();
+      if(now - mouse.last > 18){
+        // 噴灑：少量但密度夠
+        addShape(mouse.x + rnd(-9,9), mouse.y + rnd(-9,9), 1.05, now/1000);
+        if(Math.random()<0.35){
+          addSpark(mouse.x, mouse.y, rnd(-1.6,1.6), rnd(-1.6,1.6), rnd(1.0,2.2), 0.9, rnd(0,360));
+        }
+        mouse.last = now;
+      }
+    }
+  });
+
+  window.addEventListener('pointerdown', (e)=>{
+    if(e.button !== 0) return;
+    mouse.down = true;
+    mouse.last = performance.now();
+    settling = 0;
+    burst(e.clientX, e.clientY, 1.0, mouse.last/1000);
+  });
+
+  window.addEventListener('pointerup', (e)=>{
+    if(e.button !== 0) return;
+    mouse.down = false;
+
+    // 「結束感」：放開觸發收束結尾（反向波 + 物件快速安靜）
+    settling = 1;
+    settleX = mouse.x;
+    settleY = mouse.y;
+    addWave(settleX, settleY, -1); // 收縮波（句點感）
+    screenShake = Math.max(screenShake, 6);
+  });
+
+  window.addEventListener('pointerleave', ()=>{
+    mouse.x=-9999; mouse.y=-9999; mouse.down=false;
+  });
+
+  // ====== Visual punch helpers ======
+  let screenShake = 0; // 像遊戲 hitstop 的感覺
+  let flash = 0;       // 點擊閃光
+
+  function drawBackdrop(ctx, t, beat){
+    // 半透明覆蓋：形成殘影拖尾（太重會卡，這裡取中間值）
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = `rgba(5, 6, 17, 0.14)`;
+    ctx.fillRect(0,0,W,H);
+
+    // 霓虹雲（screen）
+    ctx.globalCompositeOperation = 'screen';
+    const g1 = ctx.createRadialGradient(W*0.22, H*0.18, 10, W*0.22, H*0.18, Math.min(W,H)*0.72);
+    g1.addColorStop(0.0, `hsla(${(t*40)%360} 98% 62% / ${0.18 + 0.10*beat})`);
+    g1.addColorStop(0.6, `hsla(${(t*40+90)%360} 98% 62% / 0.05)`);
+    g1.addColorStop(1.0, `hsla(${(t*40+140)%360} 98% 62% / 0.00)`);
+    ctx.fillStyle = g1; ctx.fillRect(0,0,W,H);
+
+    const g2 = ctx.createRadialGradient(W*0.80, H*0.54, 10, W*0.80, H*0.54, Math.min(W,H)*0.68);
+    g2.addColorStop(0.0, `hsla(${(t*38+210)%360} 98% 62% / ${0.14 + 0.08*beat})`);
+    g2.addColorStop(0.65,`hsla(${(t*38+260)%360} 98% 62% / 0.04)`);
+    g2.addColorStop(1.0, `hsla(${(t*38+320)%360} 98% 62% / 0.00)`);
+    ctx.fillStyle = g2; ctx.fillRect(0,0,W,H);
+
+    // 光束
+    ctx.save();
+    ctx.translate(W*0.10, H*0.05);
+    ctx.rotate(-0.22 + Math.sin(t*0.7)*0.03);
+    const beam = ctx.createLinearGradient(0,0,W,0);
+    beam.addColorStop(0.00,'rgba(255,255,255,0)');
+    beam.addColorStop(0.16,`rgba(255,255,255,${0.06+0.06*beat})`);
+    beam.addColorStop(0.22,`rgba(255,250,220,${0.14+0.10*beat})`);
+    beam.addColorStop(0.30,'rgba(255,255,255,0.03)');
+    beam.addColorStop(0.40,'rgba(255,255,255,0)');
+    beam.addColorStop(0.58,`rgba(255,0,200,${0.07+0.06*beat})`);
+    beam.addColorStop(0.66,`rgba(0,220,255,${0.08+0.06*beat})`);
+    beam.addColorStop(0.78,'rgba(255,255,255,0)');
+    ctx.fillStyle = beam;
+    ctx.fillRect(-W*0.3, -H*0.3, W*1.7, H*1.7);
+    ctx.restore();
+
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawShape(ctx, s, t, beat){
+    const col = neon(t, s.bias);
+    const a = clamp(s.a * s.life, 0, 1);
+
+    const pulse = 1 + 0.10*beat + 0.07*Math.sin(t*3 + s.bias);
+    const pop = 1 + s.pop;
+
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.rot);
+
+    ctx.globalAlpha = a;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.shadowBlur = 18 * (0.75 + 0.7*beat);
+    ctx.shadowColor = col;
+
+    if(s.type === 0){
+      const r = (s.size*0.50) * pulse * pop;
+      const g = ctx.createRadialGradient(-r*0.2, -r*0.2, r*0.12, 0,0,r);
+      g.addColorStop(0, 'rgba(255,255,255,0.70)');
+      g.addColorStop(0.35, hsla(t, s.bias, 0.55));
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+    } else if(s.type === 1){
+      const w = (s.size*2.0) * pulse * pop;
+      const h = Math.max(2, s.size*0.09);
+      const g = ctx.createLinearGradient(-w/2,0,w/2,0);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.5, hsla(t, s.bias, 0.78));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      roundRect(ctx, -w/2, -h/2, w, h, 999);
+      ctx.fill();
+    } else {
+      const A = (s.size) * pulse * pop;
+      ctx.fillStyle = hsla(t, s.bias, 0.58);
+      ctx.beginPath();
+      ctx.moveTo(0, -A*0.62);
+      ctx.lineTo( A*0.58, A*0.45);
+      ctx.lineTo(-A*0.58, A*0.45);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawSparks(ctx, t, beat){
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for(let i=0;i<spN;i++){
+      const p = sparks[i];
+      const col = neon(t, p.bias);
+      ctx.globalAlpha = clamp(p.a, 0, 1);
+      ctx.fillStyle = col.replace('hsl','hsla').replace(')', ` / ${0.55 + 0.25*beat})`);
+      ctx.shadowBlur = 16*(0.7 + 0.6*beat);
+      ctx.shadowColor = col;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawWaves(ctx, t, beat){
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    for(let i=0;i<wvN;i++){
+      const w = waves[i];
+      // dir=+1 擴散：半徑從小到大；dir=-1 收縮：半徑從大到小
+      const tt = w.t;
+      const maxR = Math.min(W,H)*0.55;
+      const r = (w.dir>0)
+        ? (tt*maxR)
+        : ((1-tt)*maxR);
+
+      const col = neon(t, w.bias);
+      const alpha = (1-tt) * (0.55 + 0.25*beat);
+
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 2 + 6*(0.6+beat);
+      ctx.shadowBlur = 22*(0.8+beat);
+      ctx.shadowColor = col;
+      ctx.strokeStyle = col.replace('hsl','hsla').replace(')', ` / ${alpha})`);
+
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, Math.max(6,r), 0, Math.PI*2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y, x+w,y+h, rr);
+    ctx.arcTo(x+w,y+h, x,y+h, rr);
+    ctx.arcTo(x,y+h, x,y, rr);
+    ctx.arcTo(x,y, x+w,y, rr);
+    ctx.closePath();
+  }
+
+  // ====== Update physics (含收束結尾) ======
+  function update(t, beat){
+    const rightLimit = W*0.92; // 保留右側 HUD 空間即可
+    const settlePull = settling ? (0.35 + 0.65*beat) : 0;
+
+    // shapes
+    for(let i=0;i<shN;i++){
+      const s = shapes[i];
+
+      // pop decay
+      s.pop += (0 - s.pop) * 0.12;
+
+      // base motion + rhythm
+      s.x += s.vx + Math.sin(t*1.2 + s.bias)*0.08*beat;
+      s.y += s.vy + Math.cos(t*1.1 + s.bias)*0.06*beat;
+      s.rot += s.vr;
+
+      // mouse push
+      const dx = s.x - mouse.x;
+      const dy = s.y - mouse.y;
+      const dist = Math.hypot(dx,dy);
+      const radius = Math.max(120, s.size*2.2);
+
+      if(dist < radius){
+        const f = (1 - dist/radius);
+        const nx = dx/(dist||1), ny = dy/(dist||1);
+        s.vx += nx * f * (0.85 + 0.55*beat);
+        s.vy += ny * f * (0.85 + 0.55*beat);
+        s.life = Math.min(1.25, s.life + f*0.05);
+        if(Math.random() < 0.008*f){
+          addSpark(s.x+rnd(-3,3), s.y+rnd(-3,3), rnd(-1.4,1.4), rnd(-1.4,1.4), rnd(1.0,2.2), 0.85, s.bias+rnd(-25,25));
+        }
+      } else {
+        s.life += (1 - s.life) * 0.03;
+      }
+
+      // release "closure": pull inward + fade quicker (句點感)
+      if(settling){
+        const sx = settleX - s.x;
+        const sy = settleY - s.y;
+        const d2 = Math.hypot(sx,sy) || 1;
+        const px = sx/d2, py = sy/d2;
+        s.vx += px * settlePull * 0.9;
+        s.vy += py * settlePull * 0.9;
+        s.a  *= 0.996;        // 更快安靜
+      } else {
+        s.a *= 0.9992;        // 平常慢慢淡
+      }
+
+      // damping
+      s.vx *= 0.92;
+      s.vy *= 0.92;
+
+      // bounds
+      if(s.x < 10){ s.x=10; s.vx*=-0.92; }
+      if(s.x > rightLimit){ s.x=rightLimit; s.vx*=-0.92; }
+      if(s.y < 10){ s.y=10; s.vy*=-0.92; }
+      if(s.y > H-10){ s.y=H-10; s.vy*=-0.92; }
+    }
+
+    // sparks
+    for(let i=0;i<spN;i++){
+      const p = sparks[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= p.drag;
+      p.vy *= p.drag;
+      p.vy += 0.02;      // tiny gravity
+      p.a  *= settling ? 0.90 : 0.93; // 收束時更快消失（乾淨）
+    }
+
+    // waves progress
+    for(let i=0;i<wvN;i++){
+      const w = waves[i];
+      w.t += 0.035 + 0.03*beat; // 速度跟律動
+    }
+
+    // cleanup (in-place compact)
+    // shapes
+    let j=0;
+    for(let i=0;i<shN;i++){
+      const s = shapes[i];
+      if(s.a > 0.07){
+        shapes[j++] = s;
+      }
+    }
+    shN = j;
+
+    // sparks
+    j=0;
+    for(let i=0;i<spN;i++){
+      const p = sparks[i];
+      if(p.a > 0.05){
+        sparks[j++] = p;
+      }
+    }
+    spN = j;
+
+    // waves
+    j=0;
+    for(let i=0;i<wvN;i++){
+      const w = waves[i];
+      if(w.t < 1){
+        waves[j++] = w;
+      }
+    }
+    wvN = j;
+
+    // settle decay
+    if(settling){
+      settling *= 0.94; // 很快回到 0（結束感）
+      if(settling < 0.02) settling = 0;
+    }
+
+    // flash decay
+    flash *= 0.88;
+    if(flash < 0.01) flash = 0;
+
+    // shake decay
+    screenShake *= 0.85;
+    if(screenShake < 0.2) screenShake = 0;
+  }
+
+  // ====== Render pipeline ======
+  function composite(){
+    // world -> main
+    mctx.clearRect(0,0,W,H);
+
+    // 左半像素化：把 world 左半縮到 pix，再放大貼到 main 左半
+    const pw = pix.width, ph = pix.height;
+
+    // 把 world 左半縮到 pix（低解析度）
+    pctx.clearRect(0,0,pw,ph);
+    pctx.drawImage(
+      world,
+      0, 0, MID*DPR, H*DPR,     // source in device pixels
+      0, 0, pw, ph              // dest low-res
+    );
+
+    // 放大回 main 左半（關閉平滑 => 像素風）
+    mctx.save();
+    mctx.imageSmoothingEnabled = false;
+    mctx.drawImage(pix, 0,0,pw,ph, 0,0, MID,H);
+    mctx.restore();
+
+    // 右半正常貼
+    mctx.imageSmoothingEnabled = true;
+    mctx.drawImage(
+      world,
+      MID*DPR, 0, (W-MID)*DPR, H*DPR,
+      MID, 0, (W-MID), H
+    );
+
+    // 中線：分割提示（很淡）
+    mctx.save();
+    mctx.globalAlpha = 0.18;
+    mctx.fillStyle = 'rgba(255,255,255,0.55)';
+    mctx.fillRect(MID-1, 0, 2, H);
+    mctx.restore();
+  }
+
+  function render(t, beat){
+    // world clear is handled by backdrop fill (trail)
+    // screen shake
+    let sx=0, sy=0;
+    if(screenShake){
+      sx = rnd(-1,1) * screenShake;
+      sy = rnd(-1,1) * screenShake;
+    }
+
+    wctx.save();
+    wctx.translate(sx, sy);
+
+    drawBackdrop(wctx, t, beat);
+
+    // sort by brightness (cheap: no sort, but still ok; keep stable for perf)
+    // draw shapes
+    for(let i=0;i<shN;i++){
+      drawShape(wctx, shapes[i], t, beat);
+    }
+
+    // sparks + waves
+    drawSparks(wctx, t, beat);
+    drawWaves(wctx, t, beat);
+
+    // click flash overlay (impact)
+    if(flash){
+      wctx.save();
+      wctx.globalCompositeOperation = 'screen';
+      wctx.globalAlpha = flash;
+      const g = wctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, Math.min(W,H)*0.45);
+      g.addColorStop(0, 'rgba(255,255,255,0.70)');
+      g.addColorStop(0.25, 'rgba(255,0,220,0.18)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      wctx.fillStyle = g;
+      wctx.fillRect(0,0,W,H);
+      wctx.restore();
+    }
+
+    // slight vignette (adds focus, cheap)
+    wctx.save();
+    wctx.globalAlpha = 0.22;
+    wctx.fillStyle = 'rgba(0,0,0,1)';
+    wctx.globalCompositeOperation = 'multiply';
+    const vg = wctx.createRadialGradient(W*0.5, H*0.5, Math.min(W,H)*0.20, W*0.5, H*0.5, Math.min(W,H)*0.85);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,'rgba(0,0,0,1)');
+    wctx.fillStyle = vg;
+    wctx.fillRect(0,0,W,H);
+    wctx.restore();
+
+    wctx.restore();
+
+    composite();
+  }
+
+  // ====== Seed initial scene ======
+  function seed(){
+    shN=0; spN=0; wvN=0;
+    const n = Math.round(clamp(W/24, 18, 54));
+    const t = performance.now()/1000;
+    for(let i=0;i<n;i++){
+      addShape(rnd(40, W*0.92), rnd(60, H-60), 0.85, t);
+    }
+  }
+  seed();
+
+  // ====== Main loop ======
+  function frame(){
+    const t = performance.now()/1000;
+    const raw = (Math.sin(t*omega) + 1)/2;
+    const beat = Math.pow(raw, 1.7); // 更有「砰」的律動
+
+    update(t, beat);
+    render(t, beat);
+
+    requestAnimationFrame(frame);
+  }
+  frame();
+
+})();
+</script>
+</body>
+</html>
+你說的幾點，我這版怎麼對應
+
+「檔案大、會卡」：我把效果做成「固定成本」
+
+粒子/形狀/波紋都有上限
+
+用物件池、避免一直 new
+
+DPR 上限（高 DPI 螢幕不會被拉爆）
+
+左半像素化用低解析度重繪（省很多）
+
+「互動後要有結束感」：放開左鍵就觸發 收束波 + 物件向中心收、快速安靜淡出，很像一句話落點
+
+「一半像素風、一半維持」：左半像素化、右半保留霓虹
+
+「視覺衝擊要更強」：衝擊波 + 震動 + 閃光 + 霓虹雲 + 殘影，衝擊感提升但仍控成本
+
+如果你覺得「還想更吸睛」但又不能卡，我推薦下一步只加一個超划算的衝擊效果（幾乎不增加成本）：
+
+文字/符號節拍 UI（像遊戲的 Combo、BPM、壓力值條）
+
+色彩模式切換（按 1/2/3 秒切風格：糖果霓虹 / 壓力粉紅 / 冷藍金屬）
+
+你想要加哪一個？我可以直接把按鍵功能塞進這份檔案裡。
+
+
+
+你說：
+好 給我一段文字理念 還有形容詞來描述我的作品
+
+
+ChatGPT 說：
+
+好，我幫你寫一段可以放在作品說明卡或展場牆面的理念文字，再給你一組形容詞關鍵字，讓你的作品語言更完整。
+
+作品理念｜《像素與霓虹之間》
+
+這是一個介於秩序與失控之間的情緒場域。
+
+畫面被切成兩半：左側是像素風的低解析世界，顆粒分明、節奏克制，像被壓縮後的情緒記憶；右側是流動的霓虹能量，色彩鮮豔、光影奔放，像被觸發後外溢的感受。
+
+當觀者以滑鼠點擊、拖曳、推動畫面時，情緒被生成、擴散、震動；放開的瞬間，能量收束、波紋反向回縮，一切歸於安靜。這個「生成—爆發—收束」的循環，對應著我們面對壓力與感受時的節奏——不是永遠張揚，也不是完全消失，而是在一次次互動中被看見、被釋放、被整理。
+
+像素與霓虹的對比，並非衝突，而是一種並存：
+理性與感性、壓抑與爆發、遊戲感與真實感，在同一個畫面中同時存在。
+
+這不是一個單純的視覺效果，而是一段可被觸發、可被結束的情緒過程。
+
+簡短版理念（展板可用）
+
+左半像素，右半霓虹。
+情緒在秩序與能量之間生成、爆發、收束。
+每一次點擊，都是一次被看見的瞬間。
+
+形容詞關鍵字（可放在作品標籤或簡報）
+視覺層面
+
+霓虹脈動
+
+像素顆粒感
+
+高飽和衝擊
+
+光束切割
+
+動態殘影
+
+節拍律動
+
+能量波紋
+
+發光粒子場
+
+情緒層面
+
+外溢的壓力
+
+被觸發的感受
+
+收束的句點
+
+生成與釋放
+
+可控制的失序
+
+介於理性與感性之間
+
+被壓縮的記憶
+
+可被整理的混亂
+
+整體氣質
+
+沉穩卻躁動
+
+克制卻鮮烈
+
+遊戲感與儀式感並存
+
+未完成但可被終止
+
+光亮中帶著張力
+
+如果你想讓它更貼近你《看不見的色彩》系列，我也可以幫你改寫成壓力角色系統延伸版的理念，把像素區當成「內在層」、霓虹區當成「外顯層」，讓整體概念更連貫。
+
+語音
+ChatGPT 可能會出錯。請查核重要資訊。

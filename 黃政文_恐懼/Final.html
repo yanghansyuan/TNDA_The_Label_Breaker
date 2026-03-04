@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Abyss - Procedural</title>
+    <style>
+        :root {
+            --bg-brightness: 1;
+            --bg-contrast: 1;
+            --vignette-opacity: 0;
+            --outline-opacity: 0;
+            --compress-ratio: 0px;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000;
+            cursor: crosshair;
+            font-family: sans-serif;
+        }
+
+        #app {
+            position: relative;
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            filter: brightness(var(--bg-brightness)) contrast(var(--bg-contrast));
+            transition: filter 0.5s ease;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        #bgCanvas { z-index: 1; }
+        #outlineCanvas { z-index: 3; pointer-events: none; opacity: var(--outline-opacity); }
+        #crackCanvas { z-index: 5; pointer-events: none; }
+
+        /* 邊界壓縮區塊 */
+        .edge {
+            position: absolute; left: 0; width: 100%;
+            height: var(--compress-ratio);
+            background: #000; z-index: 100;
+            transition: height 0.2s ease-out;
+        }
+        .edge-top { top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .edge-bottom { bottom: 0; border-top: 1px solid rgba(255,255,255,0.1); }
+
+        /* 中央選擇區塊 */
+        #selectionZone {
+            position: absolute;
+            width: 260px; height: 120px;
+            border: 1px solid rgba(255,255,255,0.3);
+            z-index: 101;
+            opacity: 0;
+            pointer-events: none;
+            display: flex; justify-content: center; align-items: center;
+            color: white; letter-spacing: 5px; font-size: 12px;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.8s ease;
+        }
+
+        /* 震動動畫定義 */
+        .vibrate { animation: vibrate 0.08s infinite; }
+        .shake-heavy { animation: shake 0.15s infinite; }
+
+        @keyframes vibrate {
+            0% { transform: translate(0,0); }
+            50% { transform: translate(1px, 1px); }
+            100% { transform: translate(-1px, -1px); }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(-4px, 2px); }
+            50% { transform: translate(4px, -2px); }
+            75% { transform: translate(-2px, -4px); }
+            100% { transform: translate(0,0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="edge edge-top"></div>
+    <div class="edge edge-bottom"></div>
+    <div id="selectionZone">SYSTEM INITIALIZED</div>
+    
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="outlineCanvas"></canvas>
+    <canvas id="crackCanvas"></canvas>
+</div>
+
+<script>
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const crackCanvas = document.getElementById('crackCanvas');
+    const crackCtx = crackCanvas.getContext('2d');
+    const outlineCanvas = document.getElementById('outlineCanvas');
+    const outlineCtx = outlineCanvas.getContext('2d');
+    const app = document.getElementById('app');
+
+    let width, height;
+    let clickCount = 0;
+    let scrollProgress = 0;
+    let holdTimer;
+    let idleTimer;
+    let distortionScale = 0;
+    let breathTime = 0;
+    let outlineTime = 0;
+
+    function init() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        [bgCanvas, crackCanvas, outlineCanvas].forEach(c => {
+            c.width = width;
+            c.height = height;
+        });
+    }
+
+    // --- 背景與呼吸效果 ---
+    function drawBackground() {
+        breathTime += 0.015;
+        // 背景 1% 呼吸縮放
+        const breath = 1 + Math.sin(breathTime) * 0.005;
+        
+        bgCtx.save();
+        bgCtx.translate(width/2, height/2);
+        bgCtx.scale(breath, breath);
+        bgCtx.translate(-width/2, -height/2);
+
+        // 模擬原圖的環境漸層
+        const grad = bgCtx.createRadialGradient(width/2, height/2 * 0.8, 0, width/2, height/2, width * 0.7);
+        grad.addColorStop(0, '#1a1a1a');
+        grad.addColorStop(1, '#020202');
+        bgCtx.fillStyle = grad;
+        bgCtx.fillRect(-50, -50, width+100, height+100);
+
+        // 頂部與底部的微弱邊界光
+        bgCtx.fillStyle = "rgba(255,255,255,0.05)";
+        bgCtx.fillRect(0, 0, width, 1);
+        bgCtx.fillRect(0, height-1, width, 1);
+
+        // 滑鼠移動導致的局部模糊扭曲
+        if (distortionScale > 0.1) {
+            bgCtx.filter = `blur(${distortionScale * 4}px)`;
+            distortionScale *= 0.92; // 2秒內恢復 80%
+        } else {
+            bgCtx.filter = 'none';
+        }
+        
+        bgCtx.restore();
+        requestAnimationFrame(drawBackground);
+    }
+
+    // --- 高複雜度有機輪廓 ---
+    function drawOutline() {
+        outlineTime += 0.007;
+        outlineCtx.clearRect(0, 0, width, height);
+        
+        outlineCtx.shadowBlur = 20;
+        outlineCtx.shadowColor = 'rgba(255,255,255,0.2)';
+        outlineCtx.strokeStyle = 'rgba(255,255,255,0.7)';
+        outlineCtx.lineWidth = 1.5;
+        
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const baseRadius = Math.min(width, height) * 0.28;
+
+        // 主輪廓：四重諧波疊加
+        outlineCtx.beginPath();
+        for (let i = 0; i <= Math.PI * 2 + 0.1; i += 0.02) {
+            let n1 = Math.sin(i * 3 + outlineTime) * 30;
+            let n2 = Math.cos(i * 8 - outlineTime * 1.2) * 15;
+            let n3 = Math.sin(i * 17 + outlineTime * 2) * 8;
+            let n4 = Math.cos(i * 31 + Math.sin(outlineTime)) * 4;
+
+            const r = baseRadius + n1 + n2 + n3 + n4;
+            const x = centerX + Math.cos(i) * r;
+            const y = centerY + Math.sin(i) * r;
+
+            if (i === 0) outlineCtx.moveTo(x, y);
+            else outlineCtx.lineTo(x, y);
+        }
+        outlineCtx.closePath();
+        outlineCtx.stroke();
+
+        // 次要內部纖維輪廓
+        outlineCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+        outlineCtx.beginPath();
+        for (let i = 0; i <= Math.PI * 2; i += 0.05) {
+            let n = Math.sin(i * 5 - outlineTime) * 12 + Math.cos(i * 12 + outlineTime) * 6;
+            const r = baseRadius * 0.7 + n;
+            const x = centerX + Math.cos(i) * r;
+            const y = centerY + Math.sin(i) * r;
+            if (i === 0) outlineCtx.moveTo(x, y);
+            else outlineCtx.lineTo(x, y);
+        }
+        outlineCtx.stroke();
+        
+        requestAnimationFrame(drawOutline);
+    }
+
+    // --- 裂痕系統 ---
+    function drawCrack(x, y) {
+        crackCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+        crackCtx.lineWidth = 0.6;
+        crackCtx.beginPath();
+        crackCtx.moveTo(x, y);
+        
+        let cx = x, cy = y;
+        const segments = 6 + Math.random() * 6;
+        
+        for(let i=0; i < segments; i++) {
+            cx += (Math.random() - 0.5) * 80;
+            cy += (Math.random() - 0.5) * 80;
+            crackCtx.lineTo(cx, cy);
+            
+            // 隨機分支
+            if(Math.random() > 0.75) {
+                crackCtx.moveTo(cx, cy);
+                crackCtx.lineTo(cx + (Math.random()-0.5)*40, cy + (Math.random()-0.5)*40);
+                crackCtx.moveTo(cx, cy);
+            }
+        }
+        crackCtx.stroke();
+    }
+
+    // --- 互動邏輯 ---
+    window.addEventListener('mousemove', (e) => {
+        const speed = Math.sqrt(e.movementX**2 + e.movementY**2);
+        distortionScale = Math.min(speed / 8, 6); // 速度越快扭曲越大
+
+        document.documentElement.style.setProperty('--bg-brightness', 1);
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            document.documentElement.style.setProperty('--bg-brightness', 0.95);
+        }, 5000);
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        clickCount++;
+        drawCrack(e.clientX, e.clientY);
+
+        if (clickCount >= 5) document.documentElement.style.setProperty('--bg-brightness', 0.9);
+        if (clickCount >= 10) app.classList.add('shake-heavy');
+
+        let seconds = 0;
+        holdTimer = setInterval(() => {
+            seconds += 0.1;
+            if (seconds >= 1) app.classList.add('vibrate');
+            if (seconds >= 3) document.documentElement.style.setProperty('--vignette-opacity', '1');
+            if (seconds >= 5) document.documentElement.style.setProperty('--bg-contrast', '1.6');
+            if (seconds >= 7) document.documentElement.style.setProperty('--outline-opacity', '0.1');
+            if (seconds >= 10) document.documentElement.style.setProperty('--outline-opacity', '0.25');
+        }, 100);
+    });
+
+    window.addEventListener('mouseup', () => {
+        clearInterval(holdTimer);
+        app.classList.remove('vibrate');
+        document.documentElement.style.setProperty('--bg-brightness', 1);
+        // 輪廓殘留淡影不重置
+    });
+
+    window.addEventListener('wheel', (e) => {
+        scrollProgress += e.deltaY * 0.05;
+        scrollProgress = Math.max(0, Math.min(100, scrollProgress));
+        
+        // 畫面壓縮
+        const compressVal = (scrollProgress / 100) * (height * 0.35);
+        document.documentElement.style.setProperty('--compress-ratio', `${compressVal}px`);
+
+        if (scrollProgress >= 100) {
+            document.getElementById('selectionZone').style.opacity = 1;
+        } else {
+            document.getElementById('selectionZone').style.opacity = 0;
+        }
+    });
+
+    window.addEventListener('resize', init);
+
+    init();
+    drawBackground();
+    drawOutline();
+</script>
+
+</body>
+</html>

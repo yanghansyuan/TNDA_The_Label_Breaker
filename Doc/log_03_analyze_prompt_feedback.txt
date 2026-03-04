@@ -1,0 +1,34 @@
+  周庭玉_悲傷: 無 AI對話內容，已寫入預設評語
+  周昱翔_開心: 10 個 prompt，約 9627 token
+  嚴文浩_渴望: 9 個 prompt，約 8429 token
+  張哲瑜_平靜: 11 個 prompt，約 11499 token
+  張永成_悲傷: 3 個 prompt，約 3333 token
+  徐妏寧_憤怒: 無 AI對話內容，已寫入預設評語
+  戴抒瑜_渴望: 8 個 prompt，約 348 token
+  曾莉榛_快樂: 4 個 prompt，約 4444 token
+  林妤庭_渴望: 無 AI對話內容，已寫入預設評語
+  林曉萱_悲傷: 8 個 prompt，約 8602 token
+  林育瑋_悲傷: 無 AI對話內容，已寫入預設評語
+  柯佳彣_平靜: 無 AI對話內容，已寫入預設評語
+  楊漢軒_興奮: 12 個 prompt，約 6605 token
+  楊靜慧_悲傷: 11 個 prompt，約 4291 token
+  王建勛_恐懼: 5 個 prompt，約 95 token
+  王欣怡_悲傷: 17 個 prompt，約 16993 token
+  盧品安_恐懼: 4 個 prompt，約 3691 token
+  翁圓舒_快樂: 10 個 prompt，約 1410 token
+  胡珮晴_平靜: 無 AI對話內容，已寫入預設評語
+  蔡佳翰_平靜: 3 個 prompt，約 112 token
+  藍玉婷_悲傷: 無 AI對話內容，已寫入預設評語
+  賴眉均_恐懼: 15 個 prompt，約 1496 token
+  連浡崴_平靜: 10 個 prompt，約 597 token
+  邵靖榕_快樂: 10 個 prompt，約 1284 token
+  鍾佩蓉_恐懼: 3 個 prompt，約 165 token
+  陳子怡_平靜: 15 個 prompt，約 2728 token
+  陳怡瑾_平靜: 16 個 prompt，約 16327 token
+  陳翰博_悲傷: 8 個 prompt，約 3010 token
+  顏士傑_憤怒: 10 個 prompt，約 502 token
+  鮑婷煖_平靜: 無 AI對話內容，已寫入預設評語
+  黃政文_恐懼: 5 個 prompt，約 4451 token
+  黃鈺倢_渴望: 37 個 prompt，約 1619 token
+
+已寫入 D:\Work\2026\TNDA_跨域工作坊\學生作業\Data\prompt_feedback.json，共 32 位學生。

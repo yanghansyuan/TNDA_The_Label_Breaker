@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮手抖實驗</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000; /* 畫布外面全黑，像舞台外的暗處 */
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: white;
+    }
+
+    /* 1024x1024 畫布 */
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      background: radial-gradient(circle at 30% 20%, #222 0, #050505 60%, #000 100%);
+      position: relative;
+      overflow: hidden; /* 把跑出去的圓圈藏起來 */
+      cursor: pointer;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* 單一圓圈的基本樣式 */
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none; /* 不要擋到滑鼠點擊 */
+      opacity: 0.9;
+      transform: scale(0.4);
+      animation: shake-fade 0.6s ease-out forwards;
+    }
+
+    /* 抖動 + 放大 + 淡出 */
+    @keyframes shake-fade {
+      0% {
+        transform: translate(0, 0) scale(0.4);
+        opacity: 0.9;
+      }
+      30% {
+        transform: translate(-4px, 3px) scale(0.9);
+      }
+      60% {
+        transform: translate(5px, -4px) scale(1.2);
+      }
+      100% {
+        transform: translate(0, 0) scale(1.6);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="hint">
+      <div>點擊任意位置</div>
+      <div>讓圓圈抖動、爆開，表達你的興奮</div>
+    </div>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+
+    // 一組興奮感顏色（會輪流使用）
+    const colors = [
+      "#F80B04", // 紅
+      "#FEDD0B", // 黃
+      "#00A4FD", // 藍
+      "#CE11FD", // 紫
+      "#A2F934"  // 綠
+    ];
+
+    let colorIndex = 0;
+
+    stage.addEventListener("click", function (event) {
+      const rect = stage.getBoundingClientRect();
+      // 滑鼠在 stage 裡面的相對座標
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      // 每次點擊噴出多顆圓圈
+      const count = 14;
+
+      for (let i = 0; i < count; i++) {
+        createCircle(x, y);
+      }
+    });
+
+    function createCircle(x, y) {
+      const circle = document.createElement("div");
+      circle.classList.add("circle");
+
+      // 半徑大小隨機
+      const size = 20 + Math.random() * 40; // 20~60px
+      circle.style.width = size + "px";
+      circle.style.height = size + "px";
+
+      // 顏色輪流＋一點隨機
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      circle.style.backgroundColor = baseColor;
+
+      // 在點擊座標附近隨機抖動起始位置
+      const offsetX = (Math.random() - 0.5) * 40; // -20 ~ 20
+      const offsetY = (Math.random() - 0.5) * 40; // -20 ~ 20
+
+      circle.style.left = x + offsetX - size / 2 + "px";
+      circle.style.top = y + offsetY - size / 2 + "px";
+
+      stage.appendChild(circle);
+
+      // 動畫結束後移除節點，避免累積
+      circle.addEventListener("animationend", () => {
+        circle.remove();
+      });
+    }
+  </script>
+</body>
+</html>

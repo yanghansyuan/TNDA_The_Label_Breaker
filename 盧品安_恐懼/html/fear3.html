@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear - 3_chaos_white.html</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000; /* 全黑背景 */
+            cursor: none;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let audioCtx = null, audioFilter, audioGain;
+    let mouse = { x: 0, y: 0, lastX: 0, lastY: 0, active: false };
+    let triangles = [];
+    let fragments = [];
+    let frameCount = 0;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    class Triangle {
+        constructor(isPlayer = false) {
+            this.isPlayer = isPlayer;
+            this.reset();
+        }
+
+        reset() {
+            this.x = rand(0, width);
+            this.y = rand(0, height);
+            this.size = this.isPlayer ? 60 : rand(20, 40);
+            this.rotation = rand(0, Math.PI * 2);
+            this.vx = rand(-1, 1);
+            this.vy = rand(-1, 1);
+            this.color = this.isPlayer ? "#ffffff" : `rgba(${rand(50, 100)}, ${rand(50, 100)}, ${rand(50, 100)}, 0.4)`;
+            this.lineWidth = this.isPlayer ? 8 : 2; // 白色三角形加粗
+        }
+
+        draw(targetX, targetY) {
+            let posX = this.isPlayer ? targetX : this.x;
+            let posY = this.isPlayer ? targetY : this.y;
+
+            ctx.save();
+            ctx.translate(posX, posY);
+            ctx.rotate(this.rotation + (this.isPlayer ? frameCount * 0.1 : 0));
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 1.5);
+            ctx.lineTo(-this.size / 1.5, this.size / 1.5);
+            ctx.lineTo(this.size / 1.5, this.size / 1.5);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        update(tx, ty) {
+            if (!this.isPlayer) {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                // 點擊閃避邏輯
+                if (mouse.active) {
+                    const dx = this.x - tx;
+                    const dy = this.y - ty;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 250) {
+                        this.vx = (dx / dist) * 15;
+                        this.vy = (dy / dist) * 15;
+                    }
+                }
+                this.vx *= 0.95; // 摩擦力
+                this.vy *= 0.95;
+            }
+        }
+    }
+
+    class Fragment {
+        constructor(x, y, isWhite = false) {
+            this.x = x;
+            this.y = y;
+            this.vx = rand(-10, 10);
+            this.vy = rand(-10, 10);
+            this.life = 1.0;
+            this.color = isWhite ? rgba(255,255,255,${rand(0.5, 1)}) : `rgba(${rand(20, 50)},0,0,${rand(0.2, 0.5)})`;
+            this.w = rand(1, 4);
+        }
+        draw() {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.w;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + this.vx * 2, this.y + this.vy * 2);
+            ctx.stroke();
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= 0.02;
+            return this.life > 0;
+        }
+    }
+
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        audioFilter = audioCtx.createBiquadFilter();
+        audioFilter.type = 'lowpass';
+        audioGain = audioCtx.createGain();
+        audioGain.gain.value = 0.05;
+
+        whiteNoise.connect(audioFilter);
+        audioFilter.connect(audioGain);
+        audioGain.connect(audioCtx.destination);
+        whiteNoise.start();
+    }
+
+    const playerTri = new Triangle(true);
+    for (let i = 0; i < 60; i++) triangles.push(new Triangle(false));
+
+    function animate() {
+        frameCount++;
+        // 隨機背景閃爍增加焦慮感
+        if (Math.random() > 0.98) {
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        } else {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        }
+        ctx.fillRect(0, 0, width, height);
+
+        // 自動生成背景混亂線條
+        for (let i = 0; i < 3; i++) {
+            fragments.push(new Fragment(rand(0, width), rand(0, height), false));
+        }
+
+        fragments = fragments.filter(f => f.update());
+        fragments.forEach(f => f.draw());
+
+        triangles.forEach(t => {
+            t.update(mouse.x, mouse.y);
+            t.draw();
+        });
+
+        playerTri.draw(mouse.x, mouse.y);
+
+        // 滑鼠移動殘影
+        if (Math.abs(mouse.x - mouse.lastX) > 5) {
+            for (let i = 0; i < 5; i++) {
+                fragments.push(new Fragment(mouse.x, mouse.y, true));
+            }
+            mouse.lastX = mouse.x;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        if (!audioCtx) initAudio();
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        audioFilter.frequency.setValueAtTime(rand(200, 1000), audioCtx.currentTime);
+    });
+
+    window.addEventListener('mousedown', () => {
+        mouse.active = true;
+        if (audioCtx) {
+            audioGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.05);
+            audioFilter.frequency.setTargetAtTime(5000, audioCtx.currentTime, 0.05);
+        }
+        // 點擊爆發大量碎片
+        for (let i = 0; i < 50; i++) fragments.push(new Fragment(mouse.x, mouse.y, true));
+    });
+
+    window.addEventListener('mouseup', () => {
+        mouse.active = false;
+        if (audioCtx) {
+            audioGain.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.2);
+            audioFilter.frequency.setTargetAtTime(400, audioCtx.currentTime, 0.2);
+        }
+    });
+
+    animate();
+</script>
+</body>
+</html>

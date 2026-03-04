@@ -1,0 +1,8 @@
+# For merge_score_sheets.py
+openpyxl>=3.1.0
+
+# For build_gallery_data.py 文字理念/形容詞 從 docx pdf rtf odt 抽出文字
+python-docx>=1.0.0
+pypdf>=4.0.0
+striprtf>=0.0.26
+odfpy>=1.4.0

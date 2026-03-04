@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒互動：悲傷的生鐵環</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* 背景色：Pantone Cool Gray 3 C */
+            background-color: #C8C9C7; 
+            cursor: crosshair;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+    const { Engine, Render, Runner, Bodies, Composite, Mouse, Vector, Body } = Matter;
+
+    // --- 1. 色彩定義 ---
+    const colors = {
+        background: '#C8C9C7', // Pantone Cool Gray 3 C
+        main: '#1D2327',       // Pantone 433 C (深炭黑)
+        accent: '#591014'      // Pantone 1817 C (深褐紅)
+    };
+
+    // --- 2. 物理引擎初始化 ---
+    const engine = Engine.create();
+    // 增加重力感，讓墜落更沉重
+    engine.world.gravity.y = 1.8; 
+
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    // RWD 視窗調整
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        if (ground) Composite.remove(engine.world, [ground, wallLeft, wallRight]);
+        setupBoundaries();
+    }
+
+    let ground, wallLeft, wallRight;
+    function setupBoundaries() {
+        // 建立看不見的邊界牆，防止圓環掉出畫面
+        ground = Bodies.rectangle(width / 2, height + 60, width, 120, { isStatic: true });
+        wallLeft = Bodies.rectangle(-60, height / 2, 120, height + 200, { isStatic: true });
+        wallRight = Bodies.rectangle(width + 60, height / 2, 120, height + 200, { isStatic: true });
+        Composite.add(engine.world, [ground, wallLeft, wallRight]);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 儲存自定義物件的陣列
+    const heavyRings = [];
+    const shockwaves = [];
+
+    // --- 3. 建立生鐵圓環的函數 ---
+    function createIronRing(x, y) {
+        // 半徑範圍稍微縮小，讓堆疊更密集
+        const radius = Math.random() * 25 + 15;
+        // 使用多邊形模擬圓形，邊數不用太多，保持粗糙感
+        const sides = 16; 
+        const body = Bodies.polygon(x, y, sides, radius, {
+            density: 0.2,      // 高密度，像鐵一樣重
+            friction: 0.9,     // 高摩擦力，堆疊時不易滑動
+            restitution: 0.05, // 極低彈性，落地時幾乎不反彈
+            render: { visible: false } // 不使用引擎內建渲染
+        });
+
+        Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.3);
+        
+        // 隨機分配主色或輔色 (讓深褐紅出現機率稍低一點，約 30%)
+        const ringColor = Math.random() > 0.7 ? colors.accent : colors.main;
+
+        const ringData = {
+            body: body,
+            radius: radius,
+            // 用於製造邊緣不平整的隨機偏移量
+            offsets: Array.from({ length: sides }, () => Math.random() * 4),
+            color: ringColor,
+            vibration: 0,    // 顫動強度
+            crackLevel: 0    // 裂痕等級 (0-3)
+        };
+
+        heavyRings.push(ringData);
+        Composite.add(engine.world, body);
+    }
+
+    // --- 4. 滑鼠互動：多重漣漪與裂痕觸發 ---
+    window.addEventListener('mousedown', (e) => {
+        const clickPos = { x: e.clientX, y: e.clientY };
+
+        // 產生 5 圈多重漣漪，透過初始半徑(r)為負值來製造時間差
+        for(let i = 0; i < 5; i++) {
+             shockwaves.push({ 
+                 x: clickPos.x, 
+                 y: clickPos.y, 
+                 r: -i * 40,       // 初始半徑為負，延遲出現
+                 opacity: 0.8 - (i * 0.1), // 外圈透明度較低
+                 width: 5 - i*0.5  // 線條寬度
+             });
+        }
+
+        // 檢查並觸發圓環的反應
+        heavyRings.forEach(c => {
+            const dist = Vector.magnitude(Vector.sub(c.body.position, clickPos));
+            // 震盪波影響範圍
+            if (dist < 350) {
+                c.vibration = 20; // 設定強烈顫動
+                
+                // 增加裂痕等級，最高到 3 級
+                if (Math.random() > 0.3) { // 不是每次必裂，增加隨機感
+                     c.crackLevel = Math.min(c.crackLevel + 1, 3);
+                }
+
+                // 施加微小的斥力，模擬衝擊
+                const forceDir = Vector.normalise(Vector.sub(c.body.position, clickPos));
+                const forceMag = 0.08 / (dist > 50 ? dist/50 : 1); // 距離越近力量越大
+                Body.applyForce(c.body, c.body.position, Vector.mult(forceDir, forceMag));
+            }
+        });
+    });
+
+    // 定時生成圓環 (模擬情緒積累)
+    setInterval(() => {
+        // 限制總數量以維持效能，堆疊到一定程度停止
+        if (heavyRings.length < 200) { 
+            createIronRing(Math.random() * width, -100);
+        }
+    }, 1200); // 生成速度稍微加快
+
+    // --- 5. 輔助繪圖函數：繪製裂痕 ---
+    function drawCracks(ctx, radius, crackLevel) {
+        if (crackLevel === 0) return;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // 裂痕顏色：半透明白
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        
+        // 根據裂痕等級決定畫幾條線
+        const numCracks = crackLevel * 2; 
+        for (let i = 0; i < numCracks; i++) {
+            // 隨機生成穿越圓心的折線
+            const angle = Math.random() * Math.PI * 2;
+            const startR = radius * (0.4 + Math.random() * 0.2);
+            const endR = radius * (0.8 + Math.random() * 0.2);
+            
+            const x1 = Math.cos(angle) * startR;
+            const y1 = Math.sin(angle) * startR;
+            // 中間加一個折點，讓裂痕更尖銳
+            const midX = (Math.random()-0.5) * radius * 0.5;
+            const midY = (Math.random()-0.5) * radius * 0.5;
+            const x2 = Math.cos(angle + Math.PI) * endR;
+            const y2 = Math.sin(angle + Math.PI) * endR;
+
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(midX, midY);
+            ctx.lineTo(x2, y2);
+        }
+        ctx.stroke();
+    }
+
+
+    // --- 6. 主渲染循環 ---
+    (function render() {
+        // 清空背景
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(0, 0, width, height);
+
+        // 更新物理引擎
+        Engine.update(engine);
+
+        // A. 繪製多重震盪波漣漪
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+            const s = shockwaves[i];
+            s.r += 8; // 擴散速度
+            
+            // 只有當半徑大於 0 時才繪製
+            if (s.r > 0) {
+                s.opacity -= 0.015; // 透明度衰減
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                // 漣漪顏色使用輔色 (Pantone 1817 C)
+                ctx.strokeStyle = `rgba(89, 16, 20, ${s.opacity})`; 
+                ctx.lineWidth = s.width;
+                ctx.stroke();
+            }
+            // 完全透明後移除
+            if (s.opacity <= 0) shockwaves.splice(i, 1);
+        }
+
+        // B. 繪製生鐵圓環
+        heavyRings.forEach(c => {
+            const { position, angle } = c.body;
+            const sides = c.offsets.length;
+
+            ctx.save();
+            ctx.translate(position.x, position.y);
+            
+            // 處理受衝擊時的顫動
+            if (c.vibration > 0) {
+                const shakeX = (Math.random() - 0.5) * c.vibration;
+                const shakeY = (Math.random() - 0.5) * c.vibration;
+                ctx.translate(shakeX, shakeY);
+                c.vibration *= 0.9; // 顫動衰減
+            }
+            
+            ctx.rotate(angle);
+            
+            // 開始繪製不規則路徑
+            ctx.beginPath();
+            for (let i = 0; i < sides; i++) {
+                const ang = (i / sides) * Math.PI * 2;
+                // 半徑加上隨機偏移，製造粗糙邊緣
+                const r = c.radius + c.offsets[i];
+                const x = Math.cos(ang) * r;
+                const y = Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            
+            // --- 關鍵修改：從填充改為粗描邊，形成空心環 ---
+            ctx.strokeStyle = c.color;
+            // 描邊寬度設為半徑的 40%，製造厚重感
+            ctx.lineWidth = c.radius * 0.4; 
+            // 線段端點和轉角設為圓角，讓生鐵感更自然
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // 繪製額外的細線增加鑄造的粗糙紋理感
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.stroke();
+
+            // C. 繪製裂痕 (如果有的話)
+            drawCracks(ctx, c.radius, c.crackLevel);
+            
+            ctx.restore();
+        });
+
+        requestAnimationFrame(render);
+    })();
+</script>
+
+</body>
+</html>

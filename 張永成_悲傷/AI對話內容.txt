@@ -1,0 +1,928 @@
+============================================================
+學生／資料夾: 張永成_悲傷
+擷取之連結數: 1
+============================================================
+
+----------------------------------------
+[連結 1] https://gemini.google.com/share/7a6051599a09
+----------------------------------------
+登入
+Gemini
+關於 Gemini
+在新視窗中開啟
+Gemini 應用程式
+在新視窗中開啟
+訂閱
+在新視窗中開啟
+企業用途
+在新視窗中開啟
+悲傷網頁設計：黑暗雜訊撕裂
+https://gemini.google.com/share/7a6051599a09
+透過「Pro」建立 2026年2月19日 下午04:15
+發布時間：2026年2月19日 下午04:59
+你說了
+
+請幫我以設計一個網頁的html檔
+
+以悲傷為主題，畫面整體黑暗，並持續有部分不間斷的雜訊效果，當滑鼠滑滑動時出現白色線條（直橫）撕扯空間，點擊時線條出現劇烈扭曲，如果持續點擊不放線條出現更嚴重變形並在背景處開始出現顏色變化
+
+請幫我製作成響應式網頁
+
+這是一個非常具有藝術性且情緒張力強烈的網頁設計需求。為了達到你描述的「悲傷、黑暗、雜訊、空間撕裂與劇烈扭曲」的效果，我為你編寫了一個結合 HTML5 <canvas> 與 JavaScript 的單一網頁檔案。
+
+這個網頁具有以下特性：
+
+響應式設計：畫布會自動適應視窗大小。
+
+不間斷雜訊：利用預先生成的雜訊圖層，在每一幀隨機偏移，產生效能極佳的電視雜訊感。
+
+滑鼠移動（空間撕裂）：以滑鼠為中心，產生垂直與水平的白色撕裂線條。
+
+點擊與長按（劇烈扭曲與顏色變化）：點擊時線條會開始呈現不規則的鋸齒狀；長按不放時，扭曲程度會隨時間不斷加劇，且原本純黑的背景會逐漸滲透出黯淡、瘀傷般的深紅/深紫藍色。
+
+你可以將以下程式碼複製並存成一個 .html 檔案（例如 sadness.html），然後直接用瀏覽器開啟：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sadness - 空間撕裂</title>
+    <style>
+        /* 重設預設樣式，隱藏滾動條，確保全螢幕黑暗 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            cursor: crosshair; /* 游標改為十字，增加撕裂感 */
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 給予一點悲傷的文字提示，隨著時間淡出 */
+        .hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.3);
+            font-family: "Courier New", Courier, monospace;
+            letter-spacing: 5px;
+            pointer-events: none;
+            animation: fadeOut 5s forwards;
+            animation-delay: 2s;
+            user-select: none;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hint">觸碰・撕裂・緊握</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let mouse = { x: -1000, y: -1000 }; // 初始隱藏在畫面外
+        let isMouseDown = false;
+        let holdTime = 0; // 記錄按下的時間
+
+        // 離線畫布：用來生成並儲存雜訊，提升效能
+        const noiseCanvas = document.createElement('canvas');
+        const noiseCtx = noiseCanvas.getContext('2d');
+        const noiseSize = 256;
+
+        function initNoise() {
+            noiseCanvas.width = noiseSize;
+            noiseCanvas.height = noiseSize;
+            const imgData = noiseCtx.createImageData(noiseSize, noiseSize);
+            const buffer32 = new Uint32Array(imgData.data.buffer);
+            for (let i = 0; i < buffer32.length; i++) {
+                // 生成灰階雜訊，帶有低透明度
+                if (Math.random() < 0.1) {
+                    buffer32[i] = 0x15ffffff; // 白色雜訊，透明度極低
+                }
+            }
+            noiseCtx.putImageData(imgData, 0, 0);
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // 如果滑鼠還沒進來，將初始位置設在正中央
+            if (mouse.x === -1000) {
+                mouse.x = width / 2;
+                mouse.y = height / 2;
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        
+        // 滑鼠事件監聽
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', () => {
+            isMouseDown = true;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            holdTime = 0; // 放開時重置變形時間
+        });
+
+        // 觸控螢幕支援
+        window.addEventListener('touchmove', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        });
+        window.addEventListener('touchstart', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            isMouseDown = true;
+        });
+        window.addEventListener('touchend', () => {
+            isMouseDown = false;
+            holdTime = 0;
+        });
+
+        // 繪製撕裂的線條
+        function drawTearLine(startX, startY, endX, endY, segments, distortion) {
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+
+            const stepX = (endX - startX) / segments;
+            const stepY = (endY - startY) / segments;
+
+            for (let i = 1; i <= segments; i++) {
+                // 計算基礎位置
+                let currentX = startX + stepX * i;
+                let currentY = startY + stepY * i;
+
+                // 如果不是終點，加上扭曲效果
+                if (i !== segments) {
+                    currentX += (Math.random() - 0.5) * distortion;
+                    currentY += (Math.random() - 0.5) * distortion;
+                }
+
+                ctx.lineTo(currentX, currentY);
+            }
+            ctx.stroke();
+        }
+
+        function animate() {
+            // 處理長按邏輯與背景顏色
+            let r = 0, g = 0, b = 0;
+            let currentDistortion = 2; // 預設微弱的抖動
+            let alpha = 0.8; // 背景覆蓋率（產生殘影感）
+
+            if (isMouseDown) {
+                holdTime++;
+                // 扭曲度隨時間指數上升
+                currentDistortion = 10 + Math.pow(holdTime, 1.2) * 0.5;
+                
+                // 長按越久，背景越透出深沉的瘀傷血紅色
+                r = Math.min(40, holdTime * 0.3);
+                g = Math.min(5, holdTime * 0.05);
+                b = Math.min(15, holdTime * 0.1);
+            } else {
+                // 緩慢恢復黑色
+                holdTime = Math.max(0, holdTime - 5);
+            }
+
+            // 繪製背景 (帶有半透明以產生拖曳殘影)
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            ctx.fillRect(0, 0, width, height);
+
+            // 繪製全螢幕雜訊
+            const noiseX = Math.random() * noiseSize;
+            const noiseY = Math.random() * noiseSize;
+            for (let x = -noiseX; x < width; x += noiseSize) {
+                for (let y = -noiseY; y < height; y += noiseSize) {
+                    ctx.drawImage(noiseCanvas, x, y);
+                }
+            }
+
+            // 設定線條樣式 (發光、撕裂感)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = isMouseDown ? 2 : 1;
+            ctx.shadowBlur = isMouseDown ? 15 : 5;
+            ctx.shadowColor = 'white';
+            ctx.lineJoin = 'miter';
+
+            // 將線條分段以進行扭曲
+            const segments = isMouseDown ? Math.floor(30 + holdTime * 0.5) : 10;
+
+            // 繪製垂直十字線
+            drawTearLine(mouse.x, 0, mouse.x, height, segments, currentDistortion);
+            // 繪製水平十字線
+            drawTearLine(0, mouse.y, width, mouse.y, segments, currentDistortion);
+
+            // 額外隨機裂紋 (長按時爆發)
+            if (isMouseDown && holdTime > 20) {
+                const extraCracks = Math.min(10, Math.floor(holdTime / 20));
+                for(let i=0; i < extraCracks; i++) {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random()})`;
+                    ctx.lineWidth = Math.random() * 2;
+                    let angle = Math.random() * Math.PI * 2;
+                    let length = Math.random() * (holdTime * 5);
+                    let endX = mouse.x + Math.cos(angle) * length;
+                    let endY = mouse.y + Math.sin(angle) * length;
+                    drawTearLine(mouse.x, mouse.y, endX, endY, segments / 2, currentDistortion * 1.5);
+                }
+            }
+
+            // 清除陰影避免影響下一幀的背景與雜訊
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(animate);
+        }
+
+        // 初始化
+        initNoise();
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>
+
+設計與技術亮點說明：
+
+情緒渲染（Visual Tone）：一開始黑色的畫面與隱隱約約的灰白雜訊，營造出壓抑的氛圍。十字線的設計像是在虛空中尋找焦點，卻又帶著破壞性。
+
+數學與互動（Math & Interaction）：
+
+isMouseDown 與 holdTime 的結合：長按時，雜訊與撕裂程度採用指數函數 (Math.pow) 放大，讓「崩潰感」越到後面越劇烈。
+
+顏色滲透：背景從 #000（純黑）慢慢過渡到 rgba(40, 5, 15)（類似乾涸血液或深層瘀青的顏色），具象化了悲傷轉向內心痛楚的過程。
+
+效能優化（Performance）：雜訊（Noise）效果如果每一幀都用像素運算會非常卡頓。這裡使用了「離線畫布 (Offscreen Canvas)」預先畫好一小塊雜訊，然後利用平鋪 (drawImage) 的方式配合隨機偏移座標，達到了完美流暢的視覺效果。
+
+你可以直接測試並感受這個效果。需要我幫你調整撕裂線條的粗細，或是背景改變的顏色色調嗎？
+
+你說了
+
+請幫我優化並修改網頁的一些地方
+
+雜訊效果顆粒感再大一點，並且有幾處隨機出現顆粒更大的撕裂不規則粒子
+
+線條在打開網站預設先消失，等到滑鼠開始移動時淡入，滑鼠不移動時淡出
+
+線條在持續點擊時的扭曲狀態呈現更不可預側的型態
+
+請搭配哀傷的鋼琴音樂
+
+這是一個非常棒的優化方向。將雜訊放大、增加不規則的撕裂粒子，以及加入淡入淡出效果，能讓這個網頁的「呼吸感」與「不可控的崩潰感」更加強烈。
+
+在加入音樂時，有一個現實的技術限制需要先向你說明：現代瀏覽器（如 Chrome, Safari, Edge）為了使用者體驗，嚴格禁止網頁在沒有使用者互動（如點擊）的情況下自動播放聲音。因此，我將邏輯設計為：當使用者第一次點擊畫面時，音樂才會開始播放。
+
+以下是為你優化過後的完整程式碼。我為你搭配了一首經典且極具哀傷氛圍的鋼琴曲（艾瑞克·薩提的《吉諾佩第第一號》）作為預設音樂。
+
+優化版網頁程式碼
+
+你可以直接覆蓋原本的檔案，或是另存為一個新的 .html 檔案：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sadness - 空間撕裂與崩潰</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-family: "Courier New", Courier, monospace;
+            letter-spacing: 5px;
+            pointer-events: none;
+            transition: opacity 1s;
+            user-select: none;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .hidden {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hint" id="hintText">移動以喚醒<br>點擊以撕裂</div>
+    
+    <audio id="bgm" loop>
+        <source src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Gymnopedie_No_1.ogg" type="audio/ogg">
+    </audio>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const bgm = document.getElementById('bgm');
+        const hintText = document.getElementById('hintText');
+
+        let width, height;
+        let mouse = { x: -1000, y: -1000 };
+        let isMouseDown = false;
+        let holdTime = 0;
+        
+        // 淡入淡出控制
+        let lineOpacity = 0;
+        let targetLineOpacity = 0;
+        let moveTimeout;
+        let audioStarted = false;
+
+        // 離線畫布：雜訊生成
+        const noiseCanvas = document.createElement('canvas');
+        const noiseCtx = noiseCanvas.getContext('2d');
+        const noiseSize = 128; // 縮小畫布尺寸以放大顆粒感
+        const noiseScale = 4;  // 雜訊放大倍率
+
+        function initNoise() {
+            noiseCanvas.width = noiseSize;
+            noiseCanvas.height = noiseSize;
+            const imgData = noiseCtx.createImageData(noiseSize, noiseSize);
+            const buffer32 = new Uint32Array(imgData.data.buffer);
+            for (let i = 0; i < buffer32.length; i++) {
+                if (Math.random() < 0.15) { // 提高一點雜訊密度
+                    buffer32[i] = 0x22ffffff; 
+                }
+            }
+            noiseCtx.putImageData(imgData, 0, 0);
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // 關閉影像平滑，讓放大的雜訊保持粗糙的顆粒感 (Pixelated)
+            ctx.imageSmoothingEnabled = false; 
+        }
+
+        window.addEventListener('resize', resize);
+        
+        // 滑鼠移動：淡入線條
+        function handleMove(x, y) {
+            mouse.x = x;
+            mouse.y = y;
+            targetLineOpacity = 1;
+            
+            clearTimeout(moveTimeout);
+            // 滑鼠停止移動 1.5 秒後，開始淡出
+            moveTimeout = setTimeout(() => {
+                if (!isMouseDown) targetLineOpacity = 0;
+            }, 1500);
+        }
+
+        window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+
+        window.addEventListener('mousedown', () => {
+            isMouseDown = true;
+            targetLineOpacity = 1;
+            hintText.classList.add('hidden'); // 點擊後隱藏提示
+            
+            // 第一次點擊時播放音樂
+            if (!audioStarted) {
+                bgm.volume = 0.5; // 音量適中
+                bgm.play().catch(e => console.log("瀏覽器阻擋自動播放", e));
+                audioStarted = true;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            holdTime = 0;
+            // 若滑鼠沒動，放開後隨即準備淡出
+            handleMove(mouse.x, mouse.y); 
+        });
+
+        // 觸控支援
+        window.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.touches[0].clientY));
+        window.addEventListener('touchstart', (e) => {
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+            isMouseDown = true;
+            hintText.classList.add('hidden');
+            if (!audioStarted) {
+                bgm.volume = 0.5;
+                bgm.play().catch(e => console.log(e));
+                audioStarted = true;
+            }
+        });
+        window.addEventListener('touchend', () => {
+            isMouseDown = false;
+            holdTime = 0;
+        });
+
+        // 繪製不可預測扭曲的撕裂線條
+        function drawTearLine(startX, startY, endX, endY, segments, distortion) {
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+
+            const stepX = (endX - startX) / segments;
+            const stepY = (endY - startY) / segments;
+
+            for (let i = 1; i <= segments; i++) {
+                let currentX = startX + stepX * i;
+                let currentY = startY + stepY * i;
+
+                if (i !== segments) {
+                    // 加入混亂的數學函數，創造不可預測的毛刺感 (Glitch)
+                    let chaos = Math.sin(i * 0.8 + holdTime * 0.3) * distortion;
+                    let randomSpike = (Math.random() - 0.5) * distortion * 2;
+                    
+                    // 偶爾出現極端突變
+                    if (isMouseDown && Math.random() < 0.15) {
+                        randomSpike *= 4; 
+                    }
+
+                    // 根據線條方向決定扭曲軸向
+                    if (Math.abs(startX - endX) < 1) { // 垂直線，水平扭曲
+                        currentX += chaos + randomSpike;
+                    } else { // 水平線，垂直扭曲
+                        currentY += chaos + randomSpike;
+                    }
+                }
+
+                ctx.lineTo(currentX, currentY);
+            }
+            ctx.stroke();
+        }
+
+        // 隨機的巨大不規則撕裂粒子
+        function drawGlitchParticles() {
+            // 長按越久，撕裂粒子越多
+            let chance = isMouseDown ? 0.2 + (holdTime * 0.005) : 0.02;
+            
+            if (Math.random() < chance) {
+                const numParticles = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < numParticles; i++) {
+                    ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.9)';
+                    let w = Math.random() * 150 + 20; // 寬度變化大
+                    let h = Math.random() * 15 + 2;   // 高度扁平
+                    let x = Math.random() * width;
+                    let y = Math.random() * height;
+                    
+                    // 讓撕裂區塊稍微集中在滑鼠附近
+                    if (isMouseDown && Math.random() < 0.6) {
+                        x = mouse.x + (Math.random() - 0.5) * 300;
+                        y = mouse.y + (Math.random() - 0.5) * 300;
+                    }
+                    
+                    ctx.fillRect(x, y, w, h);
+                }
+            }
+        }
+
+        function animate() {
+            // 平滑過渡透明度 (淡入淡出)
+            lineOpacity += (targetLineOpacity - lineOpacity) * 0.05;
+
+            let r = 0, g = 0, b = 0;
+            let currentDistortion = 2;
+            let alpha = 0.8; 
+
+            if (isMouseDown) {
+                holdTime++;
+                // 更不可預測的扭曲基數
+                currentDistortion = 10 + Math.pow(holdTime, 1.3) * 0.4 + Math.random() * 10;
+                
+                r = Math.min(60, holdTime * 0.4);
+                g = Math.min(10, holdTime * 0.08);
+                b = Math.min(25, holdTime * 0.15);
+            } else {
+                holdTime = Math.max(0, holdTime - 5);
+            }
+
+            // 背景
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            ctx.fillRect(0, 0, width, height);
+
+            // 繪製放大的顆粒雜訊
+            ctx.globalAlpha = 1;
+            const noiseX = Math.random() * noiseSize * noiseScale;
+            const noiseY = Math.random() * noiseSize * noiseScale;
+            for (let x = -noiseX; x < width; x += noiseSize * noiseScale) {
+                for (let y = -noiseY; y < height; y += noiseSize * noiseScale) {
+                    ctx.drawImage(noiseCanvas, x, y, noiseSize * noiseScale, noiseSize * noiseScale);
+                }
+            }
+
+            // 繪製隨機巨大撕裂粒子
+            drawGlitchParticles();
+
+            // 如果線條幾乎看不見，就不進行計算與繪製以節省效能
+            if (lineOpacity > 0.01) {
+                ctx.globalAlpha = lineOpacity;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = isMouseDown ? (2 + Math.random() * 2) : 1; // 點擊時線條粗細也會閃爍
+                ctx.shadowBlur = isMouseDown ? 20 : 5;
+                ctx.shadowColor = 'white';
+                ctx.lineJoin = 'miter';
+
+                const segments = isMouseDown ? Math.floor(40 + holdTime * 0.8) : 15;
+
+                drawTearLine(mouse.x, 0, mouse.x, height, segments, currentDistortion);
+                drawTearLine(0, mouse.y, width, mouse.y, segments, currentDistortion);
+
+                if (isMouseDown && holdTime > 15) {
+                    const extraCracks = Math.min(15, Math.floor(holdTime / 15));
+                    for(let i=0; i < extraCracks; i++) {
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.8})`;
+                        ctx.lineWidth = Math.random() * 3;
+                        let angle = Math.random() * Math.PI * 2;
+                        let length = Math.random() * (holdTime * 8);
+                        let endX = mouse.x + Math.cos(angle) * length;
+                        let endY = mouse.y + Math.sin(angle) * length;
+                        drawTearLine(mouse.x, mouse.y, endX, endY, segments / 2, currentDistortion * 2);
+                    }
+                }
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.globalAlpha = 1; // 恢復透明度
+            requestAnimationFrame(animate);
+        }
+
+        initNoise();
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>
+
+這次修改的主要亮點：
+
+放大顆粒感與效能兼顧：我使用了 ctx.imageSmoothingEnabled = false，並在渲染雜訊時將其拉伸放大。這就像是刻意展現低畫質像素遊戲的毛邊，讓雜訊的壓迫感更強烈，同時不消耗額外的 CPU 運算。
+
+不可預測的扭曲 (Glitch Art)：在 drawTearLine 中，我加入了三角函數 (Math.sin) 與隨機數互相疊加的演算法。這會讓線條在長按時不再只是單純的鋸齒，而是會出現類似「數位信號干擾（Glitch）」般的銳利突變與抽搐。
+
+隨機撕裂粒子：新增了 drawGlitchParticles 函數。畫面上會不時閃爍巨大、扁平的黑白塊狀物，長按時這些撕裂區塊會密集地向滑鼠中心聚集。
+
+音樂與沉浸感：加入了《吉諾佩第第一號》，這首曲子空靈、緩慢且哀傷。透過設定 bgm.volume = 0.5，讓它作為背景襯托，不會過於喧賓奪主。
+
+如果你有自己喜歡的音樂，只需要把 <source src="..."> 裡面的網址換成你自己 .mp3 檔案的路徑即可。
+
+需要我幫你調整線條淡出淡入的速度，或是滑鼠長按時背景變色的深度嗎？
+
+你說了
+
+現在持續點擊時扭曲的速度有點太快，請幫我放慢一點，讓滑鼠點擊更久才能達到強烈的扭曲效果
+
+沒問題，調整節奏是非常重要的。為了讓情緒有堆疊的過程，我將數值增長的速度大幅調慢，並調整了數學公式，讓它呈現「慢熱」的曲線：
+
+前 1-3 秒：只有微幅的震動，像是在忍耐。
+
+3-5 秒後：線條開始明顯崩壞。
+
+長按 8 秒以上：才會達到原本那種劇烈的毀滅與變色效果。
+
+我也順勢調整了「放開滑鼠」後的恢復速度，讓它不會瞬間變回平靜，而是緩慢地平復（餘韻更長）。
+
+請使用以下更新後的完整程式碼：
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sadness - 緩慢崩壞</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-family: "Courier New", Courier, monospace;
+            letter-spacing: 5px;
+            pointer-events: none;
+            transition: opacity 1s;
+            user-select: none;
+            text-align: center;
+            line-height: 1.8;
+            z-index: 10;
+        }
+
+        .hidden {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hint" id="hintText">移動喚醒<br>長按以侵蝕</div>
+    
+    <audio id="bgm" loop>
+        <source src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Gymnopedie_No_1.ogg" type="audio/ogg">
+    </audio>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const bgm = document.getElementById('bgm');
+        const hintText = document.getElementById('hintText');
+
+        let width, height;
+        let mouse = { x: -1000, y: -1000 };
+        let isMouseDown = false;
+        let holdTime = 0;
+        
+        // 淡入淡出與音樂控制
+        let lineOpacity = 0;
+        let targetLineOpacity = 0;
+        let moveTimeout;
+        let audioStarted = false;
+
+        // 離線畫布：雜訊
+        const noiseCanvas = document.createElement('canvas');
+        const noiseCtx = noiseCanvas.getContext('2d');
+        const noiseSize = 128; 
+        const noiseScale = 4;  
+
+        function initNoise() {
+            noiseCanvas.width = noiseSize;
+            noiseCanvas.height = noiseSize;
+            const imgData = noiseCtx.createImageData(noiseSize, noiseSize);
+            const buffer32 = new Uint32Array(imgData.data.buffer);
+            for (let i = 0; i < buffer32.length; i++) {
+                if (Math.random() < 0.15) { 
+                    buffer32[i] = 0x22ffffff; 
+                }
+            }
+            noiseCtx.putImageData(imgData, 0, 0);
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false; 
+        }
+
+        window.addEventListener('resize', resize);
+        
+        function handleMove(x, y) {
+            mouse.x = x;
+            mouse.y = y;
+            targetLineOpacity = 1;
+            
+            clearTimeout(moveTimeout);
+            moveTimeout = setTimeout(() => {
+                if (!isMouseDown) targetLineOpacity = 0;
+            }, 1500);
+        }
+
+        window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+
+        window.addEventListener('mousedown', () => {
+            isMouseDown = true;
+            targetLineOpacity = 1;
+            hintText.classList.add('hidden');
+            
+            if (!audioStarted) {
+                bgm.volume = 0.5;
+                bgm.play().catch(e => console.log("Audio play blocked", e));
+                audioStarted = true;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            // 讓 holdTime 不要歸零，而是透過 animate 中的遞減邏輯慢慢恢復
+            // 這樣鬆開手時，崩壞的狀態會殘留一下
+            handleMove(mouse.x, mouse.y); 
+        });
+
+        window.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.touches[0].clientY));
+        window.addEventListener('touchstart', (e) => {
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+            isMouseDown = true;
+            hintText.classList.add('hidden');
+            if (!audioStarted) {
+                bgm.volume = 0.5;
+                bgm.play().catch(e => {});
+                audioStarted = true;
+            }
+        });
+        window.addEventListener('touchend', () => {
+            isMouseDown = false;
+        });
+
+        // 繪製線條
+        function drawTearLine(startX, startY, endX, endY, segments, distortion) {
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+
+            const stepX = (endX - startX) / segments;
+            const stepY = (endY - startY) / segments;
+
+            for (let i = 1; i <= segments; i++) {
+                let currentX = startX + stepX * i;
+                let currentY = startY + stepY * i;
+
+                if (i !== segments) {
+                    // 這裡的 distortion 會被傳入的參數控制，現在參數增長變慢了
+                    let chaos = Math.sin(i * 0.5 + holdTime * 0.1) * distortion;
+                    let randomSpike = (Math.random() - 0.5) * distortion * 1.5;
+                    
+                    if (isMouseDown && Math.random() < 0.1) {
+                        randomSpike *= 3; 
+                    }
+
+                    if (Math.abs(startX - endX) < 1) { 
+                        currentX += chaos + randomSpike;
+                    } else { 
+                        currentY += chaos + randomSpike;
+                    }
+                }
+                ctx.lineTo(currentX, currentY);
+            }
+            ctx.stroke();
+        }
+
+        // 粒子系統
+        function drawGlitchParticles() {
+            // 調整：發生機率增長變慢 (0.001)
+            let chance = isMouseDown ? 0.05 + (holdTime * 0.001) : 0.02;
+            
+            if (Math.random() < chance) {
+                const numParticles = Math.floor(Math.random() * 2) + 1;
+                for (let i = 0; i < numParticles; i++) {
+                    ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.8)';
+                    let w = Math.random() * 120 + 10;
+                    let h = Math.random() * 10 + 1; 
+                    let x = Math.random() * width;
+                    let y = Math.random() * height;
+                    
+                    if (isMouseDown && Math.random() < 0.7) {
+                        // 讓粒子更慢地向中心聚集
+                        let spread = 400 - (holdTime * 0.5); 
+                        spread = Math.max(50, spread); // 最小擴散範圍
+                        x = mouse.x + (Math.random() - 0.5) * spread;
+                        y = mouse.y + (Math.random() - 0.5) * spread;
+                    }
+                    
+                    ctx.fillRect(x, y, w, h);
+                }
+            }
+        }
+
+        function animate() {
+            lineOpacity += (targetLineOpacity - lineOpacity) * 0.05;
+
+            let r = 0, g = 0, b = 0;
+            let currentDistortion = 2;
+            let alpha = 0.8; 
+
+            if (isMouseDown) {
+                holdTime++;
+                
+                // === 關鍵調整區 ===
+                // 扭曲度：改用較小的係數 0.08 (原本是 0.4)
+                // 指數增長：保持 1.4，讓它依然有「越後面越快」的感覺，但起步非常慢
+                currentDistortion = 5 + Math.pow(holdTime, 1.4) * 0.06 + Math.random() * 5;
+                
+                // 顏色變化：速度除以 4 (0.1 -> 0.025)
+                // 需要按住很久背景才會變紅
+                r = Math.min(60, holdTime * 0.1);  
+                g = Math.min(10, holdTime * 0.02);
+                b = Math.min(25, holdTime * 0.04);
+            } else {
+                // 恢復速度：減慢恢復速度 (從 -5 改為 -2)，讓悲傷的餘韻停留更久
+                holdTime = Math.max(0, holdTime - 2);
+            }
+
+            // 背景
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            ctx.fillRect(0, 0, width, height);
+
+            // 雜訊
+            ctx.globalAlpha = 1;
+            const noiseX = Math.random() * noiseSize * noiseScale;
+            const noiseY = Math.random() * noiseSize * noiseScale;
+            for (let x = -noiseX; x < width; x += noiseSize * noiseScale) {
+                for (let y = -noiseY; y < height; y += noiseSize * noiseScale) {
+                    ctx.drawImage(noiseCanvas, x, y, noiseSize * noiseScale, noiseSize * noiseScale);
+                }
+            }
+
+            drawGlitchParticles();
+
+            if (lineOpacity > 0.01) {
+                ctx.globalAlpha = lineOpacity;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = isMouseDown ? (1 + Math.random() * 1.5) : 1; 
+                ctx.shadowBlur = isMouseDown ? Math.min(30, holdTime * 0.2) : 5; // 陰影也隨時間慢慢增加
+                ctx.shadowColor = 'white';
+                ctx.lineJoin = 'miter';
+
+                // 線段細分程度增長也變慢
+                const segments = isMouseDown ? Math.floor(20 + holdTime * 0.2) : 15;
+
+                drawTearLine(mouse.x, 0, mouse.x, height, segments, currentDistortion);
+                drawTearLine(0, mouse.y, width, mouse.y, segments, currentDistortion);
+
+                // 額外裂痕：門檻提高 (從 15 改為 120)，大約要按住 2 秒才會開始分裂
+                if (isMouseDown && holdTime > 120) {
+                    const extraCracks = Math.min(10, Math.floor((holdTime - 120) / 40));
+                    for(let i=0; i < extraCracks; i++) {
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.6})`;
+                        ctx.lineWidth = Math.random() * 2;
+                        let angle = Math.random() * Math.PI * 2;
+                        let length = Math.random() * (holdTime * 2); // 長度增長變慢
+                        let endX = mouse.x + Math.cos(angle) * length;
+                        let endY = mouse.y + Math.sin(angle) * length;
+                        drawTearLine(mouse.x, mouse.y, endX, endY, segments / 2, currentDistortion * 1.5);
+                    }
+                }
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.globalAlpha = 1; 
+            requestAnimationFrame(animate);
+        }
+
+        initNoise();
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>
+
+調整細節報告：
+
+扭曲增長率：從原本的快速爆發，改成 Math.pow(holdTime, 1.4) * 0.06。這意味著在前 3-4 秒，線條只會「微微顫抖」，你需要持續施壓，它才會慢慢崩潰。
+
+顏色滲透速度：背景變紅的速度減慢了約 4 倍。現在需要按住更長的時間，背景深處的血色才會浮現。
+
+恢復速度（Decay）：當你放開滑鼠時，holdTime 減少的速度從每幀 -5 改為 -2。這表示當你造成了劇烈的扭曲後，放手時畫面不會馬上變回原樣，而是像傷口癒合一樣慢慢平復。
+
+裂痕門檻：原本按一下馬上會有很多分岔線，現在設定為 holdTime > 120（約 2 秒），前 2 秒只會有主十字線的扭曲，堅持下去才會出現周圍的碎裂紋路。
+
+Google 隱私權政策
+在新視窗中開啟
+Google 服務條款
+在新視窗中開啟
+個人隱私權與 Gemini 應用程式
+在新視窗中開啟
+
+Gemini 可能會提供不準確的資訊 (包括人物資訊)，因此請查證回覆內容。
+
+登入

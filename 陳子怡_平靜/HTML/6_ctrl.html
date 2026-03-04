@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>泡沫之境 | The Land of Foam</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f7;
+            --text-color: #1a1a1a;
+            --font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 1.5s ease, color 1.5s ease;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- 啟動畫面 --- */
+        #start-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98);
+            z-index: 100;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 0.8s ease;
+        }
+        #start-overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        .start-btn {
+            padding: 15px 40px; font-size: 0.9rem; letter-spacing: 0.2em; text-transform: uppercase;
+            border: 1px solid #333; background: transparent; cursor: pointer; transition: 0.3s;
+        }
+        .start-btn:hover { background: #333; color: #fff; }
+        .hint-text { margin-top: 20px; font-size: 0.75rem; color: #888; letter-spacing: 0.05em;}
+        .sub-hint { font-size: 0.7rem; color: #aaa; margin-top: 5px; }
+
+        /* --- 視覺層 --- */
+        #canvas-container {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            transition: filter 2s ease;
+            opacity: 0.9;
+        }
+
+        /* --- 紋理層 --- */
+        .texture-layer {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2; pointer-events: none; opacity: 0;
+            transition: opacity 2s ease;
+        }
+        .texture-ribbed {
+            background: repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(255, 255, 255, 0.05) 2px, rgba(0, 0, 0, 0.1) 4px);
+            background-size: 4px 100%;
+            mix-blend-mode: overlay; 
+        }
+        .texture-grit {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: soft-light;
+        }
+        .texture-rings {
+             background: radial-gradient(circle, transparent 20%, rgba(255,255,255,0.05) 21%, transparent 22%),
+                         radial-gradient(circle, transparent 40%, rgba(0,0,0,0.03) 41%, transparent 42%);
+             background-size: 100px 100px;
+             mix-blend-mode: overlay;
+        }
+
+        body.mode-foam .texture-ribbed { opacity: 0; }
+        body.mode-amber .texture-ribbed { opacity: 0.7; mix-blend-mode: overlay; }
+        body.mode-neon .texture-ribbed { opacity: 0.5; mix-blend-mode: screen; }
+        body.mode-ink .texture-grit { opacity: 0.6; }
+        body.mode-ink .texture-ribbed { opacity: 0; }
+        body.mode-aura .texture-rings { opacity: 0.8; }
+
+        /* --- UI 層 --- */
+        .ui-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3;
+            padding: 2rem; pointer-events: none;
+            font-size: 0.85rem; letter-spacing: 0.05em; font-weight: 500;
+        }
+        
+        /* 文字淡入淡出動畫 */
+        .fade-text {
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+        .fade-text.fading-out {
+            opacity: 0;
+        }
+
+        .top-left { position: absolute; top: 2rem; left: 2rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .top-right { position: absolute; top: 2rem; right: 2rem; text-align: right; }
+        .bottom-left { position: absolute; bottom: 2rem; left: 2rem; }
+        .bottom-right { position: absolute; bottom: 2rem; right: 2rem; }
+        
+        .vertical-text-left {
+            position: absolute; top: 50%; left: 2rem; transform: translateY(-50%) rotate(-180deg);
+            writing-mode: vertical-rl; font-size: 0.75rem; opacity: 0.8; letter-spacing: 0.15em;
+        }
+        .vertical-text-right {
+            position: absolute; top: 50%; right: 2rem; transform: translateY(-50%) rotate(0deg);
+            writing-mode: vertical-rl; font-size: 0.75rem; opacity: 0.8;
+        }
+
+        /* 音量條動畫 */
+        .audio-wave { 
+            display: inline-flex; 
+            align-items: flex-end; 
+            height: 12px; 
+            gap: 3px; /* 增加線條間距 */
+            margin-left: 15px; /* 往右移，避免擁擠 */
+        }
+        .bar { width: 3px; background-color: currentColor; animation: wave 1s infinite ease-in-out; }
+        .bar:nth-child(1) { height: 40%; animation-delay: 0.0s; }
+        .bar:nth-child(2) { height: 80%; animation-delay: 0.1s; }
+        .bar:nth-child(3) { height: 50%; animation-delay: 0.2s; }
+        
+        @keyframes wave { 0%, 100% { height: 40%; } 50% { height: 100%; } }
+
+        @media (max-width: 768px) {
+            .ui-layer { padding: 1.5rem; }
+            .top-left, .top-right, .bottom-left, .bottom-right { top: 1.5rem; left: 1.5rem; right: 1.5rem; bottom: 1.5rem; }
+            .vertical-text-left, .vertical-text-right { display: none; }
+        }
+    </style>
+</head>
+<body class="mode-foam">
+
+    <div id="start-overlay">
+        <button id="enter-btn" class="start-btn">Enter The Foam</button>
+        <div class="hint-text">泡沫之境 | The Land of Foam</div>
+        <div class="sub-hint">建議佩戴耳機 • 點擊進入</div>
+    </div>
+
+    <audio id="main-audio" loop></audio>
+
+    <canvas id="canvas-container"></canvas>
+    
+    <div class="texture-layer texture-ribbed"></div>
+    <div class="texture-layer texture-grit"></div>
+    <div class="texture-layer texture-rings"></div>
+
+    <main class="ui-layer">
+        <div class="top-left fade-text" id="ui-top-left">
+            <span id="theme-index">NO.01</span>
+            <span id="mode-name">FOAM</span>
+        </div>
+        <div class="top-right fade-text" id="ui-top-right">
+            <span id="mood-text">Over Nara</span>
+            <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Click to shift reality</div>
+        </div>
+        <div class="vertical-text-left fade-text" id="date-text"></div>
+        <div class="vertical-text-right fade-text" id="quote-text">FREEWILL IDEA</div>
+        
+        <!-- 左下角播放狀態 -->
+        <div class="bottom-left">
+            <span id="audio-status" style="display:flex; align-items:center;">
+                <span style="font-size: 0.8rem; margin-right: 5px; opacity: 0.7;">Playing:</span>
+                <span id="song-name" class="fade-text" style="font-size: 0.8rem;">...</span>
+                <div class="audio-wave" id="wave-anim">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+            </span>
+        </div>
+        
+        <div class="bottom-right">
+            <span>©The Land of Foam</span>
+        </div>
+    </main>
+
+    <script>
+        const themes = [
+            {
+                name: "FOAM", 
+                id: "NO.01",
+                class: "mode-foam",
+                mood: "Blue Silence",
+                songTitle: "Over Nara",
+                audioSrc: "foam.mp3", 
+                colors: ["#4169E1", "#1E90FF", "#6495ED", "#B0C4DE"],
+                bg: "#f4f4f7",
+                text: "#1a1a1a",
+                visual: { speed: 0.8, filter: "blur(60px) contrast(1.2)", blend: "normal", gravity: 0 },
+                shape: "circle"
+            },
+            {
+                name: "AMBER", 
+                id: "NO.02",
+                class: "mode-amber",
+                mood: "Solar Energy",
+                songTitle: "Tree of Life",
+                audioSrc: "amber.mp3",
+                colors: ["#FF4500", "#FF6347", "#FFD700", "#FFF8DC"], 
+                bg: "#FFFAF0", 
+                text: "#CD5C5C",
+                visual: { speed: 0.6, filter: "blur(40px) contrast(1.1) brightness(1.1)", blend: "multiply", gravity: -0.3 },
+                shape: "triangle"
+            },
+            {
+                name: "NEON", 
+                id: "NO.03",
+                class: "mode-neon",
+                mood: "Digital Rain",
+                songTitle: "Neon Tides",
+                audioSrc: "neon.mp3",
+                colors: ["#008B8B", "#B87333", "#000033", "#2F4F4F", "#D2691E"],
+                bg: "#050505", 
+                text: "#B87333",
+                visual: { speed: 1.5, filter: "blur(30px) brightness(1.4) contrast(1.2)", blend: "color-dodge", gravity: 0 },
+                shape: "line"
+            },
+            {
+                name: "INK", 
+                id: "NO.04",
+                class: "mode-ink",
+                mood: "Block Print",
+                songTitle: "Ink on Paper",
+                audioSrc: "ink.mp3",
+                colors: ["#000000", "#111111", "#FFFFFF", "#333333"],
+                bg: "#808080", 
+                text: "#000000",
+                visual: { speed: 0.4, filter: "blur(25px) contrast(8) grayscale(1)", blend: "normal", gravity: 0.1 },
+                shape: "rect"
+            },
+            {
+                name: "AURA", 
+                id: "NO.05",
+                class: "mode-aura",
+                mood: "Inner State",
+                songTitle: "Healing Freq",
+                audioSrc: "aura.mp3", 
+                colors: ["#98FB98", "#00FA9A", "#F0FFF0", "#ADFF2F", "#32CD32"],
+                bg: "#e0ffe0", 
+                text: "#2E8B57",
+                visual: { speed: 0.5, filter: "blur(50px) brightness(1.05)", blend: "screen", gravity: 0 },
+                shape: "ring"
+            }
+        ];
+
+        let currentThemeIndex = 0;
+        let currentTheme = themes[0];
+        const audioElement = document.getElementById('main-audio');
+        const enterBtn = document.getElementById('enter-btn');
+        
+        // 音樂播放邏輯
+        function playThemeAudio(src) {
+            let fadeOut = setInterval(() => {
+                if(audioElement.volume > 0.05) {
+                    audioElement.volume -= 0.05;
+                } else {
+                    clearInterval(fadeOut);
+                    audioElement.src = src;
+                    audioElement.play().catch(e => console.log("Audio waiting"));
+                    
+                    audioElement.volume = 0;
+                    let fadeIn = setInterval(() => {
+                        if(audioElement.volume < 0.8) {
+                            audioElement.volume += 0.05;
+                        } else {
+                            clearInterval(fadeIn);
+                        }
+                    }, 50);
+                }
+            }, 50);
+        }
+
+        // --- Canvas 視覺 ---
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        
+        // 滑鼠與自動導航系統
+        let mouse = { x: -1000, y: -1000, isActive: false };
+        let autoMouse = { x: 0, y: 0, angle: 0 }; 
+        let lastMouseMoveTime = 0;
+        let simTime = 0; 
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.breathSpeed = 0.02 + Math.random() * 0.03; 
+                this.breathOffset = Math.random() * Math.PI * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+            }
+
+            reset() {
+                let sizeMod = 1;
+                if (currentTheme.shape === "rect") sizeMod = 0.8; 
+                if (currentTheme.shape === "line") sizeMod = 2.0; 
+
+                this.baseSize = (Math.random() * 80 + 100) * sizeMod;
+                this.size = this.baseSize;
+                
+                const spd = currentTheme.visual.speed;
+                this.vx = (Math.random() - 0.5) * spd;
+                this.vy = (Math.random() - 0.5) * spd;
+                this.color = currentTheme.colors[Math.floor(Math.random() * currentTheme.colors.length)];
+            }
+
+            update() {
+                this.vy += currentTheme.visual.gravity * 0.05;
+                this.angle += this.rotationSpeed;
+
+                if (currentTheme.shape === "line") {
+                    this.y += this.vy * 2; 
+                } else {
+                    this.x += this.vx; this.y += this.vy;
+                }
+
+                const margin = 200;
+                if (this.x < -margin) this.x = width + margin;
+                if (this.x > width + margin) this.x = -margin;
+                if (this.y < -margin) this.y = height + margin;
+                if (this.y > height + margin) this.y = -margin;
+
+                let breath = Math.sin(simTime * this.breathSpeed + this.breathOffset) * 0.15;
+                let reactScale = 1 + breath;
+                let targetSize = this.baseSize * reactScale;
+                
+                let interactX = mouse.isActive ? mouse.x : autoMouse.x;
+                let interactY = mouse.isActive ? mouse.y : autoMouse.y;
+                let interactStrength = mouse.isActive ? 400 : 600; 
+
+                const dx = interactX - this.x;
+                const dy = interactY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < interactStrength) {
+                    const force = (interactStrength - dist) / interactStrength;
+                    this.vx -= (dx / dist) * force * 0.08;
+                    this.vy -= (dy / dist) * force * 0.08;
+                    targetSize += 50 * force;
+                }
+                this.size += (targetSize - this.size) * 0.05;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.globalCompositeOperation = currentTheme.visual.blend;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle); 
+
+                switch (currentTheme.shape) {
+                    case "circle": 
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case "ring": 
+                        ctx.beginPath();
+                        ctx.lineWidth = this.size * 0.2; 
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.lineWidth = this.size * 0.1;
+                        ctx.arc(0, 0, this.size * 0.6, 0, Math.PI * 2);
+                        ctx.stroke();
+                        break;
+                    case "triangle": 
+                        ctx.beginPath();
+                        const r = this.size;
+                        ctx.moveTo(0, -r);
+                        ctx.lineTo(r * 0.866, r * 0.5);
+                        ctx.lineTo(-r * 0.866, r * 0.5);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    case "line": 
+                        const h = this.size * 2; 
+                        const w = this.size * 0.1; 
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = this.color;
+                        ctx.fillRect(-w/2, -h/2, w, h);
+                        break;
+                    case "rect": 
+                        const s = this.size * 1.5;
+                        ctx.fillRect(-s/2, -s/2, s, s);
+                        break;
+                }
+                ctx.restore();
+                ctx.globalCompositeOperation = 'source-over';
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            let count = width < 768 ? 6 : 10;
+            if (currentTheme.shape === "line") count *= 1.5;
+            if (currentTheme.shape === "rect") count += 4;
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+
+        function updateAutoMouse() {
+            autoMouse.angle += 0.01;
+            autoMouse.x = width/2 + Math.cos(autoMouse.angle) * (width * 0.3);
+            autoMouse.y = height/2 + Math.sin(autoMouse.angle * 2) * (height * 0.2);
+            
+            if (Date.now() - lastMouseMoveTime > 3000) {
+                mouse.isActive = false;
+            } else {
+                mouse.isActive = true;
+            }
+        }
+
+        function animate() {
+            simTime++;
+            updateAutoMouse();
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        function updateUI() {
+            const elements = [
+                document.getElementById('theme-index'),
+                document.getElementById('mode-name'),
+                document.getElementById('mood-text'),
+                document.getElementById('song-name')
+            ];
+
+            elements.forEach(el => el.parentElement.classList.add('fading-out'));
+            if(document.getElementById('song-name')) document.getElementById('song-name').classList.add('fading-out');
+
+            setTimeout(() => {
+                document.getElementById('theme-index').innerText = currentTheme.id;
+                document.getElementById('mode-name').innerText = currentTheme.name;
+                document.getElementById('mood-text').innerText = currentTheme.mood;
+                document.getElementById('song-name').innerText = currentTheme.songTitle;
+
+                elements.forEach(el => el.parentElement.classList.remove('fading-out'));
+                if(document.getElementById('song-name')) document.getElementById('song-name').classList.remove('fading-out');
+            }, 500); 
+        }
+
+        function switchTheme() {
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            currentTheme = themes[currentThemeIndex];
+
+            document.body.className = currentTheme.class;
+            document.documentElement.style.setProperty('--bg-color', currentTheme.bg);
+            document.documentElement.style.setProperty('--text-color', currentTheme.text);
+            
+            canvas.style.filter = currentTheme.visual.filter;
+            
+            updateUI();
+            playThemeAudio(currentTheme.audioSrc);
+            
+            setTimeout(() => {
+                initParticles();
+            }, 200);
+        }
+
+        // 啟動
+        enterBtn.addEventListener('click', () => {
+            document.getElementById('start-overlay').classList.add('hidden');
+            audioElement.src = currentTheme.audioSrc;
+            audioElement.play().catch(e => {
+                document.getElementById('song-name').innerText = "(Check Files)";
+            });
+            document.getElementById('song-name').innerText = currentTheme.songTitle;
+            const d = new Date();
+            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            document.getElementById('date-text').innerText = `${months[d.getMonth()]} / ${d.getDate()}TH / ${d.getFullYear()}`;
+            
+            lastMouseMoveTime = Date.now(); 
+        });
+
+        document.body.addEventListener('click', (e) => {
+            if (e.target.closest('#start-overlay')) return;
+            switchTheme();
+        });
+
+        const handleMove = (x, y) => {
+            mouse.x = x;
+            mouse.y = y;
+            lastMouseMoveTime = Date.now();
+        };
+
+        window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => {
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: true});
+
+        window.addEventListener('resize', resize);
+
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>

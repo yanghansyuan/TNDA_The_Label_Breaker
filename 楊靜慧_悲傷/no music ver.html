@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幾何滑雪與墨染 - 探索人生篇</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #FFFFFF;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            transition: background-color 2s ease;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            color: #888;
+            opacity: 0.7;
+            transition: opacity 1s;
+        }
+
+        #main-hint {
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 300;
+            margin-bottom: 8px;
+        }
+
+        #sub-hint {
+            font-size: 12px;
+            letter-spacing: 1px;
+            font-weight: 300;
+            color: #aaa;
+        }
+
+        /* 新增文字樣式 */
+        #help-hint {
+            position: absolute;
+            bottom: 80px; /* 在原本提示的上方 */
+            left: 50%;
+            transform: translateX(-50%);
+            color: #bdc3c7;
+            font-size: 14px;
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 2s;
+            pointer-events: none;
+            font-family: 'Courier New', Courier, monospace; /* 打字機風格 */
+        }
+
+        #final-msg {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #546E7A; /* 深藍灰，配合第三階段 */
+            font-size: 18px;
+            letter-spacing: 4px;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 3s;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-container">
+        <div id="main-hint">Scroll to Begin</div>
+        <div id="sub-hint">Click to Inject Life</div>
+    </div>
+    
+    <div id="help-hint">Click. Help me.</div>
+    <div id="final-msg">Grief passes, scars remain.</div>
+
+    <canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const uiContainer = document.getElementById('ui-container');
+    const helpHint = document.getElementById('help-hint');
+    const finalMsg = document.getElementById('final-msg');
+
+    // 離屏 Canvas 用於處理墨水遮罩 (Ink Mask)
+    const inkCanvas = document.createElement('canvas');
+    const inkCtx = inkCanvas.getContext('2d');
+
+    // --- 狀態定義 ---
+    const STATE = {
+        SKIING: 'SKIING',           // S型滑雪
+        FLATTENING: 'FLATTENING',   // 自動變扁
+        WAITING_INK: 'WAITING_INK', // 等待墨水
+        SINKING: 'SINKING',         // 移至中央並下沉
+        DARKNESS: 'DARKNESS',       // 全黑互動
+        REBIRTH_GROW: 'REBIRTH_GROW', // 原地長回正方
+        REBIRTH_RISE: 'REBIRTH_RISE', // 升起回到原位 + 墨色下沉
+        SKY_SKIING: 'SKY_SKIING'    // 藍色背景滑雪
+    };
+
+    let currentState = STATE.SKIING;
+    let globalTimeCounter = 0;
+    
+    // --- 參數設置 ---
+    let width, height;
+    let scrollDistance = 0;
+    
+    // 玩家 (圓角 3D 立方體)
+    const player = {
+        x: 0, 
+        y: 0, 
+        baseSize: 30, 
+        w: 30,        // 當前寬度
+        h: 30,        // 當前高度
+        targetW: 30,
+        targetH: 30,
+        color: '#2C3E50', // 深藍灰
+        sideColor: '#566573',
+        topColor: '#808B96',
+        yOffset: 0,       // 滑雪波動偏移量
+        anchorY: 0        // 用於變形動畫的錨點記錄
+    };
+
+    // 環境物件
+    let trees = [];
+    let tracks = []; 
+    let renderLayers = []; // 墨水與淨化點
+    
+    // 進程控制
+    const PHASE_1_DURATION = 2500; 
+    let flattenStartTime = 0; 
+    
+    // 計時器變數
+    let stateTimer = 0;
+    let phase2Duration = 0;    // 第二階段持續時間
+    let highDarknessTimer = 0; // 進入全黑後的時間
+    let phase3Duration = 0;    // 第三階段持續時間
+    let autoSkiing = false;    // 是否自動滑雪
+    
+    // 視覺顏色
+    const COLORS = {
+        bgStart: '#FFFFFF',  
+        bgEnd: '#E3F2FD',    
+        treeStart: '#2F4F4F', 
+        treeEnd: '#01579B',   
+        ink: '#081030',       
+        purify: 'hsla(200, 60%, 85%, 1.0)' 
+    };
+
+    let currentBgColor = COLORS.bgStart;
+    let darknessLevel = 0;
+    let clearingY = 0; 
+    let waveOffset = 0;
+
+    // --- 初始化 ---
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        inkCanvas.width = width;
+        inkCanvas.height = height;
+        
+        if (currentState === STATE.SKIING) {
+            player.x = width * 0.2;
+            player.y = height * 0.5;
+            initTrees(COLORS.treeStart); 
+        }
+    }
+
+    function initTrees(color) {
+        for(let i=0; i<15; i++) {
+            trees.push({
+                x: Math.random() * width * 1.5, 
+                y: Math.random() * height,
+                h: 20 + Math.random() * 30,
+                targetH: 20 + Math.random() * 30,
+                w: 10 + Math.random() * 10,
+                opacity: 1,
+                growing: false,
+                color: color
+            });
+        }
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- 互動監聽 ---
+
+    window.addEventListener('wheel', (e) => {
+        const delta = Math.abs(e.deltaY) > 0 ? Math.sign(e.deltaY) * 8 : 0;
+        if (delta <= 0) return;
+
+        // 如果在第三階段且正在自動滑雪，使用者滾動後取消自動滑雪
+        if ((currentState === STATE.SKY_SKIING || currentState === STATE.REBIRTH_RISE) && autoSkiing) {
+            autoSkiing = false;
+        }
+
+        if (currentState === STATE.SKIING || currentState === STATE.SKY_SKIING) {
+            scrollDistance += delta;
+            
+            const wave = Math.sin(scrollDistance * 0.004) * (height * 0.15);
+            player.yOffset = wave;
+
+            updateTracks();
+            uiContainer.style.opacity = 0;
+        } 
+        else if (currentState === STATE.REBIRTH_RISE) {
+            scrollDistance += delta;
+            uiContainer.style.opacity = 0;
+        }
+        else if (currentState === STATE.FLATTENING) {
+            scrollDistance += delta * 0.1;
+            uiContainer.style.opacity = 0;
+        }
+        else if (currentState === STATE.SINKING || currentState === STATE.DARKNESS || currentState === STATE.WAITING_INK) {
+             stateTimer += delta * 0.1;
+             uiContainer.style.opacity = 0;
+        }
+        
+        checkStateProgression();
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        const mx = e.clientX;
+        const my = e.clientY;
+
+        if (currentState === STATE.SKIING || currentState === STATE.FLATTENING || currentState === STATE.SKY_SKIING) {
+            const worldX = mx + scrollDistance - (width * 0.2);
+            const treeColor = (currentState === STATE.SKY_SKIING || currentState === STATE.REBIRTH_RISE) 
+                              ? COLORS.treeEnd : COLORS.treeStart;
+            
+            trees.push({
+                x: worldX,
+                y: my,
+                h: 0,
+                targetH: 25 + Math.random() * 35,
+                w: 12 + Math.random() * 12,
+                opacity: 1,
+                growing: true,
+                color: treeColor
+            });
+        } else if (currentState === STATE.SINKING || currentState === STATE.DARKNESS || currentState === STATE.WAITING_INK) {
+            renderLayers.push({
+                type: 'purifier',
+                x: mx,
+                y: my,
+                r: 0,
+                targetR: 20 + Math.random() * 15, 
+                opacity: 1, 
+                life: 1.0,  
+                timestamp: ++globalTimeCounter
+            });
+            checkRebirthCondition();
+        }
+    });
+
+    // --- 邏輯控制 ---
+
+    function checkStateProgression() {
+        if (currentState === STATE.SKIING && scrollDistance > PHASE_1_DURATION) {
+            currentState = STATE.FLATTENING;
+            flattenStartTime = Date.now();
+            player.anchorY = player.y + player.yOffset + player.h;
+            
+            player.targetH = 15;   
+            player.targetW = 60;  
+            stateTimer = 0;
+        }
+    }
+
+    function checkRebirthCondition() {
+        if (currentState !== STATE.SINKING && currentState !== STATE.DARKNESS) return;
+        
+        const px = player.x;
+        const py = player.y;
+        const pw = player.w;
+        const ph = player.h;
+
+        const checkPoints = [
+            {x: px, y: py},             
+            {x: px + pw, y: py},        
+            {x: px, y: py + ph},        
+            {x: px + pw, y: py + ph},   
+            {x: px + pw/2, y: py + ph/2}
+        ];
+
+        const activePurifiers = renderLayers.filter(l => l.type === 'purifier' && l.opacity > 0.5);
+        
+        let coveredPoints = 0;
+        for (let pt of checkPoints) {
+            let isPointCovered = false;
+            for (let p of activePurifiers) {
+                const dx = pt.x - p.x;
+                const dy = pt.y - p.y;
+                if (Math.sqrt(dx*dx + dy*dy) < p.r) {
+                    isPointCovered = true;
+                    break;
+                }
+            }
+            if (isPointCovered) coveredPoints++;
+        }
+
+        if (coveredPoints === 5 && darknessLevel > 0.95) {
+            triggerRebirth();
+        }
+    }
+
+    function triggerRebirth() {
+        currentState = STATE.REBIRTH_GROW;
+        player.anchorY = player.y + player.h;
+        player.targetW = player.baseSize;
+        player.targetH = player.baseSize;
+        stateTimer = 0;
+        clearingY = 0; 
+        currentBgColor = COLORS.bgEnd;
+        // 移除第二階段提示
+        helpHint.style.opacity = 0;
+    }
+
+    function updateTracks() {
+        if (tracks.length === 0 || Math.abs(scrollDistance - tracks[tracks.length-1].worldX) > 5) {
+            tracks.push({
+                worldX: scrollDistance,
+                y: player.y + player.yOffset + player.h 
+            });
+        }
+        if (tracks.length > 800) tracks.shift();
+    }
+
+    // --- 繪圖輔助 ---
+
+    function drawRoundedCube(ctx, x, y, w, h, baseColor) {
+        const r = 4; 
+        const depth = player.baseSize * 0.4; 
+
+        const isoX = depth * 0.866; 
+        const isoY = depth * 0.5;   
+
+        const f_tr = {x: x + w, y: y};
+        const f_br = {x: x + w, y: y + h};
+        const b_tr = {x: x + w + isoX, y: y - isoY};
+        const b_br = {x: x + w + isoX, y: y + h - isoY};
+        
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 1;
+
+        ctx.fillStyle = player.sideColor;
+        ctx.beginPath();
+        ctx.moveTo(f_tr.x, f_tr.y + r);
+        ctx.lineTo(f_tr.x, f_br.y - r);
+        ctx.arcTo(f_tr.x, f_br.y, f_br.x + isoX, f_br.y - isoY, r); 
+        ctx.lineTo(b_br.x, b_br.y + r);
+        ctx.arcTo(b_br.x, b_br.y, b_tr.x, b_tr.y, r); 
+        ctx.lineTo(b_tr.x, b_tr.y);
+        ctx.lineTo(f_tr.x, f_tr.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = player.topColor;
+        ctx.beginPath();
+        ctx.moveTo(x, y); 
+        ctx.lineTo(x + isoX, y - isoY); 
+        ctx.lineTo(b_tr.x, b_tr.y); 
+        ctx.lineTo(f_tr.x, f_tr.y); 
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = baseColor;
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+        ctx.fill();
+    }
+
+    function drawBrushInk(ctx, item) {
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        
+        ctx.globalAlpha = item.opacity;
+        ctx.fillStyle = COLORS.ink;
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, item.r * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = item.opacity * 0.3;
+        ctx.beginPath();
+        const segments = 16;
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const noise = Math.sin(angle * 5 + item.seed) * (item.r * 0.1);
+            const r = item.r + noise;
+            ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawSmoothTracks(ctx) {
+        if (tracks.length < 2) return;
+        ctx.beginPath();
+        ctx.strokeStyle = (currentState === STATE.SKY_SKIING || currentState === STATE.REBIRTH_RISE) ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = player.w * 0.9; 
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const offsetX = width * 0.2;
+        let p0 = tracks[0];
+        let sx0 = offsetX - (scrollDistance - p0.worldX);
+        ctx.moveTo(sx0, p0.y); 
+
+        for (let i = 1; i < tracks.length; i++) {
+            const p = tracks[i];
+            const sx = offsetX - (scrollDistance - p.worldX);
+            ctx.lineTo(sx, p.y);
+        }
+        ctx.stroke();
+    }
+
+    // --- 循環 ---
+
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    function update() {
+        stateTimer++;
+        waveOffset += 0.05; 
+
+        // 1. 玩家動畫
+        
+        if (currentState === STATE.SKIING) {
+            let progress = scrollDistance / PHASE_1_DURATION;
+            let spawnRate = 0.06 * Math.max(0, (1 - progress * 1.3)); 
+            
+            if (Math.random() < spawnRate) {
+                 trees.push({
+                    x: width + scrollDistance + Math.random() * 200,
+                    y: Math.random() * height,
+                    h: 20 + Math.random() * 30,
+                    targetH: 20 + Math.random() * 30,
+                    w: 10 + Math.random() * 10,
+                    opacity: 1,
+                    growing: false,
+                    color: COLORS.treeStart
+                });
+            }
+        }
+        else if (currentState === STATE.FLATTENING) {
+            const duration = 2000;
+            const elapsed = Date.now() - flattenStartTime;
+            let progress = elapsed / duration;
+            if (progress > 1) progress = 1;
+            
+            player.w = player.baseSize + (player.targetW - player.baseSize) * progress;
+            player.h = player.targetH + (player.baseSize - player.targetH) * (1 - progress);
+            
+            if (progress < 1) player.yOffset *= 0.9;
+            else player.yOffset = 0;
+
+            player.y = player.anchorY - player.h - player.yOffset;
+
+            if (progress >= 1) {
+                currentState = STATE.WAITING_INK;
+                stateTimer = 0;
+            }
+        }
+        else if (currentState === STATE.WAITING_INK) {
+            if (stateTimer > 60) {
+                currentState = STATE.SINKING;
+                player.targetX = width * 0.5 - player.w / 2;
+                player.targetY = height * 0.85 - player.h;
+            }
+        }
+        else if (currentState === STATE.SINKING) {
+            phase2Duration++; // 開始計算第二階段時間
+
+            player.x += (width * 0.5 - player.w/2 - player.x) * 0.02;
+            const targetY = height * 0.8 - player.h;
+            player.y += (targetY - player.y) * 0.003; 
+        }
+        else if (currentState === STATE.DARKNESS) {
+            phase2Duration++;
+        }
+        else if (currentState === STATE.REBIRTH_GROW) {
+            const centerX = width * 0.5;
+            player.w += (player.targetW - player.w) * 0.05;
+            player.h += (player.targetH - player.h) * 0.05;
+            player.x = centerX - player.w / 2;
+            player.y = player.anchorY - player.h;
+
+            if (Math.abs(player.h - player.targetH) < 0.5) {
+                currentState = STATE.REBIRTH_RISE;
+                trees = []; 
+                tracks = []; 
+                autoSkiing = true; // 進入第三階段，開啟自動滑雪
+            }
+        }
+        else if (currentState === STATE.REBIRTH_RISE) {
+            phase3Duration++;
+            
+            const targetX = width * 0.2;
+            const targetY = height * 0.5;
+            
+            player.x += (targetX - player.x) * 0.01;
+            player.y += (targetY - player.y) * 0.01;
+            
+            // 自動滑雪邏輯
+            if (autoSkiing) {
+                scrollDistance += 5;
+            }
+
+            if (Math.random() < 0.05) {
+                 trees.push({
+                    x: width + scrollDistance + 100, 
+                    y: Math.random() * height,
+                    h: 20 + Math.random() * 30,
+                    targetH: 20 + Math.random() * 30,
+                    w: 10 + Math.random() * 10,
+                    opacity: 1,
+                    growing: false,
+                    color: COLORS.treeEnd 
+                });
+            }
+
+            const progress = 1 - (Math.abs(player.x - targetX) / Math.abs(width * 0.5 - width * 0.2));
+            clearingY = height * (progress * 1.2); 
+
+            if (Math.abs(player.x - targetX) < 5 && clearingY > height) {
+                currentState = STATE.SKY_SKIING;
+                darknessLevel = 0;
+            }
+        }
+        else if (currentState === STATE.SKY_SKIING) {
+            phase3Duration++;
+            
+            // 自動滑雪邏輯
+            if (autoSkiing) {
+                scrollDistance += 5;
+                const wave = Math.sin(scrollDistance * 0.004) * (height * 0.15);
+                player.yOffset = wave;
+                updateTracks();
+            }
+
+             if (Math.random() < 0.03) {
+                 trees.push({
+                    x: width + scrollDistance + 100,
+                    y: Math.random() * height,
+                    h: 20 + Math.random() * 30,
+                    targetH: 20 + Math.random() * 30,
+                    w: 10 + Math.random() * 10,
+                    opacity: 1,
+                    growing: false,
+                    color: COLORS.treeEnd
+                });
+            }
+        }
+
+        // 檢查第二階段超時提示 (10秒 = 600 frames)
+        if (phase2Duration > 600 && (currentState === STATE.SINKING || currentState === STATE.DARKNESS)) {
+            helpHint.style.opacity = 1;
+        }
+
+        // 檢查第三階段文字提示
+        if (phase3Duration > 600 && (currentState === STATE.REBIRTH_RISE || currentState === STATE.SKY_SKIING)) {
+            finalMsg.style.opacity = 1;
+        }
+
+        // 2. 墨水生成
+        if (currentState === STATE.SINKING || currentState === STATE.DARKNESS || currentState === STATE.WAITING_INK) {
+            // 加快生成 (0.03 -> 0.05)
+            if (Math.random() < 0.05 + (darknessLevel * 0.05)) { 
+                renderLayers.push({
+                    type: 'ink',
+                    x: Math.random() * width,
+                    y: -100,
+                    r: 40 + Math.random() * 60,
+                    targetR: 100 + Math.random() * 120,
+                    vy: 1 + Math.random() * 2, 
+                    opacity: 0,
+                    seed: Math.random() * 100,
+                    timestamp: ++globalTimeCounter
+                });
+            }
+            // 加快變黑 (0.0008 -> 0.0015)
+            if (darknessLevel < 1) darknessLevel += 0.0015; 
+            
+            // 計時：高黑暗狀態
+            if (darknessLevel > 0.95) {
+                currentState = STATE.DARKNESS;
+                highDarknessTimer++;
+            }
+        }
+
+        // 3. 物件更新
+        renderLayers.forEach(item => {
+            if (item.type === 'ink') {
+                item.y += item.vy;
+                if (item.y > height * 0.1) { 
+                    item.r += (item.targetR - item.r) * 0.005; 
+                    if (item.opacity < 0.85) item.opacity += 0.005; 
+                }
+                if (item.y > height + 400) item.dead = true;
+            } else if (item.type === 'purifier') {
+                item.r += (item.targetR - item.r) * 0.1;
+                
+                // 動態侵蝕邏輯
+                if (darknessLevel > 0.3) {
+                    let baseErosion = 0.03; // 加快基礎侵蝕 (原 0.02)
+                    let erosionMultiplier = 1.0;
+                    
+                    // 墨水染透前 (darkness < 0.95) 或 染透後的前5秒 (highDarknessTimer < 300)
+                    // 侵蝕速度極快
+                    if (darknessLevel < 0.95 || highDarknessTimer < 300) {
+                        erosionMultiplier = 2.0; 
+                    } else {
+                        // 5秒後，速度緩慢下降
+                        // (highDarknessTimer - 300) * 0.005 
+                        // 讓倍率從 2.0 慢慢降到 0.2
+                        let decay = (highDarknessTimer - 300) * 0.005;
+                        erosionMultiplier = Math.max(0.2, 2.0 - decay);
+                    }
+                    
+                    item.life -= baseErosion * erosionMultiplier;
+                    item.opacity = item.life;
+                    if (item.life <= 0) item.dead = true;
+                }
+            }
+        });
+        renderLayers = renderLayers.filter(item => !item.dead);
+
+        trees.forEach(tree => {
+            if (tree.growing) {
+                tree.h += (tree.targetH - tree.h) * 0.05;
+                if (Math.abs(tree.targetH - tree.h) < 1) tree.growing = false;
+            }
+            if (currentState === STATE.FLATTENING || currentState === STATE.WAITING_INK) {
+                tree.opacity -= 0.05;
+            }
+        });
+        trees = trees.filter(t => t.x - scrollDistance > -200);
+    }
+
+    function draw() {
+        // --- 1. 準備墨水層 (Offscreen Canvas) ---
+        inkCtx.clearRect(0, 0, width, height);
+        
+        if (darknessLevel > 0) {
+            inkCtx.fillStyle = `rgba(8, 16, 48, ${darknessLevel * 0.7})`;
+            inkCtx.fillRect(0, 0, width, height);
+        }
+        
+        renderLayers.forEach(item => {
+            if (item.type === 'ink' && item.opacity > 0) {
+                drawBrushInk(inkCtx, item);
+            }
+        });
+
+        inkCtx.globalCompositeOperation = 'destination-out';
+        renderLayers.forEach(item => {
+            if (item.type === 'purifier' && item.opacity > 0) {
+                inkCtx.beginPath();
+                inkCtx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+                inkCtx.fill();
+            }
+        });
+        
+        if (currentState === STATE.REBIRTH_RISE && clearingY > 0) {
+            inkCtx.beginPath();
+            inkCtx.moveTo(0, 0);
+            inkCtx.lineTo(width, 0);
+            
+            const amplitude = 30; 
+            const frequency = 0.01; 
+            
+            for (let x = width; x >= 0; x -= 10) {
+                let y = clearingY + 
+                        Math.sin(x * frequency + waveOffset) * amplitude + 
+                        Math.cos(x * frequency * 2.5) * (amplitude * 0.5);
+                inkCtx.lineTo(x, y);
+            }
+            
+            inkCtx.lineTo(0, 0);
+            inkCtx.fill();
+        }
+        
+        inkCtx.globalCompositeOperation = 'source-over'; 
+
+        // --- 2. 繪製主畫面 ---
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.fillStyle = currentBgColor;
+        ctx.fillRect(0, 0, width, height);
+
+        if (currentState !== STATE.SINKING && currentState !== STATE.DARKNESS && currentState !== STATE.WAITING_INK) {
+            drawSmoothTracks(ctx);
+        }
+
+        trees.forEach(tree => {
+            if (tree.opacity <= 0) return;
+            let screenX = tree.x - scrollDistance + (width * 0.2);
+            if (screenX < -50 || screenX > width + 50) return;
+
+            ctx.globalAlpha = tree.opacity;
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.beginPath();
+            ctx.ellipse(screenX, tree.y + 5, tree.w * 0.8, tree.w * 0.3, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.fillStyle = tree.color;
+            ctx.beginPath();
+            ctx.moveTo(screenX, tree.y - tree.h);
+            ctx.lineTo(screenX + tree.w/2, tree.y);
+            ctx.lineTo(screenX - tree.w/2, tree.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        });
+
+        renderLayers.forEach(item => {
+            if (item.type === 'purifier' && item.opacity > 0) {
+                ctx.globalAlpha = item.opacity;
+                ctx.fillStyle = COLORS.purify;
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        });
+
+        ctx.save();
+        let visualY = player.y;
+        if (currentState === STATE.SKIING || currentState === STATE.SKY_SKIING || currentState === STATE.REBIRTH_RISE) {
+            if (currentState === STATE.REBIRTH_RISE) {
+                 visualY += Math.sin(scrollDistance * 0.004) * (height * 0.05); 
+            } else {
+                 visualY += player.yOffset;
+            }
+        }
+
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.beginPath();
+        let shadowY = visualY + player.h + 5;
+        let shadowScale = 1 - (Math.abs(player.yOffset) / 200); 
+        ctx.ellipse(player.x + player.w/2, shadowY, player.w * 0.6 * shadowScale, player.w * 0.2 * shadowScale, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        drawRoundedCube(ctx, player.x, visualY, player.w, player.h, player.color);
+        
+        if (currentState === STATE.REBIRTH_GROW || currentState === STATE.REBIRTH_RISE) {
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.fillStyle = COLORS.purify;
+            ctx.beginPath();
+            ctx.arc(player.x + player.w/2, visualY + player.h/2, 80, 0, Math.PI*2);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // --- 3. 疊加墨水遮罩 ---
+        ctx.drawImage(inkCanvas, 0, 0);
+    }
+
+    requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>

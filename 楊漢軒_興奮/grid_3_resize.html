@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>筆刷 3x3 舞台</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0;
+      background: #111;
+    }
+
+    .cell {
+      border: 1px solid #222; /* 想去掉格線就把這行刪掉 */
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 讓 iframe 本身當容器，不出現捲軸 */
+    .cell iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      overflow: hidden;
+    }
+
+    /* 讓裡面的 1024x1024 畫面縮放到 1/3，並置中顯示
+       這裡假設每個筆刷的內容根節點是 <body>，我們稍後用 JS 加 style 進去 */
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="cell"><iframe data-file="16_adaption_size2.html"   title="brush01"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"      title="brush02"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"     title="brush03"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"          title="brush04"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"  title="brush05"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"        title="brush06"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"         title="brush07"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html"           title="brush08"></iframe></div>
+    <div class="cell"><iframe data-file="16_adaption_size2.html" title="brush09"></iframe></div>
+  </div>
+
+  <script>
+    // 共用資料夾路徑（注意 file:///）
+    const basePath = "file:///D:/Work/2026/放視大賞跨域工作坊/作業/";
+
+    document.querySelectorAll("iframe[data-file]").forEach((frame) => {
+      const fileName = frame.getAttribute("data-file");
+      frame.src = basePath + encodeURI(fileName);
+
+      // 當內頁載入完成後，對內容做等比縮小
+      frame.addEventListener("load", () => {
+        try {
+          const doc = frame.contentDocument || frame.contentWindow.document;
+          const root = doc.body; // 假設畫布是充滿整個 body
+
+          // 3x3 → 每格約 1/3 大，這裡直接用 scale(1/3)
+          const scale = 1 / 3;
+
+          // 把 body 變成 1024x1024 的縮放容器
+          root.style.margin = "0";
+          root.style.padding = "0";
+          root.style.transformOrigin = "top left";
+          root.style.transform = `scale(${scale})`;
+
+          // 避免內頁再出現捲軸
+          root.style.overflow = "hidden";
+
+          // 讓縮小後的內容在 cell 中置中
+          // 1024 * scale = 341.333...，我們用 flex 置中
+          const html = doc.documentElement;
+          html.style.margin = "0";
+          html.style.padding = "0";
+          html.style.width = "100%";
+          html.style.height = "100%";
+          html.style.display = "flex";
+          html.style.justifyContent = "center";
+          html.style.alignItems = "center";
+          html.style.overflow = "hidden";
+        } catch (e) {
+          // 若瀏覽器有本機 iframe 限制，可能會進到這裡，就先忽略錯誤
+          console.warn("無法縮放 iframe 內容：", e);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

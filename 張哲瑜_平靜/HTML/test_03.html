@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>情緒實驗室：平靜與激動</title>
+
+    <style>
+
+        /* --- CSS 樣式區 --- */
+
+        body, html {
+
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            /* 預設背景 (激動狀態 - Marsala) */
+
+            background-color: #955251;
+
+            /* 背景顏色的過渡時間 */
+
+            transition: background 2s ease-in-out, background-color 2s ease-in-out;
+
+        }
+
+
+
+        /* 平靜狀態的樣式 */
+
+        body.calm-state {
+
+            /* 使用 CSS 漸層：從冷灰藍色漸變到原本的 Cloud Dancer 米白色 */
+
+            background: linear-gradient(to bottom, #D0DDE6, #F0EEE9);
+
+            /* 備用純色，以防瀏覽器不支援漸層 */
+
+            background-color: #F0EEE9;
+
+        }
+
+
+
+        canvas {
+
+            display: block;
+
+            width: 100vw;
+
+            height: 100vh;
+
+            cursor: pointer; /* 將滑鼠游標改為手型，提示可點擊 */
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <canvas id="emotionCanvas"></canvas>
+
+
+
+    <script>
+
+        /* --- JavaScript 邏輯區 --- */
+
+        const canvas = document.getElementById('emotionCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        let lines = [];
+
+        let isCalm = false;
+
+        let width, height;
+
+        let lineSpacing = 0;
+
+
+
+        // --- 色彩設定 ---
+
+        // 激動色彩 (維持暖色調與深色對比)
+
+        const AGITATED_COLORS = ['#955251', '#7A3E3D', '#5E2C2B', '#F0EEE9', '#333333'];
+
+        // 平靜色彩 (新增冷色調：藍灰、淺冷灰，保留一點點暖灰做平衡)
+
+        const CALM_COLORS = ['#AABCCE', '#C3D1DC', '#D8E2E8', '#B0AFA9'];
+
+
+
+        class Line {
+
+            constructor(index) {
+
+                this.index = index;
+
+                // 隨機賦予線條不同的「個性」
+
+                this.thickness = Math.random() * 6 + 1; // 粗細範圍 1px ~ 7px
+
+                this.jitterIntensity = Math.random() * 0.8 + 0.2; // 抖動劇烈程度
+
+                this.color = AGITATED_COLORS[Math.floor(Math.random() * AGITATED_COLORS.length)];
+
+                this.points = [];
+
+                this.segments = 40; // 分段數
+
+                this.resetPoints();
+
+            }
+
+
+
+            resetPoints() {
+
+                this.points = [];
+
+                // 根據視窗高度與線條數量，計算出這條線的「基準中線」Y座標
+
+                const baseY = lineSpacing * (this.index + 1);
+
+                for (let i = 0; i <= this.segments; i++) {
+
+                    // 初始化點的位置
+
+                    this.points.push({ x: 0, y: baseY, targetY: baseY });
+
+                }
+
+            }
+
+
+
+            update() {
+
+                // 計算基準 Y 座標
+
+                const baseY = lineSpacing * (this.index + 1);
+
+                // 計算最大允許的抖動幅度 (不超過間距的 45%，確保不交叉)
+
+                const maxDeviation = lineSpacing * 0.45;
+
+
+
+                this.points.forEach((p, i) => {
+
+                    p.x = (i / this.segments) * width; // RWD 寬度定位
+
+
+
+                    if (!isCalm) {
+
+                        // --- 激動模式 (原地雜亂，不交叉) ---
+
+                        // 使用 Math.random() 產生高頻雜訊，讓線條原地跳動
+
+                        let noise = (Math.random() - 0.5) * 2 * maxDeviation * this.jitterIntensity;
+
+
+
+                        // 越粗的線條，抖動感稍微笨重一點，這裡做一點微調
+
+                        if(this.thickness > 4) noise *= 0.7;
+
+
+
+                        p.targetY = baseY + noise;
+
+
+
+                    } else {
+
+                        // --- 平靜模式 (冷靜、乾淨) ---
+
+                        // 極微小的緩慢波動，幾乎接近直線
+
+                        let subtleWave = Math.sin(Date.now() * 0.0008 + i * 0.15 + this.index) * 3;
+
+                        p.targetY = baseY + subtleWave;
+
+                    }
+
+
+
+                    // 緩動演算法 (Easing)：讓線條平滑地移動到目標位置
+
+                    let ease = isCalm ? 0.05 : 0.2;
+
+                    p.y += (p.targetY - p.y) * ease;
+
+                });
+
+            }
+
+
+
+            draw() {
+
+                ctx.beginPath();
+
+                // 平靜時線條統一變細 (1px)，激動時使用隨機粗細
+
+                ctx.lineWidth = isCalm ? 1 : this.thickness;
+
+                // 根據狀態切換色盤
+
+                ctx.strokeStyle = isCalm ? CALM_COLORS[this.index % CALM_COLORS.length] : this.color;
+
+                ctx.lineCap = 'round';
+
+                ctx.lineJoin = 'round';
+
+
+
+                if (this.points.length > 0) {
+
+                    ctx.moveTo(this.points[0].x, this.points[0].y);
+
+                    // 使用二次貝茲曲線繪製平滑線條
+
+                    for (let i = 1; i < this.points.length - 1; i++) {
+
+                        let xc = (this.points[i].x + this.points[i+1].x) / 2;
+
+                        let yc = (this.points[i].y + this.points[i+1].y) / 2;
+
+                        ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+
+                    }
+
+                    // 連接最後一點
+
+                    let lastP = this.points[this.points.length-1];
+
+                    ctx.lineTo(lastP.x, lastP.y);
+
+                }
+
+                ctx.stroke();
+
+            }
+
+        }
+
+
+
+        function init() {
+
+            width = canvas.width = window.innerWidth;
+
+            height = canvas.height = window.innerHeight;
+
+            lines = [];
+
+            // 線條數量設定 (可依需求調整，目前 10 條)
+
+            const lineCount = 10;
+
+            // 計算線條之間的垂直間距
+
+            lineSpacing = height / (lineCount + 1);
+
+
+
+            for (let i = 0; i < lineCount; i++) {
+
+                lines.push(new Line(i));
+
+            }
+
+        }
+
+
+
+        function animate() {
+
+            // 完全清除畫布，讓 CSS 背景透出來
+
+            ctx.clearRect(0, 0, width, height); 
+
+
+
+            lines.forEach(line => {
+
+                line.update();
+
+                line.draw();
+
+            });
+
+            requestAnimationFrame(animate);
+
+        }
+
+
+
+        window.addEventListener('resize', init);
+
+
+
+        window.addEventListener('mousedown', (e) => {
+
+            if (e.button === 0) { // 滑鼠左鍵點擊
+
+                isCalm = !isCalm;
+
+                document.body.classList.toggle('calm-state');
+
+            }
+
+        });
+
+
+
+        init();
+
+        animate();
+
+    </script>
+
+</body>
+
+</html>

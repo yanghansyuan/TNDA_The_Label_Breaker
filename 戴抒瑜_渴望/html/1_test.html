@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interactive Night Cursor</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #1b1f24; /* 深灰夜空底 */
+      cursor: none;         /* 隱藏系統游標 */
+    }
+
+    /* 全螢幕畫布，自適應 */
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    /* 毛玻璃：按住左鍵才出現 */
+    .frost {
+      position: fixed;
+      left: 0; top: 0;
+      width: 160px;
+      height: 160px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 120ms ease;
+      /* 霧化背景（瀏覽器需支援） */
+      backdrop-filter: blur(18px) saturate(130%);
+      -webkit-backdrop-filter: blur(18px) saturate(130%);
+      /* 微微玻璃質感 */
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.10) inset,
+        0 18px 50px rgba(0,0,0,0.35);
+    }
+    .frost.on {
+      opacity: 1;
+    }
+
+    /* 避免選取文字造成拖曳怪感 */
+    * { user-select: none; }
+  </style>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+  <div id="frost" class="frost"></div>
+
+  <script>
+    // ========== Canvas setup (retina friendly) ==========
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ========== Star field ==========
+    const STAR_COUNT = 90;
+    const stars = [];
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+
+    function initStars() {
+      stars.length = 0;
+      for (let i = 0; i < STAR_COUNT; i++) {
+        stars.push({
+          x: rand(0, window.innerWidth),
+          y: rand(0, window.innerHeight),
+          r: rand(0.6, 1.8),
+          baseA: rand(0.15, 0.55),
+          tw: rand(0.8, 2.2),
+          ph: rand(0, Math.PI * 2)
+        });
+      }
+    }
+    initStars();
+    window.addEventListener('resize', initStars);
+
+    // ========== Cursor state ==========
+    const frost = document.getElementById('frost');
+
+    let mouseX = window.innerWidth * 0.5;
+    let mouseY = window.innerHeight * 0.5;
+    let prevX = mouseX, prevY = mouseY;
+
+    let isDown = false;
+
+    // 用速度判斷「有在移動」以開啟行星環自轉
+    let speed = 0;          // current speed (smoothed)
+    let moveEnergy = 0;     // decays when stop moving
+    let ringAngle = 0;      // rotation angle
+
+    // ========== Events ==========
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // 只理左鍵
+      isDown = true;
+      frost.classList.add('on');
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (e.button !== 0) return;
+      isDown = false;
+      frost.classList.remove('on');
+    });
+
+    // 讓毛玻璃圈跟著走
+    function updateFrost() {
+      frost.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+    }
+
+    // ========== Drawing helpers ==========
+    function drawBackground() {
+      // 夜空底: 深灰 + 很淡的漸層
+      const g = ctx.createRadialGradient(
+        window.innerWidth * 0.5, window.innerHeight * 0.35, 50,
+        window.innerWidth * 0.5, window.innerHeight * 0.35, Math.max(window.innerWidth, window.innerHeight)
+      );
+      g.addColorStop(0, '#20262c');
+      g.addColorStop(1, '#161a1f');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+      // 星星閃爍
+      const t = performance.now() * 0.001;
+      for (const s of stars) {
+        const a = s.baseA + 0.18 * Math.sin(t * s.tw + s.ph);
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, a)})`;
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawSphere(x, y, r, pressed) {
+      // 球體：未按下=黃色；按下=橘黃金屬 + 發光
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (!pressed) {
+        // 黃色球: 柔光漸層
+        const g = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r*1.25);
+        g.addColorStop(0, '#ffe67a');
+        g.addColorStop(0.45, '#f5c443');
+        g.addColorStop(1, '#c98a12');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 小高光
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.ellipse(-r*0.25, -r*0.28, r*0.22, r*0.15, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 很淡的陰影邊
+        ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        // 按下：金屬橘黃 + glow
+        ctx.shadowColor = 'rgba(255, 170, 40, 0.85)';
+        ctx.shadowBlur = 26;
+
+        const g = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r*1.35);
+        g.addColorStop(0, '#fff1c2');
+        g.addColorStop(0.22, '#ffcc66');
+        g.addColorStop(0.55, '#ff9f2e');
+        g.addColorStop(1, '#a84c00');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 金屬感：輕微的「高光條紋」
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.22;
+        for (let i = -3; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+          ctx.lineWidth = 1;
+          ctx.arc(0, 0, r*0.92, (i*0.25) + 0.2, (i*0.25) + 0.5);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        // 邊緣加亮
+        ctx.strokeStyle = 'rgba(255, 220, 150, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawRing(x, y, baseR, pressed, energy, angle) {
+      // 行星環：一圈「小圓錐」(三角形) 繞著球轉
+      // energy = 0..1，越大越明顯
+      const count = 10;
+      const ringR = baseR * 1.25;
+      const tilt = 0.55; // 橢圓扁率 (模擬視角)
+      const alpha = 0.18 + 0.55 * energy;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(0.35); // 固定角度讓它像斜的環
+      ctx.globalAlpha = alpha;
+
+      for (let i = 0; i < count; i++) {
+        const a = angle + (i / count) * Math.PI * 2;
+
+        // 橢圓環座標
+        const px = Math.cos(a) * ringR;
+        const py = Math.sin(a) * ringR * tilt;
+
+        // 三角錐方向：指向外側
+        const dirX = Math.cos(a);
+        const dirY = Math.sin(a) * tilt;
+
+        // 大小隨 energy 微變
+        const h = baseR * (0.26 + 0.12 * energy);
+        const w = baseR * (0.16 + 0.06 * energy);
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(Math.atan2(dirY, dirX));
+
+        // 顏色：未按=棕橘；按下=更亮偏金
+        const fill = pressed ? `rgba(255, 200, 110, ${0.75})` : `rgba(168, 104, 18, ${0.75})`;
+        const edge = pressed ? `rgba(255, 240, 200, ${0.55})` : `rgba(60, 35, 8, ${0.35})`;
+
+        ctx.beginPath();
+        ctx.moveTo(h, 0);
+        ctx.lineTo(0, -w);
+        ctx.lineTo(0,  w);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+
+        ctx.strokeStyle = edge;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    // ========== Main loop ==========
+    function tick() {
+      // 速度估算
+      const dx = mouseX - prevX;
+      const dy = mouseY - prevY;
+      const instSpeed = Math.sqrt(dx*dx + dy*dy);
+
+      // 平滑速度
+      speed = speed * 0.85 + instSpeed * 0.15;
+
+      // moveEnergy: 移動時補能，不動時衰減
+      const add = Math.min(1, speed / 18);
+      moveEnergy = Math.max(0, Math.min(1, moveEnergy * 0.92 + add * 0.25));
+
+      // 旋轉速度隨 moveEnergy
+      ringAngle += 0.08 + moveEnergy * 0.22;
+
+      prevX = mouseX; prevY = mouseY;
+
+      // 畫面
+      drawBackground();
+
+      // 游標元件
+      const r = 24; // 球體半徑
+      drawRing(mouseX, mouseY, r, isDown, moveEnergy, ringAngle);
+      drawSphere(mouseX, mouseY, r, isDown);
+
+      // 毛玻璃位置更新
+      updateFrost();
+
+      requestAnimationFrame(tick);
+    }
+    tick();
+  </script>
+</body>
+</html>

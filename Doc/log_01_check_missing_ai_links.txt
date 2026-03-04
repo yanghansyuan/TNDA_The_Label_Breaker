@@ -1,0 +1,106 @@
+Ignoring wrong pointing object 6 0 (offset 0)
+Ignoring wrong pointing object 8 0 (offset 0)
+Ignoring wrong pointing object 14 0 (offset 0)
+Ignoring wrong pointing object 15 0 (offset 0)
+Ignoring wrong pointing object 6 0 (offset 0)
+Ignoring wrong pointing object 8 0 (offset 0)
+Ignoring wrong pointing object 16 0 (offset 0)
+Ignoring wrong pointing object 17 0 (offset 0)
+Ignoring wrong pointing object 6 0 (offset 0)
+Ignoring wrong pointing object 8 0 (offset 0)
+Ignoring wrong pointing object 15 0 (offset 0)
+Ignoring wrong pointing object 16 0 (offset 0)
+======================================================================
+檢查資料夾: D:\Work\2026\TNDA_跨域工作坊\學生作業
+標準檔名（模糊比對）：檔名含「AI」「對話」「網址」即可（例：AI對話串網址.docx、AI對話網址.pdf）
+會掃描「含子資料夾」內所有文字檔。
+======================================================================
+
+【✓ 命名正確且在根目錄】12 人
+  ✓ 周昱翔_開心
+  ✓ 張哲瑜_平靜
+  ✓ 林妤庭_渴望
+  ✓ 林曉萱_悲傷
+  ✓ 楊漢軒_興奮
+  ✓ 楊靜慧_悲傷
+  ✓ 王建勛_恐懼
+  ✓ 王欣怡_悲傷
+  ✓ 盧品安_恐懼
+  ✓ 連浡崴_平靜
+  ✓ 陳子怡_平靜
+  ✓ 黃鈺倢_渴望
+
+【✓ 命名正確但在子資料夾】請要求改放到該生資料夾「根目錄」：1 人
+  ✓ 張永成_悲傷
+      目前位置：「企劃\AI對話串網址.docx」
+      請將檔案移到：張永成_悲傷\ 根目錄（與 企劃、HTML 等資料夾同一層）
+
+【⚠ 需修改命名】有 AI 連結但檔名不正確：12 人
+  ⚠ 嚴文浩_渴望
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「對話連結.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 張永成_悲傷
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 戴抒瑜_渴望
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「文字&連結.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 曾莉榛_快樂
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「All text.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 翁圓舒_快樂
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「對話紀錄.pdf」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 蔡佳翰_平靜
+      目前：「AI對話.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 賴眉均_恐懼
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「對話網址.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 邵靖榕_快樂
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「對話紀錄 .pdf」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 鍾佩蓉_恐懼
+      目前：「03. AI對話串.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 陳翰博_悲傷
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「企劃\AI協作.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 顏士傑_憤怒
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「企劃\AI Chat history web link.rtf」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+  ⚠ 黃政文_恐懼
+      目前：「AI對話內容.txt」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+      目前：「文字理念.docx」 （內含 1 個 AI 連結）
+      請改檔名為：檔名含「AI」「對話」「網址」（例：AI對話串網址.docx、AI對話網址.pdf）
+
+【✗ 完全沒有】未在任何文字檔（含子資料夾）中找到 AI 聊天串連結：6 人
+  ✗ 周庭玉_悲傷
+  ✗ 徐妏寧_憤怒
+  ✗ 林育瑋_悲傷
+  ✗ 柯佳彣_平靜
+  ✗ 胡珮晴_平靜
+  ✗ 藍玉婷_悲傷
+  以上學生請補交 AI 對話連結（ChatGPT / Gemini 等分享連結）。
+

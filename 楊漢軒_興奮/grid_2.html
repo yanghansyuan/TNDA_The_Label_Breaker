@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>筆刷 3x3 舞台</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0;
+      background: #111;
+    }
+
+    .cell {
+      border: 1px solid #222; /* 想去掉格線就把這行刪掉 */
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <!-- 只填檔名在 data-file，之後在 JS 裡用 basePath + 檔名 組成完整路徑 -->
+    <div class="cell"><iframe data-file="14_no_specular.html" title="brush01"></iframe></div>
+    <div class="cell"><iframe data-file="13_specular.html"       title="brush02"></iframe></div>
+    <div class="cell"><iframe data-file="12_num_limit.html"       title="brush03"></iframe></div>
+    <div class="cell"><iframe data-file="8_curve.html"       title="brush04"></iframe></div>
+    <div class="cell"><iframe data-file="7_line_no_shake.html"       title="brush05"></iframe></div>
+    <div class="cell"><iframe data-file="6_bauhaus.html"       title="brush06"></iframe></div>
+    <div class="cell"><iframe data-file="4_random.html"       title="brush07"></iframe></div>
+    <div class="cell"><iframe data-file="3_fade.html"       title="brush08"></iframe></div>
+    <div class="cell"><iframe data-file="2_exciting_click.html"       title="brush09"></iframe></div>
+  </div>
+
+  <script>
+    // 共用資料夾路徑
+    // 注意：在瀏覽器裡讀本機檔案需要加 file:/// 前綴
+    const basePath = "file:///D:/Work/2026/放視大賞跨域工作坊/作業/";
+
+    document.querySelectorAll("iframe[data-file]").forEach((frame) => {
+      const fileName = frame.getAttribute("data-file");
+      // encodeURI 可以避免中文路徑在部分瀏覽器出錯
+      frame.src = basePath + encodeURI(fileName);
+    });
+  </script>
+</body>
+</html>

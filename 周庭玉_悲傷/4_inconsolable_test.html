@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>INCONSOLABLE - Basic Elements Display</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #181a1f; /* 深沉基礎色 */
+    user-select: none; /* 禁止文本選擇 */
+}
+
+canvas {
+    display: block;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+// !!! 關鍵檢查：確保 canvas 元素存在且 context 被成功獲取 !!!
+if (!canvas) {
+    console.error("Canvas element not found!");
+    alert("Error: Canvas element not found. Please ensure the canvas tag is in the HTML.");
+}
+const ctx = canvas.getContext("2d");
+if (!ctx) {
+    console.error("Failed to get 2D rendering context!");
+    alert("Error: Could not get Canvas rendering context. Your browser might not support Canvas.");
+}
+
+let W, H; // 窗口寬高
+
+function resize(){
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+    // 確保在resize後，元素的創建或更新邏輯被正確調用
+    // 為了優先保證顯示，這裡先簡單重置一些基本參數
+    config.mainCircle.baseRadius = Math.min(W, H) * 0.15;
+    // !!! 這裡暫時移除對 fallingPoints 和 unstableLines 的 resize 重新初始化，
+    // !!! 以專注於確保它們能夠被繪製出來，之後再細化
+    // initializeElements(); // 暫時註釋掉，為了調試
+}
+window.addEventListener("resize", resize);
+resize(); // 首次加載時執行一次
+
+// --- 參數 ---
+const config = {
+    // 主圓 (有缺口，受重力、鼠標影響)
+    mainCircle: {
+        baseY: H * 0.3, // 初始位置設在中間，方便觀察
+        baseRadius: Math.min(W, H) * 0.15,
+        gapAngle: Math.PI * 0.3,
+        rotationSpeed: 0.00005,
+        color: 'rgba(100, 110, 130, 0.6)', // 邊緣顏色
+        innerColor: 'rgba(60, 70, 90, 0.8)', // 內部顏色
+        // !!! 暫時移除複雜的鼠標互動和重力拉伸，專注於顯示 !!!
+        // gravityPull: 0.00008,
+        // maxDownward: H * 0.9,
+        // stretchFactor: 0.00005,
+        // maxStretch: 0.6,
+        // wobbleAmount: 1.5,
+        // wobbleSpeed: 0.001,
+        // mouseResponseRadius: Math.min(W, H) * 0.2,
+        // edgeRetractAmount: 0.7
+    },
+    // 下沉點 (密度隨高度增加)
+    fallingPoints: {
+        count: 50, // 減少數量
+        minSize: 2,
+        maxSize: 3,
+        minSpeed: 0.1,
+        maxSpeed: 0.2,
+        color: 'rgba(140, 150, 170, 0.4)', // 點的顏色
+        // !!! 暫時移除黏滯等複雜邏輯 !!!
+        // stickinessRadius: 120,
+        // stickinessFactor: 0.03,
+        // condenseColor: 'rgba(110, 120, 140, 0.7)'
+    },
+    // 歪斜不穩的細線
+    unstableLines: {
+        count: 3, // 減少數量
+        minLength: H * 0.1,
+        maxLength: H * 0.4,
+        maxWidth: 1.2,
+        color: 'rgba(100, 100, 110, 0.3)', // 線的顏色
+        // !!! 暫時移除移動邏輯 !!!
+        // angleJitter: 0.1,
+        // movementSpeed: 0.00005
+    },
+    // !!! 暫時移除殘影和霧層 !!!
+    // trail: { ... },
+    // fog: { ... },
+    // backgroundGradient: { ... }
+};
+
+// !!! 鼠標位置，先用於簡單測試，複雜互動將暫時註釋 !!!
+let mouse = { x: W / 2, y: H / 2, isInsideCanvas: true }; // 預設在中心，方便測試
+
+// --- 元素類別 (簡化) ---
+
+// 點 (用於下沉點)
+class Point {
+    constructor(x, y, size, color, speed) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.color = color;
+        this.speed = speed;
+        this.vy = this.speed; // 僅模擬垂直下落
+    }
+
+    draw(context) {
+        context.fillStyle = this.color;
+        context.beginPath();
+        context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    update() {
+        this.y += this.vy; // 僅垂直下落
+        // 邊界檢查，重置到頂部
+        if (this.y > H + this.size) {
+            this.y = -this.size;
+            this.x = Math.random() * W; // 隨機出現在頂部
+        }
+    }
+}
+
+// --- 初始化元素 ---
+function initializeElements() {
+    fallingPoints = [];
+    for (let i = 0; i < config.fallingPoints.count; i++) {
+        const size = config.fallingPoints.minSize + Math.random() * (config.fallingPoints.maxSize - config.fallingPoints.minSize);
+        const speed = config.fallingPoints.minSpeed + Math.random() * (config.fallingPoints.maxSpeed - config.fallingPoints.minSpeed);
+        fallingPoints.push(new Point(
+            Math.random() * W,
+            Math.random() * H, // 讓點初始分佈在整個畫布
+            size,
+            config.fallingPoints.color,
+            speed
+        ));
+    }
+
+    unstableLines = [];
+    for (let i = 0; i < config.unstableLines.count; i++) {
+        const startX = Math.random() * W;
+        const startY = Math.random() * H * 0.1;
+        const length = config.unstableLines.minLength + Math.random() * (config.unstableLines.maxLength - config.unstableLines.minLength);
+        const angle = (Math.random() - 0.5) * config.unstableLines.angleJitter;
+        unstableLines.push({
+            startX: startX,
+            startY: startY,
+            length: length,
+            angle: angle,
+        });
+    }
+
+    // 主圓重置 (僅基本參數)
+    mainCircle = { ...config.mainCircle };
+    rotation = 0;
+}
+initializeElements(); // 首次加載時執行
+
+// --- 繪製主圓 (僅基本圓形，有缺口) ---
+function drawMainCircle(context, cx, cy, radius, rotation, gapAngle) {
+    context.save();
+    context.translate(cx, cy);
+    context.rotate(rotation);
+
+    // 繪製邊緣
+    context.strokeStyle = config.mainCircle.color;
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(0, 0, radius, 0, Math.PI * 2);
+    context.stroke();
+
+    // 繪製內部填充
+    context.fillStyle = config.mainCircle.innerColor;
+    context.beginPath();
+    context.arc(0, 0, radius * 0.95, 0, Math.PI * 2);
+    context.fill();
+
+    // 繪製缺口
+    context.globalCompositeOperation = 'destination-out';
+    const gapStartAngle = rotation + gapAngle / 2;
+    const gapEndAngle = rotation - gapAngle / 2;
+    context.fillStyle = 'black';
+    context.beginPath();
+    context.arc(0, 0, radius * 0.95, gapStartAngle, gapEndAngle);
+    context.lineTo(0, 0);
+    context.closePath();
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    context.restore();
+}
+
+// --- 繪製歪斜不穩的細線 ---
+function drawUnstableLines(context) {
+    context.save();
+    context.lineWidth = config.unstableLines.maxWidth;
+    context.lineCap = 'round';
+    context.strokeStyle = config.unstableLines.color;
+
+    unstableLines.forEach(line => {
+        context.beginPath();
+        const currentAngle = line.angle; // 暫時固定角度
+        const endX = line.startX + Math.cos(currentAngle) * line.length;
+        const endY = line.startY + Math.sin(currentAngle) * line.length;
+
+        context.moveTo(line.startX, line.startY);
+        context.lineTo(endX, endY);
+        context.stroke();
+    });
+    context.restore();
+}
+
+// --- 動畫循環 ---
+function animate() {
+    // 1. 清除畫布 (使用背景色，確保完全清除，避免殘影干擾調試)
+    ctx.fillStyle = "#181a1f"; // 與 CSS 背景色一致
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. 更新和繪製點
+    fallingPoints.forEach(p => {
+        p.update();
+        p.draw(ctx);
+    });
+
+    // 3. 繪製線
+    drawUnstableLines(ctx);
+
+    // 4. 更新和繪製主圓
+    rotation += config.mainCircle.rotationSpeed;
+    // !!! 暫時只繪製基礎圓，移除複雜的重力、拉伸、鼠標互動 !!!
+    drawMainCircle(ctx, W / 2, config.mainCircle.baseY, config.mainCircle.baseRadius, rotation, config.mainCircle.gapAngle);
+
+    requestAnimationFrame(animate);
+}
+
+// --- 確保 Canvas 和 Context 存在後，再啟動動畫 ---
+if (canvas && ctx) {
+    // 確保resize後 canvas.width 和 canvas.height 被正確設置
+    // 啟動動畫
+    animate();
+} else {
+    console.error("Canvas or context not available, animation will not start.");
+}
+
+// !!! 為了調試，暫時關閉鼠標事件和複雜邏輯 !!!
+// 確保這些事件不會因為錯誤而影響到動畫的啟動
+/*
+canvas.addEventListener("mousemove", ...);
+canvas.addEventListener("mouseout", ...);
+canvas.addEventListener("click", ...);
+window.addEventListener("resize", ...); // resize 函數是必要的
+*/
+
+</script>
+
+</body>
+</html>
+--- END OF FILE final_yourEmail@example.com.html ---
+
+---
+
+**這次程式碼的重點修正：**
+
+1.  **Canvas 和 Context 存在性檢查：**
+    *   在 `<script>` 標籤的開頭，我加入了 `if (!canvas)` 和 `if (!ctx)` 的檢查。如果 Canvas 元素找不到，或者獲取 2D 上下文失敗，它會在瀏覽器控制台報錯，並彈出提示框。這能幫助我們確認 Canvas 本身是否能被 JS 訪問。
+
+2.  **基礎元素的優先顯示：**
+    *   `animate()` 函數開頭使用 `ctx.fillStyle = "#181a1f"; ctx.fillRect(0, 0, W, H);` 來**完全清除**畫布。這是為了在調試時，確保每一幀都是從乾淨的畫布開始繪製，避免殘影或之前錯誤繪製的內容干擾。
+    *   `Point` 類別的 `update` 方法現在**只執行垂直下落**，移除了黏滯等複雜邏輯。
+    *   `drawMainCircle` 函數**只繪製了基礎的帶缺口圓形**，移除了重力拉伸、鼠標互動、邊緣抖動等複雜效果。
+    *   `drawUnstableLines` 函數也移除了暫時的移動邏輯。
+    *   `initializeElements()` 函數中，與複雜效果相關的參數和邏輯被暫時註釋或移除。
+
+3.  **顏色確認：**
+    *   確保了 `background` 的 CSS 顏色、`ctx.fillStyle` 的清除顏色、以及點、線、圓的 `config` 中的顏色值都是低飽和的藍黑灰調。
+
+4.  **調試輔助：**
+    *   在 `animate()` 函數啟動前，加入了 `if (canvas && ctx)` 的檢查，確保只有在 Canvas 和 Context 都準備好時才啟動動畫循環。
+    *   移除了鼠標事件的監聽，直到基本元素能顯示出來，再逐步恢復。
+
+**請你嘗試：**
+
+1.  用記事本打開最新的程式碼，保存為 `final_yourEmail@example.com.html`。
+2.  用瀏覽器打開這個 HTML 文件。
+3.  **最重要：** 按下 `F12` 鍵打開瀏覽器的開發者工具，查看 **Console (控制台)** 選項卡。
+    *   如果 **沒有任何錯誤信息**，但依然只有單色背景，那問題可能出在 Canvas 的渲染本身（較少見）。
+    *   如果 **出現了 `Canvas element not found!` 或 `Failed to get 2D rendering context!` 的錯誤**，說明 HTML 中的 `<canvas>` 標籤有問題，或者 JS 運行在 Canvas 被創建之前。
+    *   如果 **出現了其他 JavaScript 錯誤**，請將錯誤信息複製給我。
+
+這個版本是為了「讓任何東西先顯示出來」而做的極大簡化。一旦我們能看到點、線、圓，我們就可以逐步把之前複雜的效果加回來，並解決它們顯示的問題。

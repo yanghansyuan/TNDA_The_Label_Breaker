@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開心 - 融球測試 (V1)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #ffffff; /* 背景色 */
+        }
+
+        /* 這裡是魔法發生的地方！
+           透過模糊 (blur) 和對比度 (contrast) 的互相作用，
+           讓原本分開的圓形，在靠近時產生「黏踢踢」的融合效果。
+        */
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            background-color: #fff;
+            filter: blur(20px) contrast(50); 
+            /* 調整 blur 和 contrast 數值可以改變液體的黏稠度 */
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* 說明文字，不參與融合效果 */
+        #instruction {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-family: sans-serif;
+            color: #333;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instruction">
+        <h1>1_test.html</h1>
+        <p>概念：開心、融球、流動<br>目前的狀態：自動循環飄浮</p>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="emotionCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('emotionCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+
+        // 設定畫布大小（指引 3b：盲目感，隨視窗改變）
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 定義「球」的物件
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                // 球的大小 (代表開心的膨脹感)
+                this.radius = Math.random() * 30 + 40; 
+                // 移動速度 (代表不斷變化)
+                this.vx = (Math.random() - 0.5) * 4; 
+                this.vy = (Math.random() - 0.5) * 4;
+            }
+
+            update() {
+                // 移動
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 碰到邊緣反彈 (循環)
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                // 這裡設定球的顏色。因為用了高對比濾鏡，顏色會變得很鮮豔。
+                // 像是開心的顏色：橘黃色、粉色
+                ctx.fillStyle = '#ffcc00'; 
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 為了增加一點層次，我們可以加第二顆球的顏色
+                ctx.beginPath();
+                ctx.fillStyle = '#ff6666'; 
+                // 畫一個比較小的同心圓或偏移圓，增加混合感
+                ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 產生幾顆球
+        function init() {
+            particles = [];
+            // 數量不用多，5-8顆就能看出融合效果
+            for (let i = 0; i < 6; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // 動畫迴圈
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+    </script>
+</body>
+</html>

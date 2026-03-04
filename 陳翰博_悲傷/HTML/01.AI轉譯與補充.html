@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>散去後的悲傷</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #888;
+            font-family: "Noto Serif TC", serif;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.5rem;
+            margin: 0;
+            opacity: 0.6;
+        }
+
+        p {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            opacity: 0.4;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id-="ui-overlay">
+        <h1>散去後的悲傷</h1>
+        <p>移動滑鼠，感受那些抓不住的過往</p>
+    </div>
+
+    <script>
+        let particles = [];
+        const MAX_PARTICLES = 150;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            noStroke();
+            // 初始化一些粒子
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(random(width), random(height)));
+            }
+        }
+
+        function draw() {
+            // 使用半透明背景產生殘影效果，增加憂鬱感
+            background(10, 10, 10, 25);
+
+            // 當滑鼠移動時，產生新的粒子
+            if (mouseX > 0 && mouseY > 0 && (pmouseX !== mouseX || pmouseY !== mouseY)) {
+                particles.push(new Particle(mouseX, mouseY));
+            }
+
+            // 更新並顯示粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].display();
+                
+                // 如果粒子完全透明，則從陣列中移除
+                if (particles[i].isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // 限制粒子數量以保持效能
+            if (particles.length > MAX_PARTICLES) {
+                particles.shift();
+            }
+        }
+
+        class Particle {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                // 隨機的微小漂移速度
+                this.vel = createVector(random(-0.5, 0.5), random(-0.8, 0.2));
+                this.acc = createVector(0, 0);
+                this.lifespan = 255; // 初始透明度
+                this.size = random(2, 8);
+                this.noiseOffset = random(1000); // 用於隨機漂浮路徑
+            }
+
+            update() {
+                // 使用 Perlin Noise 模擬風的吹拂
+                let n = noise(this.noiseOffset, frameCount * 0.01);
+                this.acc.x = map(n, 0, 1, -0.02, 0.02);
+                
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                
+                // 隨著時間慢慢消散（變淡並變小）
+                this.lifespan -= 1.5;
+                this.size *= 0.995;
+                this.noiseOffset += 0.01;
+            }
+
+            display() {
+                // 粒子呈現淡灰色或淡淡的藍色調
+                fill(180, 190, 200, this.lifespan);
+                
+                // 繪製模糊的圓點
+                ellipse(this.pos.x, this.pos.y, this.size);
+                
+                // 偶爾畫一點點更細微的裝飾，增加層次感
+                if (this.lifespan > 150) {
+                    fill(255, 255, 255, this.lifespan * 0.2);
+                    ellipse(this.pos.x, this.pos.y, this.size * 1.5);
+                }
+            }
+
+            isDead() {
+                return this.lifespan < 0;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

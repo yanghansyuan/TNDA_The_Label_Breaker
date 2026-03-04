@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNSEEN - 個人藝術創作</title>
+    <style>
+        :root {
+            --bg-color: #080805; /* 極深綠黑，比純黑更有層次 */
+            --accent-color: #e6e2af; /* 污濁黃 */
+            --danger-color: #7a1a1a; /* 乾枯的血色 */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--accent-color);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; 
+            cursor: none; /* 隱藏鼠標，增加不安感 */
+            user-select: none;
+        }
+
+        /* 噪點背景：營造視覺疲勞 */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 動態遮罩：手電筒效果 */
+        #flashlight {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle 80px at 50% 50%, 
+                        rgba(230, 226, 175, 0.15) 0%, 
+                        rgba(0,0,0,1) 100%);
+            z-index: 5;
+            transition: background 0.1s ease-out;
+            pointer-events: none;
+        }
+
+        /* 核心文案 */
+        .content {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            letter-spacing: 15px;
+            filter: blur(2px);
+            transition: filter 1s, opacity 1s;
+            opacity: 0.6;
+        }
+
+        /* 隨機漂浮的片段文字 */
+        .elusive-text {
+            position: absolute;
+            font-size: 0.9rem;
+            opacity: 0.3;
+            transition: all 0.5s cubic-bezier(0.1, 0, 0.1, 1);
+            white-space: nowrap;
+        }
+
+        /* 點擊產生的裂痕 */
+        .crack {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(rgba(230, 226, 175, 0.3) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(230, 226, 175, 0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            clip-path: polygon(50% 50%, 70% 10%, 55% 45%, 100% 30%, 60% 55%, 80% 90%, 50% 65%, 20% 85%, 40% 50%, 5% 20%);
+            pointer-events: none;
+            z-index: 4;
+            animation: crack-fade 4s forwards;
+        }
+
+        @keyframes crack-fade {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
+        }
+
+        /* 自適應：當畫面變紅時的閃動效果 */
+        .danger-state {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { background-color: #080805; }
+            50% { background-color: #1a0505; }
+            100% { background-color: #080805; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+    <div id="flashlight"></div>
+
+    <div class="content">
+        <h1 id="main-title">它 沒 有 離 開</h1>
+        <p id="sub-msg" style="opacity:0.2;">不要停留太久</p>
+    </div>
+
+    <div class="elusive-text" style="top:20%; left:10%;">[ 座標：未知 ]</div>
+    <div class="elusive-text" style="top:75%; left:65%;">[ 偵測到眼球活動 ]</div>
+    <div class="elusive-text" style="top:40%; left:85%;">[ 呼吸已同步 ]</div>
+
+    <script>
+        const flashlight = document.getElementById('flashlight');
+        const title = document.getElementById('main-title');
+        const elusiveTexts = document.querySelectorAll('.elusive-text');
+        let idleTimer;
+
+        // 1. 滑鼠移動：適應性光圈
+        window.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            // 更新手電筒位置與大小（移動時稍微擴大）
+            flashlight.style.background = `radial-gradient(circle 120px at ${x}px ${y}px, rgba(230, 226, 175, 0.12) 0%, rgba(0,0,0,1) 100%)`;
+
+            // 文字逃逸邏輯：計算與滑鼠距離
+            elusiveTexts.forEach(text => {
+                const rect = text.getBoundingClientRect();
+                const dx = x - (rect.left + rect.width / 2);
+                const dy = y - (rect.top + rect.height / 2);
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < 180) {
+                    const angle = Math.atan2(dy, dx);
+                    const moveX = Math.cos(angle) * -100;
+                    const moveY = Math.sin(angle) * -100;
+                    text.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                    text.style.opacity = '0.6';
+                    text.style.filter = 'blur(1px)';
+                } else {
+                    text.style.transform = `translate(0, 0)`;
+                    text.style.opacity = '0.2';
+                    text.style.filter = 'blur(3px)';
+                }
+            });
+
+            // 適應性：停頓偵測
+            clearTimeout(idleTimer);
+            document.body.classList.remove('danger-state');
+            title.innerText = "它 沒 有 離 開";
+            
+            idleTimer = setTimeout(() => {
+                // 停頓 2 秒後的「未知適應」
+                flashlight.style.background = `radial-gradient(circle 40px at ${x}px ${y}px, rgba(122, 26, 26, 0.4) 0%, rgba(0,0,0,1) 100%)`;
+                document.body.classList.add('danger-state');
+                title.innerText = "它 看 見 你 了";
+                title.style.filter = "blur(0px)";
+                title.style.color = "var(--danger-color)";
+            }, 2000);
+        });
+
+        // 2. 左鍵點擊：破壞與恐懼反饋
+        window.addEventListener('mousedown', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+
+            // 視覺閃擊
+            document.body.style.backgroundColor = "#222";
+            setTimeout(() => document.body.style.backgroundColor = "var(--bg-color)", 40);
+
+            // 生成裂痕
+            const crack = document.createElement('div');
+            crack.className = 'crack';
+            crack.style.left = `${x}px`;
+            crack.style.top = `${y}px`;
+            crack.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+            document.body.appendChild(crack);
+
+            // 隨機移除過舊的裂痕
+            if(document.querySelectorAll('.crack').length > 10) {
+                document.querySelectorAll('.crack')[0].remove();
+            }
+
+            // 適應性點擊：點擊標題會讓文字尖叫般的放大
+            if(e.target === title) {
+                title.style.transform = "scale(1.5)";
+                title.style.color = "#fff";
+                setTimeout(() => {
+                    title.style.transform = "scale(1)";
+                    title.style.color = "var(--accent-color)";
+                }, 100);
+            }
+        });
+
+        // 隨機的視覺小故障 (Glitch)
+        setInterval(() => {
+            if(Math.random() > 0.98) {
+                document.body.style.transform = `translateX(${Math.random()*4 - 2}px)`;
+                setTimeout(() => document.body.style.transform = "none", 30);
+            }
+        }, 100);
+
+    </script>
+</body>
+</html>

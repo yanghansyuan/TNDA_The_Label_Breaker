@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>筆刷 3x3 舞台</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .stage {
+      width: 1024px;
+      height: 1024px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0; /* 如果想要格子有間距可以改成 4px、8px 之類 */
+      background: #111;
+    }
+
+    .cell {
+      border: 1px solid #222; /* 看需要留或拿掉 */
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="cell"><iframe src="brush01.html" title="brush01"></iframe></div>
+    <div class="cell"><iframe src="brush02.html" title="brush02"></iframe></div>
+    <div class="cell"><iframe src="brush03.html" title="brush03"></iframe></div>
+    <div class="cell"><iframe src="brush04.html" title="brush04"></iframe></div>
+    <div class="cell"><iframe src="brush05.html" title="brush05"></iframe></div>
+    <div class="cell"><iframe src="brush06.html" title="brush06"></iframe></div>
+    <div class="cell"><iframe src="brush07.html" title="brush07"></iframe></div>
+    <div class="cell"><iframe src="brush08.html" title="brush08"></iframe></div>
+    <div class="cell"><iframe src="brush09.html" title="brush09"></iframe></div>
+  </div>
+</body>
+</html>

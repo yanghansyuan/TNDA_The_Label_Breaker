@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開心 - 物理互動 (V2)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            /* 禁止選取文字，避免拖曳時選到字 */
+            user-select: none; 
+        }
+
+        /* 說明文字
+        */
+        #instruction {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-family: '微軟正黑體', sans-serif;
+            color: #555;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* 融球濾鏡層
+        */
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            background-color: #fff;
+            /* 混合模式關鍵：
+               blur: 讓邊緣模糊
+               contrast: 把模糊的邊緣再次拉得銳利，產生沾黏感
+            */
+            filter: blur(15px) contrast(30);
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instruction">
+        <h1>2_add_shape.html</h1>
+        <p>互動：滑鼠左鍵按住球可拖曳、甩動丟出<br>
+           物理：球體撞擊反彈、融合混色<br>
+           試試看把不同顏色的球「黏」在一起！</p>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="emotionCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('emotionCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+        
+        // 滑鼠/觸控狀態
+        let dragParticle = null;
+        let mouseX = 0;
+        let mouseY = 0;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.baseRadius = Math.random() * 25 + 35; // 基礎大小
+                this.radius = this.baseRadius;
+                this.color = color; // 原始顏色
+                this.currentColor = color; // 當前顏色
+                
+                // 物理速度
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                
+                this.friction = 0.98; // 摩擦力 (越小停越快)
+                this.isDragging = false;
+            }
+
+            update() {
+                if (this.isDragging) {
+                    // 1. 拖曳模式：跟隨滑鼠，並計算「投擲速度」
+                    // 速度 = 目前位置 - 上一次的位置 (這就是甩出去的力道)
+                    this.vx = mouseX - lastMouseX;
+                    this.vy = mouseY - lastMouseY;
+                    this.x = mouseX;
+                    this.y = mouseY;
+                    
+                    // 拖曳時變色 (變亮/變白)
+                    this.currentColor = '#ffffff'; 
+                    // 拖曳時稍微變大
+                    this.radius = this.baseRadius * 1.2;
+
+                } else {
+                    // 2. 自由模式：應用物理
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // 摩擦力減速
+                    this.vx *= this.friction;
+                    this.vy *= this.friction;
+
+                    // 邊界反彈 (保持在畫面內)
+                    if (this.x < this.radius) {
+                        this.x = this.radius;
+                        this.vx *= -1;
+                    }
+                    if (this.x > width - this.radius) {
+                        this.x = width - this.radius;
+                        this.vx *= -1;
+                    }
+                    if (this.y < this.radius) {
+                        this.y = this.radius;
+                        this.vy *= -1;
+                    }
+                    if (this.y > height - this.radius) {
+                        this.y = height - this.radius;
+                        this.vy *= -1;
+                    }
+
+                    // 恢復原本顏色與大小
+                    this.currentColor = this.color;
+                    // 讓大小有個像呼吸一樣的微小浮動，感覺更有生命
+                    this.radius = this.baseRadius + Math.sin(Date.now() / 300) * 2;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.fillStyle = this.currentColor;
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            // 定義一些開心的顏色：熱情的紅、活力的黃、放鬆的藍
+            const colors = ['#FFD700', '#FF6347', '#00BFFF', '#32CD32', '#FF69B4'];
+            
+            for (let i = 0; i < 6; i++) {
+                particles.push(new Particle(
+                    width / 2 + (Math.random() - 0.5) * 200,
+                    height / 2 + (Math.random() - 0.5) * 200,
+                    colors[i % colors.length]
+                ));
+            }
+        }
+
+        // --- 互動事件處理 ---
+
+        function handleStart(x, y) {
+            // 檢查有沒有點到球
+            // 反向迴圈，確保先抓到最上面的球
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                const dx = x - p.x;
+                const dy = y - p.y;
+                // 距離公式檢查
+                if (Math.sqrt(dx*dx + dy*dy) < p.radius) {
+                    p.isDragging = true;
+                    dragParticle = p;
+                    break;
+                }
+            }
+            mouseX = x;
+            mouseY = y;
+            lastMouseX = x;
+            lastMouseY = y;
+        }
+
+        function handleMove(x, y) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            mouseX = x;
+            mouseY = y;
+        }
+
+        function handleEnd() {
+            if (dragParticle) {
+                dragParticle.isDragging = false;
+                dragParticle = null;
+            }
+        }
+
+        // 滑鼠監聽
+        canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleEnd);
+
+        // 觸控監聽 (手機版)
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            handleStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        window.addEventListener('touchmove', e => {
+            e.preventDefault(); // 防止滑動畫面
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        window.addEventListener('touchend', handleEnd);
+
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+    </script>
+</body>
+</html>

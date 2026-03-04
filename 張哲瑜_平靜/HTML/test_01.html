@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>情緒實驗室：平靜與激動</title>
+
+    <style>
+
+        /* 色彩定義：Marsala (#955251) 與 Cloud Dancer (#F0EEE9) */
+
+        :root {
+
+            --marsala: #955251;
+
+            --cloud-dancer: #F0EEE9;
+
+        }
+
+
+
+        body, html {
+
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            background-color: var(--marsala);
+
+            transition: background-color 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+            cursor: none; /* 使用自定義圓點或隱藏 */
+
+        }
+
+
+
+        body.calm-mode {
+
+            background-color: var(--cloud-dancer);
+
+        }
+
+
+
+        canvas {
+
+            display: block;
+
+        }
+
+
+
+        #ui-hint {
+
+            position: absolute;
+
+            bottom: 40px;
+
+            width: 100%;
+
+            text-align: center;
+
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+
+            font-size: 14px;
+
+            letter-spacing: 4px;
+
+            pointer-events: none;
+
+            mix-blend-mode: difference;
+
+            color: #fff;
+
+            opacity: 0.6;
+
+            transition: opacity 1s;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div id="ui-hint">滑鼠滑過觸發雜訊，點擊左鍵切換平靜</div>
+
+    <canvas id="stage"></canvas>
+
+
+
+    <script>
+
+        const canvas = document.getElementById('stage');
+
+        const ctx = canvas.getContext('2d');
+
+        let width, height, lines = [];
+
+        let isCalm = false;
+
+        let mouse = { x: -1000, y: -1000 };
+
+        
+
+        // 設定參數
+
+        const LINE_COUNT = 45;       // 線條數量
+
+        const SEGMENTS = 60;         // 每條線的分段點（越多越流暢）
+
+        const NOISE_INTENSITY = 80;  // 雜訊強度
+
+        const COLORS = {
+
+            marsala: 'rgba(149, 82, 81, 0.6)',
+
+            cloudDancer: 'rgba(240, 238, 233, 0.7)'
+
+        };
+
+
+
+        class Line {
+
+            constructor(y) {
+
+                this.baseY = y;
+
+                this.points = [];
+
+                for (let i = 0; i <= SEGMENTS; i++) {
+
+                    this.points.push({
+
+                        x: (i / SEGMENTS) * window.innerWidth,
+
+                        y: y,
+
+                        currentY: y,
+
+                        targetY: y,
+
+                        vx: 0,
+
+                        vy: 0
+
+                    });
+
+                }
+
+            }
+
+
+
+            update() {
+
+                this.points.forEach((p, i) => {
+
+                    // 基礎目標是回歸原本的水平位置
+
+                    p.targetY = this.baseY;
+
+
+
+                    if (!isCalm) {
+
+                        // 激動模式：滑鼠距離判斷
+
+                        let dx = p.x - mouse.x;
+
+                        let dy = p.y - mouse.y;
+
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+
+                        
+
+                        if (dist < 250) {
+
+                            // 產生雜訊點
+
+                            let noise = (Math.random() - 0.5) * (NOISE_INTENSITY * (1 - dist/250));
+
+                            p.targetY += noise * 2;
+
+                        }
+
+                    } else {
+
+                        // 平靜模式：極微小的正弦波
+
+                        p.targetY += Math.sin(Date.now() * 0.001 + i * 0.1 + this.baseY) * 2;
+
+                    }
+
+
+
+                    // 彈簧物理運動
+
+                    let ay = (p.targetY - p.currentY) * 0.05;
+
+                    p.vy += ay;
+
+                    p.vy *= 0.85; // 阻尼
+
+                    p.currentY += p.vy;
+
+                });
+
+            }
+
+
+
+            draw() {
+
+                ctx.beginPath();
+
+                ctx.moveTo(this.points[0].x, this.points[0].currentY);
+
+
+
+                for (let i = 1; i < this.points.length - 1; i++) {
+
+                    let xc = (this.points[i].x + this.points[i + 1].x) / 2;
+
+                    let yc = (this.points[i].currentY + this.points[i + 1].currentY) / 2;
+
+                    ctx.quadraticCurveTo(this.points[i].x, this.points[i].currentY, xc, yc);
+
+                }
+
+
+
+                ctx.strokeStyle = isCalm ? COLORS.marsala : COLORS.cloudDancer;
+
+                ctx.lineWidth = isCalm ? 1.5 : 2.5;
+
+                ctx.stroke();
+
+                
+
+                // 填充平面感
+
+                if (isCalm && this.baseY % 100 === 0) {
+
+                   ctx.globalAlpha = 0.05;
+
+                   ctx.lineTo(width, height);
+
+                   ctx.lineTo(0, height);
+
+                   ctx.fillStyle = COLORS.marsala;
+
+                   ctx.fill();
+
+                   ctx.globalAlpha = 1;
+
+                }
+
+            }
+
+        }
+
+
+
+        function init() {
+
+            width = canvas.width = window.innerWidth;
+
+            height = canvas.height = window.innerHeight;
+
+            lines = [];
+
+            let spacing = height / LINE_COUNT;
+
+            for (let i = 0; i <= LINE_COUNT; i++) {
+
+                lines.push(new Line(i * spacing));
+
+            }
+
+        }
+
+
+
+        function animate() {
+
+            ctx.clearRect(0, 0, width, height);
+
+            lines.forEach(line => {
+
+                line.update();
+
+                line.draw();
+
+            });
+
+            requestAnimationFrame(animate);
+
+        }
+
+
+
+        // 事件監聽
+
+        window.addEventListener('resize', init);
+
+        
+
+        window.addEventListener('mousemove', (e) => {
+
+            mouse.x = e.clientX;
+
+            mouse.y = e.clientY;
+
+        });
+
+
+
+        window.addEventListener('mousedown', (e) => {
+
+            if (e.button === 0) { // 左鍵點擊
+
+                isCalm = !isCalm;
+
+                document.body.classList.toggle('calm-mode');
+
+                document.getElementById('ui-hint').style.opacity = isCalm ? "0.2" : "0.6";
+
+            }
+
+        });
+
+
+
+        // 啟動
+
+        init();
+
+        animate();
+
+    </script>
+
+</body>
+
+</html>

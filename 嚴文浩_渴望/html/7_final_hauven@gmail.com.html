@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望-嚴文浩 hauven@gmail.com</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #121214;
+        }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        /* 啟動提示字 */
+        #startText {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.6); font-family: sans-serif; font-size: 1.2rem;
+            pointer-events: none; transition: opacity 1s; letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="startText">點擊畫面，喚醒渴望的聲音</div>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+        let scaleRatio = 1;
+
+        function resizeCanvas() {
+            const TARGET_RES = 1920 * 1080; 
+            const currentRes = window.innerWidth * window.innerHeight;
+            scaleRatio = currentRes > TARGET_RES ? Math.sqrt(TARGET_RES / currentRes) : 1;
+            canvas.width = window.innerWidth * scaleRatio;
+            canvas.height = window.innerHeight * scaleRatio;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        // ==========================================
+        // 🎵 Web Audio API 聲音合成系統
+        // ==========================================
+        let audioCtx;
+        let masterGain;
+        let isAudioInit = false;
+
+        // 五聲音階頻率 (C, D, E, G, A) - 保證隨機播放也很和諧
+        const pentatonic = [130.81, 146.83, 164.81, 196.00, 220.00, 261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+        function initAudio() {
+            if (isAudioInit) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.4; // 整體主音量
+            masterGain.connect(audioCtx.destination);
+
+            // 啟動背景低頻節奏 (BGM)
+            playBGM();
+
+            // 啟動隨機 MIDI 演奏機制
+            setInterval(playRandomMidi, 400); // 每 400 毫秒隨機挑物件發聲
+
+            // 啟動三角形網格的共鳴聲
+            setInterval(playWebChords, 2000); 
+
+            isAudioInit = true;
+            document.getElementById('startText').style.opacity = 0; // 隱藏提示
+        }
+
+        // 發聲函數 (頻率, 波形, 持續時間, 音量)
+        function playSynth(freq, type, duration, vol) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            // 聲音的 Attack & Release (淡入淡出，避免爆音)
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + duration * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // 柔和的低頻背景音 (心跳/呼吸感)
+        function playBGM() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 65.41; // C2 極低頻
+            
+            // 用 LFO (低頻振盪器) 做音量起伏，產生節奏感
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.5; // 每兩秒一個呼吸
+            
+            lfo.connect(gain.gain);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            lfo.start();
+        }
+
+        // ==========================================
+        // 幾何與物理系統
+        // ==========================================
+        function getDistance(x1, y1, x2, y2) { return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)); }
+
+        class GiantSquare {
+            constructor() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 40 + 60; this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.angle = Math.random() * Math.PI * 2; this.vAngle = (Math.random() - 0.5) * 0.005; 
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.x > canvas.width + 150) this.x = -150; if (this.x < -150) this.x = canvas.width + 150;
+                if (this.y > canvas.height + 150) this.y = -150; if (this.y < -150) this.y = canvas.height + 150;
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+                ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.globalAlpha = 0.6; 
+                ctx.strokeRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fillStyle = this.color; ctx.globalAlpha = 0.8; ctx.fillRect(-2, -2, 4, 4);
+                ctx.restore();
+            }
+        }
+
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width; this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2; this.vy = (Math.random() - 0.5) * 2;
+                this.angle = Math.random() * Math.PI * 2; this.vAngle = (Math.random() - 0.5) * 0.02;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.baseSize = Math.random() * 20 + 15; // 紀錄原始大小
+                this.type = Math.floor(Math.random() * 4); 
+                this.collisionCooldown = 0; 
+                
+                // 🎵 音樂屬性
+                this.freq = pentatonic[Math.floor(Math.random() * pentatonic.length)];
+                this.vibrateFrames = 0; // 震動倒數計時
+                const waveTypes = ['sine', 'triangle', 'square', 'sine'];
+                this.wave = waveTypes[this.type]; // 根據形狀決定音色材質
+            }
+
+            // 觸發該物件發聲與震動
+            playMidi() {
+                this.vibrateFrames = 15; // 震動約 1/4 秒
+                playSynth(this.freq, this.wave, 0.5, 0.1); // 輕柔的聲音
+            }
+
+            update() {
+                if (this.type === 2 && giantSquares.length > 0) {
+                    let nearestSquare = null; let minDist = Infinity;
+                    giantSquares.forEach(gs => {
+                        const dist = getDistance(this.x, this.y, gs.x, gs.y);
+                        if(dist < minDist) { minDist = dist; nearestSquare = gs; }
+                    });
+                    if (nearestSquare && minDist > 20) {
+                        const dx = nearestSquare.x - this.x; const dy = nearestSquare.y - this.y;
+                        this.vx += (dx / minDist) * 0.03 - (dy / minDist) * 0.05;
+                        this.vy += (dy / minDist) * 0.03 + (dx / minDist) * 0.05;
+                        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                        if(speed > 3.5) { this.vx = (this.vx/speed)*3.5; this.vy = (this.vy/speed)*3.5; }
+                    }
+                }
+                this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
+                if (this.vibrateFrames > 0) this.vibrateFrames--; // 減少震動時間
+                
+                if (this.x > canvas.width + 50) this.x = -50; if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50; if (this.y < -50) this.y = canvas.height + 50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // 🎵 根據是否發聲，計算視覺的高頻縮放 (最大變化約 15%)
+                let currentScale = 1;
+                if (this.vibrateFrames > 0) {
+                    // 利用 Date.now() 乘上高倍數，產生高頻抖動感
+                    currentScale = 1 + Math.sin(Date.now() * 0.05) * 0.15; 
+                }
+                ctx.scale(currentScale, currentScale);
+
+                ctx.fillStyle = this.color; ctx.strokeStyle = this.color; ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (this.type === 0) { 
+                    if(this.collisionCooldown > 0) { ctx.shadowBlur = 15; ctx.shadowColor = this.color; }
+                    ctx.arc(0, 0, this.baseSize / 2, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+                } else if (this.type === 1) { 
+                    ctx.moveTo(0, -this.baseSize); ctx.lineTo(this.baseSize, this.baseSize); ctx.lineTo(-this.baseSize, this.baseSize); ctx.closePath(); ctx.stroke();
+                } else if (this.type === 2) { 
+                    ctx.fillRect(-this.baseSize/2, -this.baseSize/2, this.baseSize, this.baseSize * 1.5);
+                } else if (this.type === 3) { 
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill(); ctx.moveTo(0, 0); ctx.lineTo(-this.baseSize * 3, 0); ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // 粒子與彗星類別 (保留上一版設定)
+        class SuperLineParticle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 8 + 4; 
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.color = color;
+                this.life = 1.0; this.decay = Math.random() * 0.02 + 0.01; 
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
+            draw() {
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.strokeStyle = this.color; ctx.lineWidth = 3;
+                ctx.shadowBlur = 8; ctx.shadowColor = this.color; ctx.beginPath();
+                ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3); ctx.stroke(); ctx.restore();
+            }
+        }
+        class Comet {
+            constructor() {
+                this.x = Math.random() < 0.5 ? (Math.random() < 0.5 ? -50 : canvas.width + 50) : Math.random() * canvas.width;
+                this.y = this.x <= 0 || this.x >= canvas.width ? Math.random() * canvas.height : (Math.random() < 0.5 ? -50 : canvas.height + 50);
+                const targetX = canvas.width / 2 + (Math.random() - 0.5) * 300; const targetY = canvas.height / 2 + (Math.random() - 0.5) * 300;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x); const speed = Math.random() * 4 + 6;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.color = '#fff'; 
+                this.tailColor = colors[Math.floor(Math.random() * colors.length)]; this.size = Math.random() * 5 + 5; this.angle = angle; this.active = true;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) this.active = false;
+                for(let i=0; i<2; i++) particles.push(new CometTrail(this.x, this.y, this.tailColor));
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(this.size * 2, 0); ctx.lineTo(-this.size, this.size); ctx.lineTo(-this.size, -this.size); ctx.closePath(); ctx.fill(); ctx.restore();
+            }
+        }
+        class CometTrail {
+            constructor(x, y, color) {
+                this.x = x + (Math.random() - 0.5) * 8; this.y = y + (Math.random() - 0.5) * 8;
+                this.color = color; this.size = Math.random() * 3 + 1; this.life = 1.0; this.decay = Math.random() * 0.04 + 0.02;
+            }
+            update() { this.life -= this.decay; }
+            draw() { ctx.save(); ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        }
+
+        const shapes = []; const particles = []; const comets = []; const giantSquares = [];
+
+        for(let i = 0; i < 35; i++) shapes.push(new FloatingShape());
+        for(let i = 0; i < Math.floor(Math.random() * 2) + 2; i++) giantSquares.push(new GiantSquare());
+
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                initAudio(); // 確保點擊時啟動音訊
+
+                const mx = event.clientX * scaleRatio; const my = event.clientY * scaleRatio;
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 點擊音效：高頻清脆的鐘聲 (Sine wave)
+                playSynth(880, 'sine', 1.0, 0.3);
+
+                for(let i = 0; i < 15; i++) particles.push(new SuperLineParticle(mx, my, burstColor));
+                
+                let newShape = new FloatingShape(mx, my);
+                newShape.playMidi(); // 誕生時發出自己的聲音
+                shapes.push(newShape);
+                
+                if(shapes.length > 65) shapes.shift(); 
+            }
+        });
+
+        // 🎵 隨機挑選物件當作 MIDI 演奏
+        function playRandomMidi() {
+            if(shapes.length === 0) return;
+            // 隨機選 1~2 個物件發聲
+            const numToPlay = Math.random() > 0.5 ? 2 : 1;
+            for(let i=0; i<numToPlay; i++) {
+                const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+                randomShape.playMidi();
+            }
+        }
+
+        // 🎵 三角形網格共鳴發聲
+        function playWebChords() {
+            const triangles = shapes.filter(s => s.type === 1);
+            let playedCount = 0;
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    const dist = getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y);
+                    if (dist < 350) { 
+                        // 如果有連線，讓其中一個三角形發出較長、柔和的弦樂聲 (Triangle wave)
+                        if(playedCount < 3) { // 限制最多發出三個和弦音，避免太吵
+                            playSynth(triangles[i].freq * 0.5, 'triangle', 2.0, 0.08);
+                            triangles[i].vibrateFrames = 30; // 震動久一點
+                            playedCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawTriangleWeb() {
+            const triangles = shapes.filter(s => s.type === 1);
+            ctx.lineWidth = 0.5; ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.beginPath();
+            for (let i = 0; i < triangles.length; i++) {
+                for (let j = i + 1; j < triangles.length; j++) {
+                    if (getDistance(triangles[i].x, triangles[i].y, triangles[j].x, triangles[j].y) < 350) { 
+                        ctx.moveTo(triangles[i].x, triangles[i].y); ctx.lineTo(triangles[j].x, triangles[j].y);
+                    }
+                }
+            }
+            ctx.stroke();
+        }
+
+        function handleCollisions() {
+            const circles = shapes.filter(s => s.type === 0);
+            for (let i = 0; i < circles.length; i++) {
+                for (let j = i + 1; j < circles.length; j++) {
+                    const c1 = circles[i]; const c2 = circles[j];
+                    if(c1.collisionCooldown > 0 || c2.collisionCooldown > 0) continue;
+
+                    if (getDistance(c1.x, c1.y, c2.x, c2.y) < (c1.baseSize / 2 + c2.baseSize / 2)) {
+                        const tempVx = c1.vx; const tempVy = c1.vy;
+                        c1.vx = c2.vx; c1.vy = c2.vy; c2.vx = tempVx; c2.vy = tempVy;
+
+                        const midX = (c1.x + c2.x) / 2; const midY = (c1.y + c2.y) / 2;
+                        const burstColor = Math.random() < 0.5 ? c1.color : c2.color;
+                        
+                        // 🎵 撞擊音效：雙頻共鳴聲
+                        playSynth(c1.freq, 'square', 0.2, 0.15);
+                        playSynth(c2.freq * 1.5, 'sine', 0.4, 0.2);
+                        
+                        // 撞擊時雙方都強烈震動
+                        c1.vibrateFrames = 20; c2.vibrateFrames = 20;
+
+                        for(let k = 0; k < 25; k++) particles.push(new SuperLineParticle(midX, midY, burstColor));
+                        for(let k = 0; k < 8; k++) particles.push(new CometTrail(midX, midY, '#fff'));
+
+                        c1.collisionCooldown = 40; c2.collisionCooldown = 40;
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTriangleWeb();
+            giantSquares.forEach(gs => { gs.update(); gs.draw(); });
+            if(Math.random() < 0.01) comets.push(new Comet());
+            handleCollisions();
+            shapes.forEach(shape => { shape.update(); shape.draw(); });
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i]; c.update(); if (!c.active) comets.splice(i, 1); else c.draw();
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.update(); if (p.life <= 0) particles.splice(i, 1); else p.draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

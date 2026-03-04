@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>三層空間｜互動響應式（無UI・後台調Ramp）</title>
+  <style>
+    :root{ --fg: rgba(255,255,255,.92); --muted: rgba(255,255,255,.66); }
+    html,body{height:100%;margin:0;background:#05060c;overflow:hidden;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial;}
+    #wrap{position:fixed;inset:0;}
+    canvas{position:absolute;inset:0;width:100%;height:100%;}
+    .hud{
+      position:fixed;left:16px;top:14px;z-index:10;
+      color:var(--fg);font-size:12px;line-height:1.5;
+      user-select:none;pointer-events:none;
+      padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.22);
+      backdrop-filter: blur(6px);
+      max-width:min(720px, calc(100vw - 32px));
+    }
+    .hud .muted{color:var(--muted)}
+    .pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .pill{
+      padding:5px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap"><canvas id="c"></canvas></div>
+
+  <div class="hud">
+    <div><b>操作</b>：左鍵按住前進｜放開停止｜滾輪縮小進宇宙｜滾輪放大回地勢</div>
+    <div class="muted">抵達亮點 → 自動染色 → 記錄成宇宙繁星（第三層）。</div>
+    <div class="pillrow">
+      <div class="pill" id="pillLayer">layer: 1</div>
+      <div class="pill" id="pillStars">stars: 0</div>
+      <div class="pill" id="pillZoom">zoom: 1.00</div>
+      <div class="pill" id="pillTime">time: 0%</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha:false });
+
+  const pillLayer = document.getElementById('pillLayer');
+  const pillStars = document.getElementById('pillStars');
+  const pillZoom  = document.getElementById('pillZoom');
+  const pillTime  = document.getElementById('pillTime');
+
+  // =========================================================
+  // BACKEND（你自己在後台調整就改這裡）
+  // - 每條 ridge 有自己的起伏 amp、速度 speed、厚度 thick、顏色 ramp stops
+  // - stops 建議 3 個（上/中/下），會做成每層自己的縱向漸層
+  // =========================================================
+  const STATE = {
+    ridges: [
+      { name:"blue",   amp:130, speed:1.7, thick:70, seed:11, stops:["#2f66ff","#6ff7ff","#ffffff"] },
+      { name:"pink",   amp:115, speed:1.2, thick:62, seed:23, stops:["#ff4fd8","#ffd2ff","#ffffff"] },
+      { name:"orange", amp:105, speed:1.45,thick:56, seed:37, stops:["#ff8a3d","#ffe36a","#ffffff"] },
+      { name:"violet", amp:120, speed:1.05,thick:64, seed:47, stops:["#8a5bff","#ff7fd6","#ffffff"] },
+      { name:"green",  amp:100, speed:1.15,thick:50, seed:59, stops:["#39ff88","#c8ff5b","#ffffff"] },
+    ],
+    global: {
+      layers: 5,
+      lineWidth: 2.2,
+      contourAlpha: 0.95,
+      fillAlpha: 0.9,
+
+      // 手繪筆觸
+      handJitter: 2.2,      // 抖動強度(px)
+      handWobble: 0.9,      // 流動擺動強度
+      multiContours: 3,     // 主線+副線總數
+      contourSpacing: 2.2,  // 副線間距(px)
+      sketchDouble: true,   // 雙描線
+    }
+  };
+
+  // ---------- Responsive ----------
+  let W=0,H=0,dpr=1;
+  function resize(){
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.floor(window.innerWidth);
+    H = Math.floor(window.innerHeight);
+    canvas.width = Math.floor(W*dpr);
+    canvas.height= Math.floor(H*dpr);
+    canvas.style.width = W+'px';
+    canvas.style.height= H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- Utils ----------
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const smooth=(t)=>t*t*(3-2*t);
+  const fract=(x)=>x-Math.floor(x);
+
+  function hash2(x,y){
+    const s = Math.sin(x*127.1 + y*311.7) * 43758.5453123;
+    return fract(s);
+  }
+  function valueNoise(x,y){
+    const xi=Math.floor(x), yi=Math.floor(y);
+    const xf=x-xi, yf=y-yi;
+    const a=hash2(xi,yi), b=hash2(xi+1,yi);
+    const c=hash2(xi,yi+1), d=hash2(xi+1,yi+1);
+    const u=smooth(xf), v=smooth(yf);
+    return lerp(lerp(a,b,u), lerp(c,d,u), v);
+  }
+  function fbm(x,y){
+    let f=0, amp=0.62, freq=1.0;
+    for(let i=0;i<5;i++){
+      f += amp * valueNoise(x*freq, y*freq);
+      freq *= 2.0;
+      amp *= 0.52;
+    }
+    return f;
+  }
+  function hexToRgb(hex){
+    const h = hex.replace('#','').trim();
+    const v = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+    return [(v>>16)&255, (v>>8)&255, v&255];
+  }
+  function mixRGB(a,b,t){
+    return [Math.round(lerp(a[0],b[0],t)), Math.round(lerp(a[1],b[1],t)), Math.round(lerp(a[2],b[2],t))];
+  }
+  function rgbStr(c,a=1){ return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+  function darken(c,t){ return mixRGB(c,[0,0,0],t); }
+  function lighten(c,t){ return mixRGB(c,[255,255,255],t); }
+
+  // ---------- Input ----------
+  const pointer = {x:0,y:0,down:false};
+  window.addEventListener('pointerdown',(e)=>{
+    if(e.button!==0) return;
+    pointer.down=true;
+    pointer.x=e.clientX; pointer.y=e.clientY;
+  });
+  window.addEventListener('pointerup',(e)=>{
+    if(e.button!==0) return;
+    pointer.down=false;
+  });
+  window.addEventListener('pointermove',(e)=>{
+    pointer.x=e.clientX; pointer.y=e.clientY;
+  });
+
+  let zoom=1.0, zoomVel=0;
+  window.addEventListener('wheel',(e)=>{
+    e.preventDefault();
+    zoomVel += Math.sign(e.deltaY) * 0.06;
+  }, {passive:false});
+
+  // ---------- State ----------
+  let time=0;
+  let timeDay=0;        // 0..1
+  let travel=0;
+  let travelVel=0;
+  let reach=1;
+
+  let inColorize=false;
+  let colorizeT=0;
+  let pendingColor=[255,140,220];
+
+  const sun={ x:0.5, y:0.44, baseColor:[255,246,222], curColor:[255,246,222] };
+
+  const stars=[];
+  function addStar(color){
+    const cx=sun.x+(Math.random()-0.5)*0.12;
+    const cy=sun.y+(Math.random()-0.5)*0.12;
+    stars.push({ x:clamp(cx,0.06,0.94), y:clamp(cy,0.06,0.94), r:lerp(0.9,2.8,Math.random()), color, twSeed:Math.random()*1000 });
+  }
+
+  // ---------- Sky (日夜) ----------
+  const skyStops=[
+    {t:0.00, c:[252,252,255]},
+    {t:0.33, c:[255,214,195]},
+    {t:0.66, c:[34, 86, 195]},
+    {t:1.00, c:[10, 12, 20]},
+  ];
+  function skyAt(t){
+    t=clamp(t,0,1);
+    for(let i=0;i<skyStops.length-1;i++){
+      const a=skyStops[i], b=skyStops[i+1];
+      if(t>=a.t && t<=b.t){
+        const u=smooth((t-a.t)/(b.t-a.t));
+        return mixRGB(a.c,b.c,u);
+      }
+    }
+    return skyStops[skyStops.length-1].c;
+  }
+  function nightAmount(t){
+    const n = clamp((t-0.58)/0.25, 0, 1);
+    return smooth(n);
+  }
+
+  function currentLayer(){ return (zoom<0.45)?3:1; }
+
+  function randomDreamColor(){
+    const choices=[[255,80,200],[80,240,255],[255,230,80],[170,120,255],[120,255,170],[255,140,110]];
+    const a=choices[(Math.random()*choices.length)|0];
+    const b=choices[(Math.random()*choices.length)|0];
+    return mixRGB(a,b,Math.random()*0.85);
+  }
+
+  // ==========================================
+  // Layer 1: 多層山河（每層獨立）＋手繪筆觸
+  // ==========================================
+ function drawMultiRidgeTerrain(sky, flow, alpha=1){
+  // SKY（保留日夜）
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, rgbStr(lighten(sky,0.10), alpha));
+  g.addColorStop(0.55, rgbStr(sky, alpha));
+  g.addColorStop(1, rgbStr(darken(sky,0.32), alpha));
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  const night = nightAmount(timeDay);
+
+  // 夜晚星塵（可見的日夜差異）
+  if(night > 0.02){
+    for(let i=0;i<120;i++){
+      const x = hash2(i, 9.1)*W;
+      const y = hash2(i, 2.7)*H*0.65;
+      const a = (hash2(i, 6.3)*0.10 + 0.02) * night * alpha;
+      const r = hash2(i, 4.2)*1.1 + 0.2;
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  const G = STATE.global;
+  const ridges = STATE.ridges;
+  const layers = Math.min(G.layers, ridges.length);
+
+  // 參考圖：遠處山較靠近地平線、近處山更高更大
+  const horizon = H*0.46;      // ✅ 讓山體上緣集中在中上（更像圖）
+  const bottomY = H*1.05;
+
+  // 畫層：由遠到近（先畫遠的，近的蓋上去）
+  for(let i=0;i<layers;i++){
+    const cfg = ridges[i];
+    const t = i/(layers-1 || 1); // 0遠->1近
+
+    // 基準高度：遠的靠上，近的往下（越近山越「大」）
+    const baseY = lerp(horizon - H*0.10, H*0.72, smooth(t));
+
+    // 起伏：遠的較小，近的更大（更像疊片）
+    const amp = cfg.amp * lerp(0.55, 1.55, smooth(t));
+
+    // 頻率：遠的曲線更平滑，近的細節多一點
+    const freq = lerp(0.0014, 0.0025, smooth(t));
+
+    // 流動速度：每層不同
+    const f = flow * 0.18 * cfg.speed;
+
+    const stepX = Math.max(8, Math.floor(W/220));
+    const pts=[];
+
+    for(let x=0;x<=W;x+=stepX){
+      const nx = (x - W*0.5) * freq;
+
+      // 兩段噪聲混合，曲線更「圓」
+      const n  = fbm(nx + cfg.seed,      f + i*3.1);
+      const n2 = fbm(nx*1.6 + cfg.seed*2, f*0.75 + i*2.2);
+      const h  = (n*0.65 + n2*0.35 - 0.5); // -0.5..0.5
+
+      // 手繪微抖（控制在小幅度，避免鋸齒）
+      const jitter = (hash2(x*0.02, i*17.7)-0.5) * (G.handJitter*0.35);
+      const wobble = Math.sin(x*0.006 + time*0.55 + i*1.2) * (G.handWobble*0.35);
+
+      pts.push([x, baseY + h*amp + jitter + wobble]);
+    }
+
+    // ===== 填色：每層用自己的 ramp（3 stops）=====
+    const c0 = mixRGB(hexToRgb(cfg.stops[0]), sky, 0.08);
+    const c1 = mixRGB(hexToRgb(cfg.stops[1]), sky, 0.08);
+    const c2 = mixRGB(hexToRgb(cfg.stops[2]), sky, 0.08);
+
+    const fillG = ctx.createLinearGradient(0, baseY-amp*0.9, 0, bottomY);
+    fillG.addColorStop(0.00, rgbStr(c0, 1));
+    fillG.addColorStop(0.55, rgbStr(c1, 1));
+    fillG.addColorStop(1.00, rgbStr(c2, 1));
+
+    // ===== 畫剪影山體（像紙片疊）=====
+    ctx.save();
+    ctx.globalAlpha = alpha; // 直接用 alpha，不要太透明，才有疊片感
+    ctx.beginPath();
+    ctx.moveTo(0, bottomY);
+    ctx.lineTo(pts[0][0], pts[0][1]);
+    for(let k=1;k<pts.length;k++) ctx.lineTo(pts[k][0], pts[k][1]);
+    ctx.lineTo(W, bottomY);
+    ctx.closePath();
+    ctx.fillStyle = fillG;
+    ctx.fill();
+    ctx.restore();
+
+    // ===== 柔光邊緣（參考圖的霧感/柔化）=====
+    const edgeAlpha = (0.08 + 0.06*(1-t)) * alpha;
+    ctx.save();
+    ctx.globalAlpha = edgeAlpha;
+    ctx.strokeStyle = rgbStr(lighten(c1, 0.25), 1);
+    ctx.lineWidth = lerp(10, 22, 1-t); // 遠處更柔
+    ctx.lineJoin="round"; ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for(let k=1;k<pts.length;k++) ctx.lineTo(pts[k][0], pts[k][1]);
+    ctx.stroke();
+    ctx.restore();
+
+    // ===== 薄薄的邊線（讓層次更清楚，但不要像等高線）=====
+    ctx.save();
+    ctx.globalAlpha = (0.10 + 0.10*(1-t)) * alpha;
+    ctx.strokeStyle = rgbStr(lighten(c0, 0.35), 1);
+    ctx.lineWidth = lerp(1.1, 2.0, 1-t);
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for(let k=1;k<pts.length;k++) ctx.lineTo(pts[k][0], pts[k][1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 暗角（夜晚更明顯）
+  const vig = ctx.createRadialGradient(
+    W*0.5, H*0.42, Math.min(W,H)*0.18,
+    W*0.5, H*0.5,  Math.min(W,H)*0.95
+  );
+  vig.addColorStop(0, `rgba(0,0,0,0)`);
+  vig.addColorStop(1, `rgba(0,0,0,${(0.14 + 0.42*night)*alpha})`);
+  ctx.fillStyle = vig;
+  ctx.fillRect(0,0,W,H);
+
+  // 低處霧（讓地面像你參考圖那種白霧漸層）
+  const fog = ctx.createLinearGradient(0, H*0.70, 0, H*1.02);
+  fog.addColorStop(0, `rgba(255,255,255,0)`);
+  fog.addColorStop(1, `rgba(255,255,255,${0.55*alpha})`);
+  ctx.fillStyle = fog;
+  ctx.fillRect(0,0,W,H);
+}
+
+
+  // ---------- Corridor ----------
+  function drawCorridor(sunX, sunY, flow, moveStrength, sky, alpha=1){
+    const topY = sunY + Math.min(W,H)*0.04;
+    const botY = H*1.02;
+
+    const topW = W*0.04;
+    const botW = W*0.90;
+    const cx = sunX;
+
+    const x1t = cx - topW*0.5, x2t = cx + topW*0.5;
+    const x1b = cx - botW*0.5, x2b = cx + botW*0.5;
+
+    const baseA = mixRGB([140,240,255],[255,84,214],0.25);
+    const baseB = mixRGB([60,120,255],[0,0,0],0.08);
+
+    const grd = ctx.createLinearGradient(0, topY, 0, botY);
+    grd.addColorStop(0, rgbStr(mixRGB(baseA, sky, 0.18), 0.50*alpha));
+    grd.addColorStop(1, rgbStr(mixRGB(baseB, sky, 0.12), 0.88*alpha));
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x1t, topY); ctx.lineTo(x2t, topY);
+    ctx.lineTo(x2b, botY); ctx.lineTo(x1b, botY);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, topY, W, botY-topY);
+
+    const speed = lerp(0.0, 1.0, moveStrength);
+    const stripeOffset = (flow * 260 * speed) % 96;
+
+    for(let i=-4;i<30;i++){
+      const y = topY + i*34 + stripeOffset;
+      const t = clamp((y-topY)/(botY-topY),0,1);
+      const halfW = lerp(topW*0.55, botW*0.55, smooth(t));
+      const xl = cx-halfW, xr=cx+halfW;
+
+      const cfg = STATE.ridges[(i+100)%STATE.ridges.length];
+      const col = hexToRgb(cfg.stops[1]);
+      const stripeCol = mixRGB([255,255,255], col, 0.30);
+
+      const a = lerp(0.26, 0.06, t) * alpha;
+      ctx.strokeStyle = rgbStr(stripeCol, a);
+      ctx.lineWidth = lerp(1.8, 1.0, t);
+      ctx.beginPath(); ctx.moveTo(xl,y); ctx.lineTo(xr,y); ctx.stroke();
+    }
+
+    ctx.restore();
+
+    const holeR = Math.min(W,H)*0.22;
+    const hole = ctx.createRadialGradient(cx, topY, 0, cx, topY, holeR);
+    hole.addColorStop(0, `rgba(16,14,22,${0.62*alpha})`);
+    hole.addColorStop(1, `rgba(0,0,0,0)`);
+    ctx.fillStyle = hole;
+    ctx.fillRect(cx-holeR, topY-holeR, holeR*2, holeR*2);
+  }
+
+  // ---------- Sun (永遠最後畫) ----------
+  function drawSun(x,y,r,color,glow=1,alpha=1){
+    const R = r*(7*glow);
+    const g = ctx.createRadialGradient(x,y,0,x,y,R);
+    g.addColorStop(0, rgbStr(color, 0.26*alpha));
+    g.addColorStop(0.22, rgbStr(lighten(color,0.10), 0.16*alpha));
+    g.addColorStop(1, `rgba(0,0,0,0)`);
+    ctx.fillStyle=g; ctx.fillRect(x-R,y-R,R*2,R*2);
+
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=rgbStr(color, 0.98*alpha); ctx.fill();
+
+    ctx.beginPath(); ctx.arc(x-r*0.22,y-r*0.22,r*0.35,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${0.36*alpha})`; ctx.fill();
+  }
+
+  // ---------- Layer 3: Space ----------
+  function drawSpace(alpha=1){
+    ctx.fillStyle=`rgba(5,6,12,${alpha})`;
+    ctx.fillRect(0,0,W,H);
+
+    const neb=ctx.createRadialGradient(W*0.35,H*0.35,0, W*0.35,H*0.35, Math.min(W,H)*0.9);
+    neb.addColorStop(0, `rgba(120,90,255,${0.10*alpha})`);
+    neb.addColorStop(0.5, `rgba(80,220,255,${0.05*alpha})`);
+    neb.addColorStop(1, `rgba(0,0,0,0)`);
+    ctx.fillStyle=neb;
+    ctx.fillRect(0,0,W,H);
+
+    for(let i=0;i<140;i++){
+      const x=(hash2(i,9.1)*W), y=(hash2(i,2.7)*H);
+      const a=(hash2(i,6.3)*0.06+0.01)*alpha;
+      const r=hash2(i,4.2)*1.2+0.2;
+      ctx.fillStyle=`rgba(255,255,255,${a})`;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+
+    for(const s of stars){
+      const x=s.x*W, y=s.y*H;
+      const tw=(Math.sin(time*1.6+s.twSeed)*0.5+0.5);
+      const a=lerp(0.35,0.95,tw)*alpha;
+
+      const R=s.r*10;
+      const g=ctx.createRadialGradient(x,y,0,x,y,R);
+      g.addColorStop(0, rgbStr(s.color, 0.24*a));
+      g.addColorStop(1, `rgba(0,0,0,0)`);
+      ctx.fillStyle=g; ctx.fillRect(x-R,y-R,R*2,R*2);
+
+      ctx.fillStyle=rgbStr(s.color,a);
+      ctx.beginPath(); ctx.arc(x,y,s.r,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ---------- Update / Render ----------
+  function update(dt){
+    time += dt;
+
+    zoomVel *= 0.84;
+    zoom = clamp(zoom - zoomVel, 0, 1);
+
+    timeDay = (timeDay + dt*0.05) % 1;
+    const sky = skyAt(timeDay);
+
+    const inTerrain = (zoom > 0.45);
+    const wantsMove = pointer.down && !inColorize && inTerrain;
+
+    const targetVel = wantsMove ? 1 : 0;
+    travelVel += (targetVel - travelVel) * (1 - Math.pow(0.001, dt));
+    travel += travelVel * dt * 1.55;
+
+    if(!inColorize){
+      if(wantsMove) reach -= dt*0.62;
+      else          reach += dt*0.08;
+      reach = clamp(reach,0,1);
+
+      if(reach <= 0.04){
+        inColorize=true;
+        colorizeT=0;
+        pendingColor=randomDreamColor();
+      }
+    } else {
+      colorizeT += dt*1.15;
+      if(colorizeT >= 1){
+        addStar(pendingColor);
+        sun.curColor = sun.baseColor.slice();
+        inColorize=false;
+        reach=1;
+      } else {
+        const t=colorizeT;
+        const up = t<0.55 ? smooth(t/0.55) : smooth((1-t)/0.45);
+        sun.curColor = mixRGB(sun.baseColor, pendingColor, up);
+      }
+    }
+
+    render(sky);
+  }
+
+  function render(sky){
+    const layer = currentLayer();
+    const terrainAlpha = clamp((zoom - 0.35)/0.65, 0, 1);
+    const spaceAlpha = 1 - terrainAlpha;
+
+    if(spaceAlpha>0.001) drawSpace(spaceAlpha);
+
+    if(terrainAlpha>0.001){
+      const flow = travel*2.45;
+
+      drawMultiRidgeTerrain(sky, flow, terrainAlpha);
+
+      const sunX = W*(sun.x + Math.sin(time*0.20)*0.002);
+      const sunY = H*(sun.y + Math.cos(time*0.16)*0.002);
+
+      drawCorridor(sunX, sunY, travel, travelVel, sky, terrainAlpha);
+
+      if(inColorize){
+        const t=smooth(colorizeT);
+        const flashA = lerp(0.00,0.30, Math.sin(Math.PI*t));
+        ctx.fillStyle=`rgba(255,255,255,${flashA*terrainAlpha})`;
+        ctx.fillRect(0,0,W,H);
+
+        const baseR = Math.min(W,H)*0.018;
+        const ringR = lerp(baseR*2.2, Math.min(W,H)*0.36, t);
+        ctx.beginPath(); ctx.arc(sunX,sunY,ringR,0,Math.PI*2);
+        ctx.strokeStyle = rgbStr(pendingColor, 0.48*terrainAlpha);
+        ctx.lineWidth = lerp(2.8,1.0,t);
+        ctx.stroke();
+      }
+
+      const baseR = Math.min(W,H)*0.018;
+      const grow = lerp(1.0, 3.1, smooth(1-reach));
+      const pulse = (Math.sin(time*1.2)*0.5+0.5);
+      const glow  = lerp(1.0, 2.1, smooth(1-reach));
+      drawSun(sunX, sunY, baseR*grow*(1.0+pulse*0.05), sun.curColor, glow, terrainAlpha);
+
+      if(!pointer.down && !inColorize){
+        const a=(Math.sin(time*2.0)*0.5+0.5)*0.35*terrainAlpha;
+        ctx.fillStyle=`rgba(255,255,255,${a})`;
+        ctx.font=`600 ${Math.max(12, Math.floor(Math.min(W,H)*0.018))}px ui-sans-serif, system-ui`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('按住左鍵追光前進', W*0.5, H*0.82);
+      }
+    }
+
+    pillLayer.textContent = `layer: ${inColorize ? '2' : layer}`;
+    pillStars.textContent = `stars: ${stars.length}`;
+    pillZoom.textContent  = `zoom: ${zoom.toFixed(2)}`;
+    pillTime.textContent  = `time: ${Math.round(timeDay*100)}%`;
+
+    if(layer===3 && !inColorize){
+      ctx.fillStyle=`rgba(255,255,255,0.55)`;
+      ctx.font=`500 ${Math.max(12, Math.floor(Math.min(W,H)*0.016))}px ui-sans-serif, system-ui`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('滾輪放大回到地勢圖（第一層）', W*0.5, H*0.90);
+      if(stars.length===0){
+        ctx.fillStyle=`rgba(255,255,255,0.42)`;
+        ctx.fillText('宇宙尚未生成繁星：先回去追光並完成染色', W*0.5, H*0.84);
+      }
+    }
+  }
+
+  // ---------- Loop ----------
+  let last=performance.now();
+  function loop(now){
+    const dt=Math.min(0.033,(now-last)/1000);
+    last=now;
+    update(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

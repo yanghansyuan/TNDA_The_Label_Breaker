@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 1_test</title>
+    <style>
+        /* 讓網頁自適應，填滿視窗且沒有捲軸 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f0ece1; /* 帶點溫暖的紙張底色 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 達成條件 b: 自適應視窗大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // 儲存點擊產生的形狀
+        let shapes = [];
+
+        // 達成條件 a: 滑鼠左鍵互動 (點擊產生形狀)
+        window.addEventListener('mousedown', function(event) {
+            // 只響應左鍵 (button === 0)
+            if (event.button === 0) {
+                shapes.push({
+                    x: event.clientX,
+                    y: event.clientY,
+                    radius: Math.random() * 15 + 10,
+                    tailLength: Math.random() * 100 + 50
+                });
+                draw();
+            }
+        });
+
+        // 繪製畫面的函數
+        function draw() {
+            // 每次重畫前清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 畫出所有點擊產生的「渴望之星」
+            shapes.forEach(shape => {
+                // 畫紅色的尾巴 (象徵延伸、渴望)
+                ctx.beginPath();
+                ctx.moveTo(shape.x, shape.y);
+                ctx.lineTo(shape.x - shape.tailLength, shape.y + shape.tailLength * 0.5); // 往左下角延伸
+                ctx.strokeStyle = '#e63946';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 畫橘色的圓形主體
+                ctx.beginPath();
+                ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#f4a261';
+                ctx.fill();
+                ctx.strokeStyle = '#e76f51';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+            
+            // 畫布中央加一點文字提示
+            if(shapes.length === 0) {
+                ctx.fillStyle = '#888';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('點擊滑鼠左鍵，釋放渴望', canvas.width/2, canvas.height/2);
+            }
+        }
+
+        // 初始繪製
+        draw();
+    </script>
+</body>
+</html>

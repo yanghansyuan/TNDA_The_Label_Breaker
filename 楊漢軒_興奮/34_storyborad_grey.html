@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮粒子場 v20（多視窗分鏡）</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #eee;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform, opacity;
+      box-shadow: 0 0 18px rgba(0,0,0,0.55);
+    }
+
+    .shape-circle { border-radius: 50%; }
+
+    .shape-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .shape-star {
+      clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+      );
+    }
+
+    .press-indicator {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 12px rgba(255,215,0,0.8);
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <script>
+    const stage = document.getElementById("stage");
+
+    let STAGE_WIDTH = stage.clientWidth;
+    let STAGE_HEIGHT = stage.clientHeight;
+    window.addEventListener("resize", () => {
+      STAGE_WIDTH = stage.clientWidth;
+      STAGE_HEIGHT = stage.clientHeight;
+    });
+
+    const MAX_PARTICLES = 800;
+    const LONG_PRESS_THRESHOLD = 1000;
+    const DRAG_DISTANCE_THRESHOLD = 20;
+
+    // ===== 分鏡設定 =====
+    const storyboardFrames = [
+      { src: "storyboard/1.png", width: 442, height: 462 },
+      { src: "storyboard/2.png", width: 237, height: 165 },
+      { src: "storyboard/3.png", width: 391, height: 161 },
+      { src: "storyboard/4.png", width: 187, height: 298 },
+      { src: "storyboard/5.png", width: 183, height: 160 }
+    ];
+    const storyboardIntervalMs = 2000; // 每張 2 秒
+    let pendingStoryboardAfterFirework = true;
+    let activeRockets = 0;
+    // 新增：紀錄目前這一輪開出的所有分鏡視窗
+    let storyboardWindows = [];
+
+    const colors = [
+      "#ff1744",
+      "#ffd600",
+      "#2979ff",
+      "#e040fb",
+      "#69f0ae",
+      "#ff9100"
+    ];
+    let colorIndex = 0;
+
+    const particles = [];
+    const shapeTypes = ["line", "triangle", "star", "circle"];
+
+    const pressIndicator = document.createElement("div");
+    pressIndicator.className = "press-indicator";
+    stage.appendChild(pressIndicator);
+
+    let pressInfo = null;
+    let pressAnimId = null;
+
+    let isSparkler = false;
+    let lastSparkX = null;
+    let lastSparkY = null;
+    let sparklerTimer = 0;
+
+    // ===== 分鏡：每張開一個獨立視窗，位置隨機 =====
+    function startStoryboardSequence() {
+  if (!storyboardFrames.length) return;
+
+  let index = 0;
+
+  function grayOutOldWindows() {
+    storyboardWindows.forEach(win => {
+      try {
+        if (win && !win.closed) {
+          const img = win.document.querySelector("img");
+          if (img) {
+            img.style.filter = "grayscale(100%) brightness(70%)";
+          }
+        }
+      } catch (e) {
+        // cross-origin 保護，先忽略
+      }
+    });
+  }
+
+  function openOne(frameIndex) {
+    if (frameIndex >= storyboardFrames.length) return;
+    const frame = storyboardFrames[frameIndex];
+    const w = frame.width;
+    const h = frame.height;
+
+    const maxLeft = Math.max(0, window.screen.availWidth - w);
+    const maxTop  = Math.max(0, window.screen.availHeight - h);
+    const left = Math.floor(Math.random() * (maxLeft + 1));
+    const top  = Math.floor(Math.random() * (maxTop + 1));
+
+    const features =
+      `width=${w},height=${h},left=${left},top=${top},` +
+      `resizable=yes,scrollbars=no`;
+
+    // 先把舊視窗裡的圖片變灰
+    grayOutOldWindows();
+
+    const win = window.open("", "_blank", features);
+    if (!win) {
+      console.warn("瀏覽器阻擋了 storyboard 視窗。");
+      return;
+    }
+
+    win.document.write(`
+      <!DOCTYPE html>
+      <html lang="zh-Hant">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Storyboard ${frameIndex + 1}</title>
+        <style>
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          img {
+            display: block;
+            width: ${w}px;
+            height: ${h}px;
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${frame.src}" alt="Storyboard ${frameIndex + 1}">
+      </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+
+    // 把這個新視窗加入列表，下一張出來時它會被變灰
+    storyboardWindows.push(win);
+  }
+
+  function scheduleNext() {
+    if (index >= storyboardFrames.length) return;
+    openOne(index);
+    index++;
+    if (index < storyboardFrames.length) {
+      setTimeout(scheduleNext, storyboardIntervalMs);
+    }
+  }
+
+  scheduleNext();
+}
+
+
+    // ===== 滑鼠事件 =====
+    stage.addEventListener("mousedown", (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      pressInfo = {
+        t: performance.now(),
+        startX: x,
+        startY: y,
+        x,
+        y,
+        exceeded: false
+      };
+
+      isSparkler = false;
+      lastSparkX = x;
+      lastSparkY = y;
+      sparklerTimer = 0;
+
+      pressIndicator.style.left = x + "px";
+      pressIndicator.style.top = y + "px";
+      pressIndicator.style.width = "120px";
+      pressIndicator.style.height = "120px";
+      pressIndicator.style.opacity = "1";
+      pressIndicator.style.transform = "translate(-50%, -50%) scale(0.2)";
+
+      const startT = performance.now();
+      function grow() {
+        if (!pressInfo || isSparkler) return;
+        const nowT = performance.now();
+        const elapsed = nowT - startT;
+
+        let scale;
+        if (elapsed < LONG_PRESS_THRESHOLD) {
+          const t = elapsed / LONG_PRESS_THRESHOLD;
+          const clamped = Math.min(t, 1);
+          scale = 0.2 + 0.8 * clamped;
+        } else {
+          const wiggle = 0.05 * Math.sin((elapsed - LONG_PRESS_THRESHOLD) / 80);
+          scale = 1.0 + wiggle;
+          if (!pressInfo.exceeded) pressInfo.exceeded = true;
+        }
+
+        pressIndicator.style.transform =
+          `translate(-50%, -50%) scale(${scale})`;
+        pressAnimId = requestAnimationFrame(grow);
+      }
+      grow();
+    });
+
+    stage.addEventListener("mousemove", (event) => {
+      if (!pressInfo) return;
+
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      pressInfo.x = x;
+      pressInfo.y = y;
+
+      const dx = x - pressInfo.startX;
+      const dy = y - pressInfo.startY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (!isSparkler && dist > DRAG_DISTANCE_THRESHOLD) {
+        isSparkler = true;
+        if (pressAnimId) {
+          cancelAnimationFrame(pressAnimId);
+          pressAnimId = null;
+        }
+        pressIndicator.style.opacity = "0";
+        pressIndicator.style.transform =
+          "translate(-50%, -50%) scale(0)";
+      }
+    });
+
+    stage.addEventListener("mouseup", () => {
+      if (!pressInfo) return;
+      const durationMs = performance.now() - pressInfo.t;
+      const { startX, startY } = pressInfo;
+      pressInfo = null;
+
+      if (pressAnimId) {
+        cancelAnimationFrame(pressAnimId);
+        pressAnimId = null;
+      }
+
+      pressIndicator.style.transform =
+        "translate(-50%, -50%) scale(0)";
+      pressIndicator.style.opacity = "0";
+
+      if (isSparkler) {
+        isSparkler = false;
+        return;
+      }
+
+      if (durationMs >= LONG_PRESS_THRESHOLD) {
+        // 每次新一輪煙火前，先關掉所有舊的分鏡視窗
+        storyboardWindows.forEach(win => {
+            if (win && !win.closed) win.close();
+        });
+        storyboardWindows = [];
+
+        pendingStoryboardAfterFirework = true;
+        spawnFireworkRockets(startX, startY, durationMs);
+        } else {
+        handleTap(startX, startY);
+        }   
+
+    });
+
+    // ===== 仙女棒 =====
+    function spawnSparkler(x, y) {
+      let dist = Infinity;
+      if (lastSparkX !== null) {
+        const dx = x - lastSparkX;
+        const dy = y - lastSparkY;
+        dist = Math.sqrt(dx*dx + dy*dy);
+      }
+      lastSparkX = x;
+      lastSparkY = y;
+
+      drawHalo(x, y);
+
+      const shouldEmit =
+        dist > 2 || Math.random() < 0.4;
+
+      if (!shouldEmit) return;
+
+      ensureCapacity(24);
+
+      const coreCount = 12 + Math.floor(Math.random() * 6);
+      for (let i = 0; i < coreCount; i++) {
+        createSparkParticle(x, y, "core");
+      }
+
+      const streakCount = 6 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < streakCount; i++) {
+        createSparkParticle(x, y, "streak");
+      }
+    }
+
+    function drawHalo(x, y) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      el.style.backgroundColor = "#fffbe5";
+      const size = 26 + Math.random() * 16;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+      el.style.opacity = "0.95";
+      el.style.boxShadow = "0 0 40px rgba(255,255,210,0.95)";
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 180 + Math.random() * 120;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha: 0.95,
+        type: "spark",
+        mode: "halo",
+        splitDone: true
+      });
+    }
+
+    function createSparkParticle(x, y, mode) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+
+      const sparkColor = mode === "core" ? "#fff9dd" : "#ffd900";
+      el.style.backgroundColor = sparkColor;
+
+      const size =
+        mode === "core"
+          ? 3 + Math.random() * 2
+          : 2 + Math.random() * 2;
+
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+      el.style.opacity = "1";
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const baseAngle = -Math.PI / 2;
+      const spread =
+        mode === "core"
+          ? (Math.random() - 0.5) * 0.9
+          : (Math.random() - 0.5) * 1.6;
+
+      const angle = baseAngle + spread;
+
+      const baseSpeed =
+        mode === "core"
+          ? 550 + Math.random() * 350
+          : 750 + Math.random() * 550;
+
+      const vx = Math.cos(angle) * baseSpeed;
+      const vy = Math.sin(angle) * baseSpeed;
+
+      const now = performance.now();
+      const life =
+        mode === "core"
+          ? 550 + Math.random() * 300
+          : 1200 + Math.random() * 900;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha: 1,
+        type: "spark",
+        mode,
+        splitDone: false
+      });
+    }
+
+    // ===== 點擊爆炸 =====
+    function handleTap(x, y) {
+      const baseCount = 30 + Math.floor(Math.random() * 20);
+      createBurstAt(x, y, baseCount);
+    }
+
+    function createBurstAt(cx, cy, count) {
+      ensureCapacity(count);
+      for (let i = 0; i < count; i++) {
+        const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        createBurstParticle(cx, cy, shape);
+      }
+    }
+
+    // ===== 長按火箭 =====
+    function spawnFireworkRockets(x, y, durationMs) {
+      const minHold = LONG_PRESS_THRESHOLD;
+      const maxHold = 4000;
+      const clamped = Math.max(minHold, Math.min(maxHold, durationMs));
+      const strength = (clamped - minHold) / (maxHold - minHold);
+
+      const rocketCount = 1 + Math.round(strength * 2);
+      ensureCapacity(rocketCount);
+      for (let i = 0; i < rocketCount; i++) {
+        createRocket(x, y, strength);
+      }
+    }
+
+    function ensureCapacity(needToAdd) {
+      const totalNeeded = particles.length + needToAdd;
+      if (totalNeeded > MAX_PARTICLES) {
+        const toRemove = totalNeeded - MAX_PARTICLES;
+        for (let i = 0; i < toRemove && particles.length > 0; i++) {
+          const old = particles.shift();
+          old.el.remove();
+        }
+      }
+    }
+
+    // ===== 一般爆炸粒子 =====
+    function createBurstParticle(cx, cy, shape) {
+      const el = document.createElement("div");
+      el.classList.add("particle");
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;
+      el.style.backgroundColor = "#ffd700";
+
+      const baseAlpha = 0.85 + Math.random() * 0.1;
+      el.style.opacity = baseAlpha.toString();
+
+      let baseSpeed;
+      let w, h;
+
+      switch (shape) {
+        case "line": {
+          el.classList.add("shape-line");
+          const tLevels = [2, 4, 7];
+          const tIndex = Math.floor(Math.random() * tLevels.length);
+          h = tLevels[tIndex];
+          w = 60 + Math.random() * 40;
+          baseSpeed = 1500 + Math.random() * 900;
+          break;
+        }
+        case "triangle": {
+          el.classList.add("shape-triangle");
+          const sLevels = [14, 20, 28];
+          const s = sLevels[Math.floor(Math.random() * sLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 900 + Math.random() * 480;
+          break;
+        }
+        case "star": {
+          el.classList.add("shape-star");
+          const sLevels = [16, 22, 30];
+          const s = sLevels[Math.floor(Math.random() * sLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 760 + Math.random() * 420;
+          break;
+        }
+        default: {
+          el.classList.add("shape-circle");
+          const sLevels = [10, 16, 22];
+          const s = sLevels[Math.floor(Math.random() * sLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 880 + Math.random() * 480;
+        }
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+
+      const size = (w + h) / 2;
+      const sizeFactor = 1.7 - Math.min(size / 80, 1.0);
+      let speed = baseSpeed * sizeFactor;
+
+      let x = cx;
+      let y = cy;
+
+      const angle = Math.random() * Math.PI * 2;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.3)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 2200 + Math.random() * 1000;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w,
+        h,
+        shape,
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: w,
+        baseAlpha,
+        type: "burst",
+        trailTimer: 0
+      });
+    }
+
+    // ===== 火箭與拖尾 =====
+    function createRocket(cx, cy, strength) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;
+      el.style.backgroundColor = "#ffd700";
+
+      const size = 10 + Math.random() * 6;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+
+      const baseAlpha = 0.9;
+      el.style.opacity = baseAlpha.toString();
+
+      const baseSpeed = 1200 + strength * 800;
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.2;
+      let vx = Math.cos(angle) * (150 * (Math.random() - 0.5));
+      let vy = Math.sin(angle) * baseSpeed;
+
+      let x = cx;
+      let y = cy;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.4)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 1300 + strength * 700;
+
+      activeRockets++;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha,
+        type: "rocket",
+        trailTimer: 0
+      });
+    }
+
+    function createTrailParticle(x, y, color) {
+      const el = document.createElement("div");
+      el.classList.add("particle", "shape-circle");
+      el.style.backgroundColor = color;
+
+      const size = 6 + Math.random() * 4;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+
+      const baseAlpha = 0.8;
+      el.style.opacity = baseAlpha.toString();
+      el.style.transform = "translate(-50%, -50%) scale(1)";
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 400 + Math.random() * 250;
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        w: size,
+        h: size,
+        shape: "circle",
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: size,
+        baseAlpha,
+        type: "trail",
+        trailTimer: 0
+      });
+    }
+
+    // ===== 動畫迴圈 =====
+    let lastTime = null;
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      if (pressInfo && isSparkler) {
+        const x = pressInfo.x ?? pressInfo.startX;
+        const y = pressInfo.y ?? pressInfo.startY;
+        sparklerTimer += dt;
+        const interval = 1 / 60;
+        while (sparklerTimer >= interval) {
+          sparklerTimer -= interval;
+          spawnSparkler(x, y);
+        }
+      } else {
+        sparklerTimer = 0;
+      }
+
+      updateParticles(dt, timestamp);
+      requestAnimationFrame(animate);
+    }
+
+    function updateParticles(dt, now) {
+      const baseDrag = 0.97;
+      const wallDamping = 0.86;
+      const spinDecay = 0.94;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.createdAt;
+        const t = age / p.life;
+
+        if (p.type === "spark" && !p.splitDone && p.mode !== "halo") {
+          const ageRatio = age / p.life;
+          if (ageRatio > 0.35 && ageRatio < 0.55) {
+            p.splitDone = true;
+
+            const splitCount = 3 + Math.floor(Math.random() * 3);
+            for (let s = 0; s < splitCount; s++) {
+              const el2 = document.createElement("div");
+              el2.classList.add("particle", "shape-circle");
+              el2.style.backgroundColor = "#ffd900";
+              const size2 = 1.5 + Math.random() * 1.5;
+              el2.style.width = size2 + "px";
+              el2.style.height = size2 + "px";
+              el2.style.opacity = "0.85";
+              el2.style.transform = "translate(-50%, -50%) scale(1)";
+              stage.appendChild(el2);
+
+              const angle = Math.random() * Math.PI * 2;
+              const speed2 = 320 + Math.random() * 260;
+              const vx2 = Math.cos(angle) * speed2;
+              const vy2 = Math.sin(angle) * speed2;
+
+              const now2 = performance.now();
+              const life2 = 900 + Math.random() * 700;
+
+              particles.push({
+                el: el2,
+                x: p.x,
+                y: p.y,
+                vx: vx2,
+                vy: vy2,
+                w: size2,
+                h: size2,
+                shape: "circle",
+                life: life2,
+                createdAt: now2,
+                spin: 0,
+                rotation: 0,
+                shrink: false,
+                targetW: size2,
+                baseAlpha: 0.85,
+                type: "spark",
+                mode: "child",
+                splitDone: true
+              });
+            }
+          }
+        }
+
+        if (t >= 1.05) {
+          if (p.type === "rocket") {
+            const baseCount = 30 + Math.floor(Math.random() * 20);
+            createBurstAt(p.x, p.y, baseCount * 5);
+
+            activeRockets--;
+            if (activeRockets <= 0 && pendingStoryboardAfterFirework) {
+              pendingStoryboardAfterFirework = false;
+              startStoryboardSequence();
+            }
+          }
+
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        if (p.type !== "trail" && p.type !== "spark") {
+          let localDrag = baseDrag;
+          if (p.shape === "line") localDrag = 0.975;
+          else if (p.shape === "star") localDrag = 0.965;
+
+          p.vx *= localDrag;
+          p.vy *= localDrag;
+
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          const halfW = p.w / 2;
+          const halfH = p.h / 2;
+          const minX = halfW;
+          const maxX = STAGE_WIDTH - halfW;
+          const minY = halfH;
+          const maxY = STAGE_HEIGHT - halfH;
+
+          let collided = false;
+
+          if (p.x < minX) {
+            p.x = minX;
+            p.vx = -p.vx * wallDamping;
+            collided = true;
+          } else if (p.x > maxX) {
+            p.x = maxX;
+            p.vx = -p.vx * wallDamping;
+            collided = true;
+          }
+
+          if (p.y < minY) {
+            p.y = minY;
+            p.vy = -p.vy * wallDamping;
+            collided = true;
+          } else if (p.y > maxY) {
+            p.y = maxY;
+            p.vy = -p.vy * wallDamping;
+            collided = true;
+          }
+
+          if (collided && p.type === "burst") {
+            const spinImpulse = 1080;
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            p.spin += spinImpulse * dir;
+
+            if (p.shape === "line" && !p.shrink) {
+              p.shrink = true;
+              p.targetW = p.w * 0.2;
+            }
+          }
+        } else {
+          const drag = p.type === "spark" ? 0.993 : 0.985;
+          p.vx *= drag;
+          p.vy *= drag;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+        }
+
+        if (p.type === "rocket") {
+          p.trailTimer += dt;
+          if (p.trailTimer > 0.03) {
+            p.trailTimer = 0;
+            createTrailParticle(p.x, p.y, p.el.dataset.baseColor || "#ffffff");
+          }
+        }
+
+        p.spin *= spinDecay;
+        p.rotation += p.spin * dt;
+
+        const baseDirDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+
+        let scale;
+        let opacity;
+
+        if (p.type === "burst" || p.type === "rocket") {
+          if (t < 0.2) {
+            p.el.style.backgroundColor = "#ffd700";
+          } else {
+            p.el.style.backgroundColor = p.el.dataset.baseColor || "#ffffff";
+          }
+
+          if (t < 0.3) {
+            const k = t / 0.3;
+            scale = 0.3 + 0.9 * k;
+          } else {
+            const k = (t - 0.3) / 0.7;
+            scale = 1.2 * (1 - k);
+          }
+
+          opacity = p.baseAlpha * (1 - t);
+        } else if (p.type === "trail" || p.type === "spark") {
+          if (p.type === "spark" && p.mode === "core") {
+            scale = 1 - t * 0.8;
+            opacity = p.baseAlpha * (1 - t * 1.3);
+          } else {
+            scale = 1 - t * 0.4;
+            opacity = p.baseAlpha * (1 - t * 0.85);
+          }
+        } else {
+          scale = 1;
+          opacity = p.baseAlpha * (1 - t);
+        }
+
+        const rotationDeg = baseDirDeg + p.rotation;
+
+        p.el.style.left = p.x + "px";
+        p.el.style.top = p.y + "px";
+        p.el.style.transform =
+          `translate(-50%, -50%) scale(${scale}) rotate(${rotationDeg}deg)`;
+        p.el.style.opacity = opacity.toString();
+        p.el.style.filter =
+          `saturate(${1 - t * 0.1}) brightness(${1 - t * 0.05})`;
+      }
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

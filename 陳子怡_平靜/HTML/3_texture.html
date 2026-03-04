@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泡沫之境 | The Land of Foam</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f7;
+            --text-color: #1a1a1a;
+            --font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 1.2s ease, color 1.2s ease;
+            cursor: pointer;
+        }
+
+        /* --- 啟動畫面 --- */
+        #start-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98);
+            z-index: 100;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 0.8s ease;
+        }
+        #start-overlay.hidden { opacity: 0; pointer-events: none; }
+        .start-btn {
+            padding: 15px 40px; font-size: 0.9rem; letter-spacing: 0.2em; text-transform: uppercase;
+            border: 1px solid #333; background: transparent; cursor: pointer; transition: 0.3s;
+        }
+        .start-btn:hover { background: #333; color: #fff; }
+        .hint-text { margin-top: 20px; font-size: 0.75rem; color: #888; letter-spacing: 0.05em;}
+
+        /* --- 核心視覺層 --- */
+        #canvas-container {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            transition: filter 1.5s ease, opacity 1.5s ease;
+        }
+
+        /* --- 動態紋理層 (Texture Overlays) --- */
+        /* 1. 通用噪點 */
+        .texture-layer {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0; /* 預設隱藏 */
+            transition: opacity 1.5s ease;
+            mix-blend-mode: overlay;
+        }
+
+        /* 琥珀與霓虹專用的：垂直光柵效果 (Lenticular / Ribbed Glass) */
+        .texture-ribbed {
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 2px,
+                rgba(255, 255, 255, 0.1) 2px,
+                rgba(0, 0, 0, 0.2) 4px
+            );
+            background-size: 4px 100%;
+            mix-blend-mode: overlay; 
+        }
+
+        /* 黑白專用的：粗糙地形噪點 */
+        .texture-grit {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: soft-light;
+        }
+
+        /* 狀態類別：控制顯示哪個紋理 */
+        body.mode-foam .texture-ribbed { opacity: 0; } /* 原始模式不需要強烈紋理 */
+        
+        /* 琥珀模式：強烈的垂直線條 */
+        body.mode-amber .texture-ribbed { 
+            opacity: 0.7; 
+            background: repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0px, transparent 2px, rgba(0,0,0,0.1) 4px);
+            mix-blend-mode: overlay;
+        }
+        
+        /* 霓虹模式：金屬拉絲感 */
+        body.mode-neon .texture-ribbed { 
+            opacity: 0.6; 
+            background: repeating-linear-gradient(90deg, rgba(0,0,0,0.8) 0px, transparent 1px, rgba(255,255,255,0.1) 3px);
+            mix-blend-mode: hard-light;
+        }
+
+        /* 黑白模式：粗糙質感 */
+        body.mode-ink .texture-grit { opacity: 0.8; mix-blend-mode: overlay; }
+        body.mode-ink .texture-ribbed { opacity: 0; }
+
+        /* --- UI 層 --- */
+        .ui-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3;
+            padding: 2rem; pointer-events: none;
+            font-size: 0.85rem; letter-spacing: 0.05em; font-weight: 500;
+        }
+        .top-left { position: absolute; top: 2rem; left: 2rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .top-right { position: absolute; top: 2rem; right: 2rem; text-align: right; }
+        .bottom-left { position: absolute; bottom: 2rem; left: 2rem; }
+        .bottom-right { position: absolute; bottom: 2rem; right: 2rem; }
+        
+        .vertical-text-left {
+            position: absolute; top: 50%; left: 2rem; transform: translateY(-50%) rotate(-180deg);
+            writing-mode: vertical-rl; font-size: 0.75rem; opacity: 0.8; letter-spacing: 0.15em;
+        }
+        .vertical-text-right {
+            position: absolute; top: 50%; right: 2rem; transform: translateY(-50%) rotate(0deg);
+            writing-mode: vertical-rl; font-size: 0.75rem; opacity: 0.8;
+        }
+
+        #click-hint { font-size: 0.7rem; opacity: 0.6; margin-top: 5px; animation: pulse 3s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .ui-layer { padding: 1.5rem; }
+            .top-left, .top-right, .bottom-left, .bottom-right { top: 1.5rem; left: 1.5rem; right: 1.5rem; bottom: 1.5rem; }
+            .vertical-text-left, .vertical-text-right { display: none; }
+        }
+    </style>
+</head>
+<body class="mode-foam">
+
+    <div id="start-overlay">
+        <button class="start-btn">Enter The Foam</button>
+        <div class="hint-text">請開啟聲音 • 點擊切換質感</div>
+    </div>
+
+    <!-- 畫布層 -->
+    <canvas id="canvas-container"></canvas>
+
+    <!-- 紋理層 (多層疊加) -->
+    <div class="texture-layer texture-ribbed"></div>
+    <div class="texture-layer texture-grit"></div>
+
+    <!-- UI 層 -->
+    <main class="ui-layer">
+        <div class="top-left">
+            <span id="theme-index">NO.01</span>
+            <span id="mode-name">FOAM</span>
+        </div>
+        <div class="top-right">
+            <span id="mood-text">Calm & Blue</span>
+            <div id="click-hint">Click to shift reality</div>
+        </div>
+        <div class="vertical-text-left" id="date-text">OCTOBER / 19TH / 2025</div>
+        <div class="vertical-text-right" id="quote-text">FREEWILL IDEA</div>
+        <div class="bottom-left">
+            <span id="audio-status">Audio Reactive: Active</span>
+        </div>
+        <div class="bottom-right">
+            <span>©The Land of Foam</span>
+        </div>
+    </main>
+
+    <script>
+        // --- 設定：四大質感境界 ---
+        const themes = [
+            {
+                name: "FOAM", // 原始設定
+                id: "NO.01",
+                class: "mode-foam",
+                mood: "Deep Silence",
+                // 原始藍色系
+                colors: ["#4169E1", "#1E90FF", "#6495ED", "#B0C4DE"],
+                bg: "#f4f4f7",
+                text: "#1a1a1a",
+                wave: "sine",
+                baseFreq: 150,
+                speed: 1.0,
+                // 中等模糊
+                filter: "blur(60px) contrast(1.2)",
+                blend: "normal",
+                gravity: 0
+            },
+            {
+                name: "AMBER", // 圖1：橘紅透鏡感
+                id: "NO.02",
+                class: "mode-amber",
+                mood: "Optic Heat",
+                // 參考圖1：高飽和橘、紅、奶油白
+                colors: ["#FF4500", "#FF6347", "#FFD700", "#FFF8DC"], 
+                bg: "#FFFAF0", // 溫暖的米白色背景
+                text: "#CD5C5C",
+                wave: "square", // 方波，溫暖復古
+                baseFreq: 180,
+                speed: 0.8,
+                // 關鍵：極高的模糊但較低的對比，配合CSS的光柵紋理，創造透鏡感
+                filter: "blur(40px) contrast(1.1) brightness(1.1)", 
+                blend: "multiply", // 疊加模式，讓顏色像墨水一樣重疊變深
+                gravity: -0.3 // 微微上升熱氣
+            },
+            {
+                name: "NEON", // 圖2：金屬拉絲/繞射質感
+                id: "NO.03",
+                class: "mode-neon",
+                mood: "Iridescent Metal",
+                // 參考圖2：深青、古銅、深藍、黑
+                colors: ["#008B8B", "#B87333", "#000033", "#2F4F4F", "#D2691E"],
+                bg: "#050505", // 極深黑背景
+                text: "#B87333", // 古銅色文字
+                wave: "sawtooth", // 鋸齒波，銳利金屬感
+                baseFreq: 110, // 低頻
+                speed: 2.0, // 快速流動
+                // 關鍵：高亮度，配合 color-dodge 產生金屬光澤
+                filter: "blur(30px) brightness(1.4) contrast(1.2)",
+                blend: "color-dodge", // 顏色減淡，模擬光線在金屬上的反射
+                gravity: 0
+            },
+            {
+                name: "INK", // 圖3：黑白地形/指紋
+                id: "NO.04",
+                class: "mode-ink",
+                mood: "Topo Structure",
+                // 參考圖3：純粹的黑與白
+                colors: ["#000000", "#111111", "#FFFFFF", "#333333"],
+                bg: "#808080", // 中性灰背景，讓黑白粒子都能顯現
+                text: "#000000",
+                wave: "triangle", // 三角波，幾何感
+                baseFreq: 80, // 極低頻震動
+                speed: 0.4, // 非常緩慢
+                // 關鍵：極致的對比度，創造銳利的邊緣（脊線效果）
+                filter: "blur(25px) contrast(8) grayscale(1)", 
+                blend: "normal",
+                gravity: 0.1 // 沈重感
+            }
+        ];
+
+        let currentThemeIndex = 0;
+        let currentTheme = themes[0];
+
+        // --- 音效系統 ---
+        let audioCtx, analyser, dataArray, masterGain;
+        let osc1, osc2, osc3;
+        let isAudioInit = false;
+
+        function initAudio() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 64;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.15;
+            masterGain.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            osc1 = createOsc(currentTheme.baseFreq, currentTheme.wave);
+            osc2 = createOsc(currentTheme.baseFreq * 1.5, currentTheme.wave);
+            osc3 = createOsc(currentTheme.baseFreq * 0.5, currentTheme.wave);
+            
+            osc1.start(); osc2.start(); osc3.start();
+            isAudioInit = true;
+        }
+
+        function createOsc(freq, type) {
+            const osc = audioCtx.createOscillator();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(masterGain);
+            return osc;
+        }
+
+        function updateAudioTheme() {
+            if (!isAudioInit) return;
+            const now = audioCtx.currentTime;
+            osc1.frequency.linearRampToValueAtTime(currentTheme.baseFreq, now + 1.5);
+            osc2.frequency.linearRampToValueAtTime(currentTheme.baseFreq * 1.5, now + 1.5);
+            osc3.frequency.linearRampToValueAtTime(currentTheme.baseFreq * 0.5, now + 1.5);
+            
+            // 延遲切換波形以配合頻率滑動
+            setTimeout(() => {
+                osc1.type = currentTheme.wave;
+                osc2.type = currentTheme.wave;
+                osc3.type = currentTheme.wave;
+            }, 500);
+        }
+
+        // --- 視覺系統 ---
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mouse = { x: -1000, y: -1000 };
+        let audioVolume = 0;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+            }
+
+            reset() {
+                // 根據模式調整大小
+                // INK 模式需要小一點的粒子來製造「脊線」細節
+                // FOAM 需要大一點
+                let sizeMod = currentTheme.name === "INK" ? 0.6 : 1; 
+                this.radius = (Math.random() * 80 + 100) * sizeMod;
+                this.baseRadius = this.radius;
+                
+                this.vx = (Math.random() - 0.5) * currentTheme.speed;
+                this.vy = (Math.random() - 0.5) * currentTheme.speed;
+                this.color = currentTheme.colors[Math.floor(Math.random() * currentTheme.colors.length)];
+            }
+
+            update() {
+                this.vy += currentTheme.gravity * 0.05;
+                
+                // 模擬垂直紋理的移動特性：如果是 NEON/AMBER，垂直移動量稍微大一點
+                if (currentTheme.name === "AMBER" || currentTheme.name === "NEON") {
+                    this.x += this.vx * 0.5; // 水平移動慢一點
+                    this.y += this.vy * 1.5; // 垂直移動快一點
+                } else {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                }
+
+                if (this.x < -200) this.x = width + 200;
+                if (this.x > width + 200) this.x = -200;
+                if (this.y < -200) this.y = height + 200;
+                if (this.y > height + 200) this.y = -200;
+
+                // Audio Scale
+                const audioScale = 1 + (audioVolume / 255) * 0.6;
+                let targetRadius = this.baseRadius * audioScale;
+
+                // Interaction
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 400) {
+                    const force = (400 - dist) / 400;
+                    this.vx -= (dx / dist) * force * 0.1;
+                    this.vy -= (dy / dist) * force * 0.1;
+                    targetRadius += 40 * force;
+                }
+
+                this.radius += (targetRadius - this.radius) * 0.1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalCompositeOperation = currentTheme.blend;
+                ctx.fill();
+                ctx.closePath();
+                ctx.globalCompositeOperation = 'source-over';
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            // INK 模式粒子多一點，製造細節
+            const count = (width < 768 ? 6 : 10) + (currentTheme.name === "INK" ? 5 : 0);
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+
+        function animate() {
+            if (isAudioInit) {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
+                audioVolume = sum / dataArray.length;
+            }
+
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        // --- 切換邏輯 ---
+        function switchTheme() {
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            currentTheme = themes[currentThemeIndex];
+
+            // 1. 設定 Body Class (觸發 CSS 紋理切換)
+            document.body.className = currentTheme.class;
+
+            // 2. 更新變數
+            document.documentElement.style.setProperty('--bg-color', currentTheme.bg);
+            document.documentElement.style.setProperty('--text-color', currentTheme.text);
+            
+            // 3. Canvas 濾鏡
+            canvas.style.filter = currentTheme.filter;
+
+            // 4. 文字
+            document.getElementById('theme-index').innerText = currentTheme.id;
+            document.getElementById('mode-name').innerText = currentTheme.name;
+            document.getElementById('mood-text').innerText = currentTheme.mood;
+
+            // 5. 聲音 & 粒子
+            updateAudioTheme();
+            
+            // 漸變粒子 (保留平滑感)
+            initParticles(); // 重新生成以適應數量變化
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        
+        document.body.addEventListener('click', (e) => {
+            if (e.target.closest('#start-overlay')) return;
+            switchTheme();
+        });
+
+        document.getElementById('start-overlay').addEventListener('click', () => {
+            document.getElementById('start-overlay').classList.add('hidden');
+            initAudio();
+            const d = new Date();
+            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            document.getElementById('date-text').innerText = `${months[d.getMonth()]} / ${d.getDate()}TH / ${d.getFullYear()}`;
+        });
+
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>

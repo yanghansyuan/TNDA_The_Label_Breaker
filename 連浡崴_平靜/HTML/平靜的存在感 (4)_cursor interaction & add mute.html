@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presence in Calmness | 靜謐空間 v3</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #d4a373;
+            --danger: #ff6b6b;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* 3D Canvas */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 啟動遮罩 */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 1.2s ease;
+        }
+
+        .overlay-text {
+            font-size: 1.5rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            font-weight: 200;
+            opacity: 0.8;
+            animation: breathe 3s infinite ease-in-out;
+        }
+
+        .overlay-sub {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            opacity: 0.4;
+            letter-spacing: 0.1em;
+        }
+
+        /* UI 控制面板 */
+        #ui-layer {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            z-index: 10;
+            opacity: 0;
+            transition: all 1s ease 0.5s;
+            pointer-events: none;
+        }
+
+        #ui-layer.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .control-panel {
+            pointer-events: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 60px;
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.2);
+            padding: 4px;
+            border-radius: 30px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-btn:hover {
+            color: #fff;
+        }
+
+        /* 啟動狀態的按鈕 */
+        .mode-btn.active {
+            background: var(--text-color);
+            color: var(--bg-color);
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15);
+        }
+
+        /* 靜音按鈕的特殊樣式 */
+        .mode-btn[data-type="off"]:hover {
+            color: var(--danger);
+        }
+        .mode-btn[data-type="off"].active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            box-shadow: none;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 10px;
+            border-left: 1px solid var(--glass-border);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 80px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.4);
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <div class="overlay-text">Enter Space</div>
+        <div class="overlay-sub">Click to Interact</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="control-panel">
+            <div class="btn-group">
+                <button class="mode-btn active" data-type="white">FOCUS</button>
+                <button class="mode-btn" data-type="pink">RAIN</button>
+                <button class="mode-btn" data-type="brown">DEEP</button>
+                <button class="mode-btn" data-type="off">MUTE</button>
+            </div>
+            
+            <div class="volume-container">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.6">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        /**
+         * PART 1: AUDIO ENGINE
+         * 包含靜音與淡入淡出邏輯
+         */
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.mainGain = null;
+                this.source = null;
+                this.analyser = null;
+                this.volume = 0.6;
+                this.isPlaying = false;
+                this.isMuted = false;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                
+                this.mainGain = this.ctx.createGain();
+                this.mainGain.gain.value = 0;
+                this.mainGain.connect(this.ctx.destination);
+
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.analyser.smoothingTimeConstant = 0.85; // 平滑化數值
+                this.analyser.connect(this.mainGain);
+            }
+
+            // 生成噪音波形
+            createBuffer(type) {
+                const bufferSize = 2 * this.ctx.sampleRate;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                let lastOut = 0;
+
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    if (type === 'white') {
+                        data[i] = white;
+                    } else if (type === 'pink') {
+                        const b0 = 0.99886 * lastOut + white * 0.0555179;
+                        data[i] = b0 * 3.5;
+                        lastOut = b0;
+                    } else if (type === 'brown') {
+                        const b0 = (lastOut + (0.02 * white)) / 1.02;
+                        data[i] = b0 * 3.5;
+                        lastOut = b0;
+                    }
+                }
+                return buffer;
+            }
+
+            play(type) {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                // 處理靜音邏輯
+                if (type === 'off') {
+                    this.mute();
+                    return;
+                }
+
+                this.isMuted = false;
+                
+                // 停止當前聲音（淡出）
+                if (this.source) {
+                    try { this.source.stop(); } catch(e){}
+                }
+
+                // 建立新聲音源
+                const buffer = this.createBuffer(type);
+                this.source = this.ctx.createBufferSource();
+                this.source.buffer = buffer;
+                this.source.loop = true;
+
+                // 濾波器：修飾聲音質感
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                if (type === 'white') filter.frequency.value = 800; // 降低白噪音刺耳感
+                else if (type === 'pink') filter.frequency.value = 2000;
+                else filter.frequency.value = 400;
+
+                this.source.connect(filter);
+                filter.connect(this.analyser);
+                this.source.start();
+                this.isPlaying = true;
+
+                // 淡入 (Fade In)
+                const now = this.ctx.currentTime;
+                this.mainGain.gain.cancelScheduledValues(now);
+                this.mainGain.gain.setValueAtTime(0, now);
+                this.mainGain.gain.linearRampToValueAtTime(this.volume, now + 1.5);
+            }
+
+            mute() {
+                if (!this.mainGain) return;
+                this.isMuted = true;
+                const now = this.ctx.currentTime;
+                // 淡出 (Fade Out)
+                this.mainGain.gain.cancelScheduledValues(now);
+                this.mainGain.gain.setValueAtTime(this.mainGain.gain.value, now);
+                this.mainGain.gain.exponentialRampToValueAtTime(0.001, now + 1);
+                
+                setTimeout(() => {
+                    if (this.isMuted && this.source) {
+                        this.source.stop();
+                        this.isPlaying = false;
+                    }
+                }, 1000);
+            }
+
+            setVolume(val) {
+                this.volume = val;
+                if (this.mainGain && !this.isMuted) {
+                    this.mainGain.gain.setTargetAtTime(val, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            getVolumeData() {
+                if (!this.analyser || this.isMuted) return 0;
+                const array = new Uint8Array(this.analyser.frequencyBinCount);
+                this.analyser.getByteFrequencyData(array);
+                let sum = 0;
+                for (let i = 0; i < array.length; i++) sum += array[i];
+                return (sum / array.length) / 255;
+            }
+        }
+
+        /**
+         * PART 2: VISUAL SCENE
+         * 進化的視角控制與光影
+         */
+        class VisualScene {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.mouseX = 0;
+                this.mouseY = 0;
+                // 增加相機角度的目標變數，用於平滑插值
+                this.targetCamX = 0;
+                this.targetCamY = 0;
+            }
+
+            init() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color('#121212');
+                this.scene.fog = new THREE.FogExp2('#121212', 0.02);
+
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+                // 初始位置
+                this.camera.position.set(0, 0, 9);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.container.appendChild(this.renderer.domElement);
+
+                // --- 幾何體 ---
+                // 1. 中央核心
+                const geoSphere = new THREE.IcosahedronGeometry(1.4, 4);
+                const matSphere = new THREE.MeshStandardMaterial({
+                    color: 0x2a2a2a,
+                    roughness: 0.6,
+                    metalness: 0.3,
+                    flatShading: true // 開啟 Flat Shading 增加幾何美感
+                });
+                this.sphere = new THREE.Mesh(geoSphere, matSphere);
+                this.sphere.castShadow = true;
+                this.sphere.receiveShadow = true;
+                this.scene.add(this.sphere);
+
+                // 2. 地板
+                const geoPlane = new THREE.PlaneGeometry(80, 80);
+                const matPlane = new THREE.MeshStandardMaterial({ 
+                    color: 0x121212, 
+                    roughness: 0.8,
+                    metalness: 0.1
+                });
+                this.plane = new THREE.Mesh(geoPlane, matPlane);
+                this.plane.rotation.x = -Math.PI / 2;
+                this.plane.position.y = -3;
+                this.plane.receiveShadow = true;
+                this.scene.add(this.plane);
+
+                // --- 燈光 ---
+                const ambient = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambient);
+
+                // 動態光源 1 (暖)
+                this.light1 = new THREE.PointLight(0xffaa66, 1.5, 25);
+                this.light1.castShadow = true;
+                this.light1.shadow.bias = -0.0001;
+                this.scene.add(this.light1);
+
+                // 動態光源 2 (冷/輔助)
+                this.light2 = new THREE.PointLight(0x6688ff, 1, 20);
+                this.scene.add(this.light2);
+
+                // --- 事件綁定 ---
+                window.addEventListener('resize', this.onResize.bind(this));
+                document.addEventListener('mousemove', this.onMouseMove.bind(this));
+            }
+
+            onMouseMove(e) {
+                // 將滑鼠座標轉換為 -1 到 1 的範圍
+                this.mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                this.mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            render(audioLevel) {
+                const time = performance.now() * 0.001;
+
+                // --- 1. 進化的相機控制 (Camera Orbit Interaction) ---
+                // 我們不只是平移相機，而是改變相機在球座標系上的位置
+                // 目標：滑鼠越往邊緣，視角轉動越大
+                
+                // 設定旋轉範圍 (弧度)
+                const rangeX = 0.8; // 左右旋轉幅度
+                const rangeY = 0.4; // 上下旋轉幅度
+
+                // 計算目標位置 (基於初始 Z=9)
+                // 這裡簡單模擬軌道運鏡：X 影響 Azimuth, Y 影響 Polar
+                const targetX = Math.sin(this.mouseX * rangeX) * 9;
+                const targetZ = Math.cos(this.mouseX * rangeX) * 9;
+                const targetY = this.mouseY * 2; // 上下高度變化
+
+                // 使用 Lerp 進行平滑插值 (阻尼感)
+                this.camera.position.x += (targetX - this.camera.position.x) * 0.03;
+                this.camera.position.z += (targetZ - this.camera.position.z) * 0.03;
+                this.camera.position.y += (targetY - this.camera.position.y) * 0.03;
+
+                // 相機永遠注視中心
+                this.camera.lookAt(0, 0, 0);
+
+                // --- 2. 聲音互動 (Audio Reactivity) ---
+                // 球體隨著聲音強度 "呼吸"
+                const scale = 1 + audioLevel * 0.4;
+                this.sphere.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.1);
+
+                // 聲音強度改變球體顏色 (從暗灰到微亮)
+                const targetEmit = audioLevel * 0.5;
+                this.sphere.material.emissive.setScalar(targetEmit);
+
+                // 球體自轉 (緩慢)
+                this.sphere.rotation.y += 0.002;
+                this.sphere.rotation.z = Math.sin(time * 0.5) * 0.1;
+
+                // --- 3. 燈光動態 ---
+                // 光源繞著中心旋轉，創造長長的移動影子
+                this.light1.position.x = Math.sin(time * 0.4) * 6;
+                this.light1.position.z = Math.cos(time * 0.4) * 6;
+                this.light1.position.y = 4 + Math.cos(time * 0.5);
+
+                this.light2.position.x = Math.sin(time * 0.2 + 2) * 5;
+                this.light2.position.z = Math.cos(time * 0.2 + 2) * 5;
+                this.light2.position.y = -1;
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        /**
+         * 程式啟動與邏輯綁定
+         */
+        const app = {
+            audio: new AudioEngine(),
+            visual: new VisualScene(),
+            ui: {
+                overlay: document.getElementById('overlay'),
+                uiLayer: document.getElementById('ui-layer'),
+                btns: document.querySelectorAll('.mode-btn'),
+                vol: document.getElementById('volume-slider')
+            },
+
+            start() {
+                this.visual.init();
+                this.bindEvents();
+                this.loop();
+            },
+
+            bindEvents() {
+                // 1. 點擊進入
+                this.ui.overlay.addEventListener('click', () => {
+                    this.audio.play('white'); // 預設白噪音
+                    
+                    this.ui.overlay.style.opacity = 0;
+                    setTimeout(() => {
+                        this.ui.overlay.style.display = 'none';
+                        this.ui.uiLayer.classList.add('visible');
+                    }, 1200);
+                });
+
+                // 2. 切換模式 (含靜音)
+                this.ui.btns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        // UI 狀態更新
+                        this.ui.btns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+
+                        // 執行音訊邏輯
+                        const type = e.target.dataset.type;
+                        this.audio.play(type);
+                    });
+                });
+
+                // 3. 音量
+                this.ui.vol.addEventListener('input', (e) => {
+                    this.audio.setVolume(parseFloat(e.target.value));
+                });
+            },
+
+            loop() {
+                requestAnimationFrame(this.loop.bind(this));
+                const audioData = this.audio.getVolumeData();
+                this.visual.render(audioData);
+            }
+        };
+
+        app.start();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ripple with Sakura</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 日式黃綠色 (抹茶/黃鶸色調) 底色 */
+            background-color: #d4e8a6; 
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,250,0.5) 0%, rgba(255,255,250,0) 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,240,0.3) 0%, rgba(255,255,240,0) 50%),
+                /* 紙張質感的雜點 */
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-blend-mode: overlay; 
+        }
+        #waterCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d'); 
+
+        const physicsWidth = 500;  
+        const physicsHeight = 350;
+        
+        const dotSpacing = 6;    
+        const maxRadius = 2.5;   
+        const colorStrength = 1.2; 
+        const damping = 0.99; 
+        
+        canvas.width = physicsWidth;
+        canvas.height = physicsHeight;
+        const size = physicsWidth * physicsHeight;
+        let rippleMap = new Float32Array(size * 2);
+        let oldIdx = size;
+        let newIdx = 0;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let mouseVx = 0; 
+        let mouseVy = 0; 
+
+        const activePetals = []; 
+        const fallenPetals = []; 
+        const clickLights = [];
+
+        class Petal {
+            constructor(isNew = false) {
+                this.x = Math.random() * physicsWidth;
+                this.y = isNew ? -20 : Math.random() * physicsHeight * 0.8; 
+                this.vx = Math.random() * 0.2 - 0.1;
+                this.vy = Math.random() * 0.4 + 0.3; 
+                this.size = Math.random() * 3 + 4; 
+                this.angle = Math.random() * Math.PI * 2; 
+                this.spin = (Math.random() - 0.5) * 0.04; 
+                
+                // 【調整】：改為更深、更飽和的緋櫻色 (深粉紅)，確保不會被綠色背景吃掉
+                const r = Math.floor(200 + Math.random() * 40); // 偏紅
+                const g = Math.floor(70 + Math.random() * 30);  // 降低綠色
+                const b = Math.floor(100 + Math.random() * 30); // 降低藍色
+                this.color = `rgba(${r}, ${g}, ${b}, 0.95)`;    // 提高不透明度到 0.95
+
+                this.targetY = physicsHeight - Math.random() * 40 - this.size;
+                this.isFallen = false; 
+            }
+
+            updateFalling(index, array) {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 60) { 
+                    let force = (60 - dist) / 60; 
+                    this.vx += mouseVx * force * 0.08; 
+                    this.vy += mouseVy * force * 0.08;
+                }
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vx += 0.005; 
+                this.vy += 0.015; 
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin;
+
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+
+                if (this.y >= this.targetY) {
+                    this.y = this.targetY;
+                    this.isFallen = true;
+                    this.vx = 0; 
+                    this.vy = 0;
+                    array.splice(index, 1);
+                    fallenPetals.push(this);
+                    if (fallenPetals.length > 250) fallenPetals.shift();
+                    activePetals.push(new Petal(true));
+                }
+            }
+
+            updateFallen() {
+                let dist = Math.hypot(this.x - mouseX, this.y - mouseY);
+                if (dist < 80) { 
+                    let force = (80 - dist) / 80; 
+                    this.vx += mouseVx * force * 0.06;
+                    this.vy += mouseVy * force * 0.03;
+                }
+
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.spin * 0.5 + this.vx * 0.1; 
+
+                if (this.y < this.targetY - 30) {
+                     this.y = this.targetY - 30;
+                     this.vy += 0.5; 
+                }
+                if (this.y > physicsHeight + 10) this.y = physicsHeight + 10;
+                if (this.x > physicsWidth + 20) this.x = -20;
+                if (this.x < -20) this.x = physicsWidth + 20;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.quadraticCurveTo(this.size, -this.size/2, 0, this.size);
+                ctx.quadraticCurveTo(-this.size, -this.size/2, 0, -this.size);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 18; i++) {
+            activePetals.push(new Petal());
+        }
+
+        function drop(x, y, radius, strength) {
+            const cx = Math.floor(x / window.innerWidth * physicsWidth);
+            const cy = Math.floor(y / window.innerHeight * physicsHeight);
+            const rSq = radius * radius;
+
+            for (let j = cy - radius; j < cy + radius; j++) {
+                for (let k = cx - radius; k < cx + radius; k++) {
+                    if (j >= 0 && j < physicsHeight && k >= 0 && k < physicsWidth) {
+                        const dx = k - cx;
+                        const dy = j - cy;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < rSq) {
+                            const power = Math.cos(distSq / rSq * Math.PI / 2) * strength;
+                            rippleMap[oldIdx + (j * physicsWidth) + k] -= power;
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            const temp = oldIdx; oldIdx = newIdx; newIdx = temp;
+            let i = 0;
+            let mapIdx = oldIdx;
+            
+            for (let y = 0; y < physicsHeight; y++) {
+                for (let x = 0; x < physicsWidth; x++) {
+                    if (x === 0 || x === physicsWidth - 1 || y === 0 || y === physicsHeight - 1) {
+                         rippleMap[newIdx + i] = 0; mapIdx++; i++; continue;
+                    }
+                    let data = (
+                        rippleMap[mapIdx - physicsWidth] + rippleMap[mapIdx + physicsWidth] +
+                        rippleMap[mapIdx - 1] + rippleMap[mapIdx + 1]
+                    ) / 2;
+                    data -= rippleMap[newIdx + i];
+                    data *= damping;
+                    rippleMap[newIdx + i] = data;
+                    mapIdx++; i++;
+                }
+            }
+
+            ctx.clearRect(0, 0, physicsWidth, physicsHeight);
+
+            // 繪製動態光暈
+            for (let j = clickLights.length - 1; j >= 0; j--) {
+                let light = clickLights[j];
+                light.radius += 3.5; 
+                light.alpha -= 0.01; 
+
+                if (light.alpha <= 0) {
+                    clickLights.splice(j, 1);
+                    continue;
+                }
+
+                ctx.save();
+                let gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+                
+                // 【調整】：改為同色系 (嫩綠色) 的漸層光芒
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${light.alpha})`);      // 核心依舊是高亮白
+                gradient.addColorStop(0.3, `rgba(200, 240, 160, ${light.alpha * 0.7})`); // 中段改為明亮的嫩綠色
+                gradient.addColorStop(1, `rgba(150, 210, 120, 0)`);                   // 邊緣以綠色透明消失
+
+                ctx.globalCompositeOperation = 'lighter'; 
+                ctx.beginPath();
+                ctx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            for (let y = 0; y < physicsHeight; y += dotSpacing) {
+                for (let x = 0; x < physicsWidth; x += dotSpacing) {
+                    const mapIndex = newIdx + (y * physicsWidth) + x;
+                    let waveHeight = rippleMap[mapIndex];
+                    let intensity = Math.abs(waveHeight);
+                    if (intensity < 8) continue; 
+                    let alpha = (intensity / 200) * colorStrength;
+                    if (alpha > 0.75) alpha = 0.75; 
+                    if (alpha < 0) alpha = 0;
+                    let radius = (intensity / 150) * maxRadius;
+                    if (radius < 0.5) radius = 0.5; 
+                    if (radius > maxRadius) radius = maxRadius;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            fallenPetals.forEach(petal => {
+                petal.updateFallen(); 
+                petal.draw(ctx);
+            });
+
+            for (let j = activePetals.length - 1; j >= 0; j--) {
+                activePetals[j].updateFalling(j, activePetals);
+                activePetals[j].draw(ctx);
+            }
+
+            mouseVx *= 0.9;
+            mouseVy *= 0.9;
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+        let lastMove = 0;
+        canvas.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            let currentMx = e.clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            if (now - lastMove > 30) { 
+                drop(e.clientX, e.clientY, 4, 100); 
+                lastMove = now;
+            }
+        });
+
+        function softDrop(x, y) {
+            const cx = x / window.innerWidth * physicsWidth;
+            const cy = y / window.innerHeight * physicsHeight;
+            clickLights.push({
+                x: cx,
+                y: cy,
+                radius: 10,   
+                alpha: 1.0    
+            });
+
+            let count = 0;
+            let strength = 600; 
+            const radius = 16;
+            const interval = setInterval(() => {
+                drop(x, y, radius, strength);
+                strength -= 100;
+                count++;
+                if (count > 5 || strength <= 0) clearInterval(interval);
+            }, 40);
+        }
+
+        canvas.addEventListener('mousedown', (e) => softDrop(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => softDrop(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+        canvas.addEventListener('touchmove', (e) => {
+            let currentMx = e.touches[0].clientX / window.innerWidth * physicsWidth;
+            let currentMy = e.touches[0].clientY / window.innerHeight * physicsHeight;
+            mouseVx = currentMx - mouseX;
+            mouseVy = currentMy - mouseY;
+            mouseX = currentMx;
+            mouseY = currentMy;
+            drop(e.touches[0].clientX, e.touches[0].clientY, 4, 100);
+        }, {passive: true});
+
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                 drop(Math.random() * window.innerWidth, Math.random() * window.innerHeight, 3, 90);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>

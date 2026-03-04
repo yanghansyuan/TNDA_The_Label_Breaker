@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒互動：悲傷的重量</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #C8C9C7; /* Pantone Cool Gray 3 C */
+            cursor: crosshair;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+    const { Engine, Render, Runner, Bodies, Composite, Mouse, Vector, Body } = Matter;
+
+    // 設定顏色
+    const colors = {
+        background: '#C8C9C7', // Pantone Cool Gray 3 C
+        main: '#1D2327',       // Pantone 433 C
+        accent: '#591014'      // Pantone 1817 C
+    };
+
+    // 初始化物理引擎
+    const engine = Engine.create();
+    engine.world.gravity.y = 1.5; // 增加重力感
+
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    // RWD 調整
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        // 更新物理邊界
+        if (ground) Composite.remove(engine.world, [ground, wallLeft, wallRight]);
+        setupBoundaries();
+    }
+
+    let ground, wallLeft, wallRight;
+    function setupBoundaries() {
+        ground = Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+        wallLeft = Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
+        wallRight = Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
+        Composite.add(engine.world, [ground, wallLeft, wallRight]);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 儲存所有圓形的自定義資料
+    const heavyCircles = [];
+    const shockwaves = [];
+
+    // 建立破碎感的圓形
+    function createBrokenCircle(x, y) {
+        const radius = Math.random() * 30 + 20;
+        const sides = 12; // 邊線數，用於模擬不完美圓形
+        const body = Bodies.polygon(x, y, sides, radius, {
+            density: 0.1,      // 增加密度使其像鉛球
+            friction: 0.8,
+            restitution: 0.1,  // 低彈性，增加沉重感
+            render: { visible: false } 
+        });
+
+        // 加入一點旋轉速度增加墜落感
+        Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.2);
+        
+        const circleData = {
+            body: body,
+            radius: radius,
+            offsets: Array.from({ length: sides }, () => Math.random() * 5), // 用於邊緣破碎感
+            vibration: 0
+        };
+
+        heavyCircles.push(circleData);
+        Composite.add(engine.world, body);
+    }
+
+    // 滑鼠點擊觸發
+    window.addEventListener('mousedown', (e) => {
+        // 1. 產生視覺震盪波
+        shockwaves.push({ x: e.clientX, y: e.clientY, r: 0, opacity: 1 });
+
+        // 2. 觸發物體顫動與排斥力
+        heavyCircles.forEach(c => {
+            const dist = Vector.magnitude(Vector.sub(c.body.position, { x: e.clientX, y: e.clientY }));
+            if (dist < 300) {
+                c.vibration = 15; // 設定顫動強度
+                // 模擬金屬碰撞的微小位移
+                const force = Vector.mult(Vector.normalise(Vector.sub(c.body.position, { x: e.clientX, y: e.clientY })), 0.05);
+                Body.applyForce(c.body, c.body.position, force);
+            }
+        });
+    });
+
+    // 定時自動生成（模擬情緒的累積）
+    setInterval(() => {
+        if (heavyCircles.length < 150) { // 限制數量避免效能下降
+            createBrokenCircle(Math.random() * width, -100);
+        }
+    }, 1500);
+
+    // 自定義繪製循環
+    (function render() {
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(0, 0, width, height);
+
+        Engine.update(engine);
+
+        // 繪製震盪波 (模擬不適音頻的視覺化)
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+            const s = shockwaves[i];
+            s.r += 10;
+            s.opacity -= 0.02;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(89, 16, 20, ${s.opacity})`; // Pantone 1817 C
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            if (s.opacity <= 0) shockwaves.splice(i, 1);
+        }
+
+        // 繪製「重型」圓形
+        heavyCircles.forEach(c => {
+            const { position, angle } = c.body;
+            ctx.save();
+            ctx.translate(position.x, position.y);
+            
+            // 處理顫動效果
+            if (c.vibration > 0) {
+                ctx.translate((Math.random() - 0.5) * c.vibration, (Math.random() - 0.5) * c.vibration);
+                c.vibration *= 0.9; // 逐漸衰減
+            }
+            
+            ctx.rotate(angle);
+            
+            // 繪製具厚度感的邊緣 (多層描邊)
+            ctx.beginPath();
+            for (let i = 0; i < 12; i++) {
+                const ang = (i / 12) * Math.PI * 2;
+                const r = c.radius - c.offsets[i];
+                const x = Math.cos(ang) * r;
+                const y = Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            
+            ctx.fillStyle = colors.main; // Pantone 433 C
+            ctx.fill();
+            
+            // 增加「重量感」的邊緣陰影
+            ctx.strokeStyle = colors.accent; // Pantone 1817 C
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.6;
+            ctx.stroke();
+            
+            ctx.restore();
+        });
+
+        requestAnimationFrame(render);
+    })();
+</script>
+
+</body>
+</html>

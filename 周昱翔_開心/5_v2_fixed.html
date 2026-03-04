@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情緒的總和 - 修正版 (V2)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f2f0eb;
+            user-select: none; 
+            font-family: '微軟正黑體', sans-serif;
+        }
+
+        #instruction {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #555;
+            z-index: 100;
+            pointer-events: none;
+            background-color: rgba(255,255,255,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .canvas-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 第一層：融球層 (Metaballs) - 修正重點在此 */
+        #goo-layer {
+            z-index: 1;
+            background-color: transparent;
+            /* [修正 1 & 2]：調整濾鏡強度
+               舊版：blur(20px) contrast(40) -> 太糊、顏色太烈
+               新版：blur(12px) contrast(25) -> 球體較清晰，黏性較自然
+               你可以微調這兩個數值找到你最喜歡的感覺。
+            */
+            filter: blur(12px) contrast(25);
+        }
+
+        /* 第二層：粒子層 (Particles) */
+        #particle-layer {
+            z-index: 2;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="instruction">
+        <h3>撕下標籤的人 - 修正版V2</h3>
+        <p>已修正：球體清晰度、拖曳不中斷。</p>
+        <hr style="border: 1px dashed #ccc;">
+        <p>1. 點擊生成情緒。</p>
+        <p>2. 拖曳觀察變色，嘗試將球融合。</p>
+        <p>3. 當球填滿螢幕時，戳破它。</p>
+    </div>
+
+    <div class="canvas-wrapper" id="goo-layer">
+        <canvas id="gooCanvas"></canvas>
+    </div>
+    <div class="canvas-wrapper" id="particle-layer">
+        <canvas id="particleCanvas"></canvas>
+    </div>
+
+    <script>
+        const gooCanvas = document.getElementById('gooCanvas');
+        const ctxGoo = gooCanvas.getContext('2d');
+
+        const particleCanvas = document.getElementById('particleCanvas');
+        const ctxParticle = particleCanvas.getContext('2d');
+
+        let width, height;
+        
+        let balls = [];
+        let particles = [];
+        // 全域變數，紀錄目前正在被拖著的那顆球
+        let draggedBall = null;
+        let isGameOver = false;
+
+        let mouseX = 0, mouseY = 0;
+        let lastMouseX = 0, lastMouseY = 0;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            gooCanvas.width = width;
+            gooCanvas.height = height;
+            particleCanvas.width = width;
+            particleCanvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- 類別定義 ---
+
+        class Ball {
+            constructor(x, y, r) {
+                this.x = x;
+                this.y = y;
+                this.radius = r;
+                this.baseRadius = r;
+                
+                this.hue = Math.random() * 360;
+                this.lightness = 50;
+                this.color = `hsl(${this.hue}, 100%, 50%)`;
+
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                // 自身的拖曳狀態標記
+                this.isDragging = false;
+            }
+
+            update() {
+                if (this.isDragging) {
+                    // 拖曳模式
+                    this.vx = mouseX - lastMouseX;
+                    this.vy = mouseY - lastMouseY;
+                    this.x = mouseX;
+                    this.y = mouseY;
+
+                    let safeX = Math.max(0, Math.min(this.x, width));
+                    let safeY = Math.max(0, Math.min(this.y, height));
+                    this.hue = (safeX / width) * 360;
+                    this.lightness = 70 - (safeY / height) * 40;
+                    
+                    this.radius = this.baseRadius * 1.1;
+
+                } else {
+                    // 自由模式
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vx *= 0.98;
+                    this.vy *= 0.98;
+
+                    if (this.x < this.radius) { this.x = this.radius; this.vx *= -1; }
+                    if (this.x > width - this.radius) { this.x = width - this.radius; this.vx *= -1; }
+                    if (this.y < this.radius) { this.y = this.radius; this.vy *= -1; }
+                    if (this.y > height - this.radius) { this.y = height - this.radius; this.vy *= -1; }
+
+                    if (this.radius > this.baseRadius) {
+                        this.radius -= 0.5;
+                    }
+                }
+                this.color = `hsl(${this.hue}, 100%, ${this.lightness}%)`;
+            }
+
+            draw() {
+                ctxGoo.beginPath();
+                ctxGoo.fillStyle = this.color;
+                ctxGoo.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctxGoo.fill();
+            }
+        }
+
+        class Spark {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.01;
+                this.color = color;
+                this.size = Math.random() * 3 + 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctxParticle.globalAlpha = this.life;
+                ctxParticle.fillStyle = this.color;
+                ctxParticle.beginPath();
+                ctxParticle.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctxParticle.fill();
+                ctxParticle.globalAlpha = 1.0;
+            }
+        }
+
+        // --- 核心功能 ---
+
+        function createExplosion(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Spark(x, y, color));
+            }
+        }
+
+        // [修正 3]：檢查並執行融合，同時處理拖曳狀態的轉移
+        function checkCollisions() {
+            if (balls.length < 2) return;
+
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    let b1 = balls[i];
+                    let b2 = balls[j];
+                    let dx = b2.x - b1.x;
+                    let dy = b2.y - b1.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+
+                    // 稍微調整了判定距離係數 0.8 -> 0.85，讓融合更容易發生一點
+                    if (dist < (b1.radius + b2.radius) * 0.85) {
+                        
+                        let newArea = b1.radius * b1.radius + b2.radius * b2.radius;
+                        let newRadius = Math.sqrt(newArea);
+                        let totalR = b1.radius + b2.radius;
+                        let newX = (b1.x * b1.radius + b2.x * b2.radius) / totalR;
+                        let newY = (b1.y * b1.radius + b2.y * b2.radius) / totalR;
+
+                        let newBall = new Ball(newX, newY, newRadius);
+                        newBall.hue = (b1.hue + b2.hue) / 2;
+                        newBall.color = `hsl(${newBall.hue}, 100%, 50%)`;
+                        
+                        // *** 關鍵修正：轉移拖曳狀態 ***
+                        // 如果 b1 或 b2 原本是被拖曳的球
+                        if (b1.isDragging || b2.isDragging) {
+                             // 將新球設定為「正在被拖曳」
+                             newBall.isDragging = true;
+                             // 更新全域指標，讓滑鼠操作能對應到這顆新球
+                             draggedBall = newBall; 
+                        }
+                        // **************************
+
+                        createExplosion(newX, newY, '#ffffff', 20);
+                        createExplosion(newX, newY, b1.color, 10);
+
+                        balls.splice(j, 1);
+                        balls.splice(i, 1);
+                        balls.push(newBall);
+                        return; 
+                    }
+                }
+            }
+        }
+
+        function checkEndGame() {
+            if (balls.length === 1) {
+                let bigBall = balls[0];
+                let limit = Math.min(width, height) * 0.4; 
+                if (bigBall.radius > limit) {
+                    isGameOver = true;
+                    bigBall.x = width / 2;
+                    bigBall.y = height / 2;
+                    bigBall.vx = 0;
+                    bigBall.vy = 0;
+                    bigBall.lightness = 50 + Math.sin(Date.now() / 200) * 10;
+                    
+                    document.querySelector('#instruction h3').innerText = "情緒已滿溢";
+                    document.querySelector('#instruction p:nth-of-type(2)').innerText = "點擊球體，釋放它。";
+                }
+            }
+        }
+
+        // --- 輸入事件 ---
+
+        function handleInputStart(x, y) {
+            let hitBall = false;
+            for (let i = balls.length - 1; i >= 0; i--) {
+                let b = balls[i];
+                let dist = Math.sqrt((x - b.x)**2 + (y - b.y)**2);
+                if (dist < b.radius) {
+                    hitBall = true;
+                    if (isGameOver) {
+                        createExplosion(x, y, b.color, 100);
+                        createExplosion(x, y, '#FFF', 50);
+                        balls = [];
+                        isGameOver = false;
+                        document.querySelector('#instruction h3').innerText = "撕下標籤的人 - 修正版V2";
+                        setTimeout(() => {
+                             document.querySelector('#instruction p:nth-of-type(2)').innerText = "2. 拖曳觀察變色，嘗試將球融合。";
+                        }, 1000);
+                    } else {
+                        // 開始拖曳
+                        b.isDragging = true;
+                        draggedBall = b;
+                    }
+                    break; 
+                }
+            }
+
+            if (!hitBall && !isGameOver) {
+                let newR = Math.random() * 20 + 30;
+                balls.push(new Ball(x, y, newR));
+                createExplosion(x, y, '#aaa', 5);
+            }
+            mouseX = x; mouseY = y;
+            lastMouseX = x; lastMouseY = y;
+        }
+
+        function handleInputMove(x, y) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            mouseX = x;
+            mouseY = y;
+        }
+
+        function handleInputEnd() {
+            // 放開滑鼠時，清除拖曳狀態
+            if (draggedBall) {
+                draggedBall.isDragging = false;
+                draggedBall = null;
+            }
+        }
+
+        window.addEventListener('mousedown', e => handleInputStart(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => handleInputMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleInputEnd);
+        window.addEventListener('touchstart', e => {
+            e.preventDefault();
+            handleInputStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            handleInputMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        window.addEventListener('touchend', handleInputEnd);
+
+        // --- 主迴圈 ---
+
+        function animate() {
+            ctxGoo.clearRect(0, 0, width, height);
+            ctxParticle.clearRect(0, 0, width, height);
+
+            balls.forEach(b => {
+                b.update();
+                b.draw();
+            });
+
+            if (!isGameOver) {
+                checkCollisions();
+                checkEndGame();
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.update();
+                p.draw();
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

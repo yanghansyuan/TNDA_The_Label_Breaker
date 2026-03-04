@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo01</title>
+  <style>
+    :root{
+      --bg: #e0e0e0;
+      --card: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(243, 65, 175, 0.62);
+    }
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial; background: var(--bg); color: var(--text); }
+    a{ color:inherit; }
+
+    .wrap{
+      min-height: 100%;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: clamp(12px, 3vw, 24px);
+      padding: clamp(16px, 4vw, 36px);
+      align-items: stretch;
+    }
+
+    header{
+      grid-column: 1 / -1;
+      display:flex;
+      gap: 16px;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(20px, 3vw, 34px);
+      letter-spacing:.5px;
+    }
+    .hint{
+      margin:0;
+      color: var(--muted);
+      font-size: clamp(12px, 1.5vw, 14px);
+    }
+
+  .stage{
+      position: relative;
+      border: 1px solid var(--stroke);
+      background: radial-gradient(1200px 800px at 20% 20%, rgba(130,170,255,.12), transparent 60%),
+                  radial-gradient(900px 600px at 80% 70%, rgba(255,120,200,.10), transparent 55%),
+                  rgba(255,255,255,.02);
+      border-radius: 18px;
+      overflow:hidden;
+      min-height: min(60vh, 560px);
+    }
+
+    .panel{
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      border-radius: 18px;
+      padding: clamp(14px, 2.8vw, 20px);
+      display:flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      background: rgba(0,0,0,.12);
+    }
+
+    label{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input[type="range"]{
+      width: 160px;
+      max-width: 40vw;
+      accent-color: white;
+    }
+
+    button{
+      all: unset;
+      cursor:pointer;
+      user-select:none;
+      text-align:center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      transition: transform .08s ease, background .2s ease;
+      font-size: 14px;
+    }
+    button:active{ transform: scale(.98); background: rgba(255,255,255,.10); }
+
+    .stats{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: auto;
+      padding-top: 6px;
+    }
+    .pill{
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(0,0,0,.12);
+    }
+
+    /* Mobile */
+    @media (max-width: 860px){
+      .wrap{ grid-template-columns: 1fr; }
+      .stage{ min-height: 52vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>互動響應式網頁</h1>
+      <p class="hint">拖曳光點、點擊產生波紋｜支援手機觸控｜會跟著視窗改變尺寸</p>
+    </header>
+
+    <div class="stage" id="stage" aria-label="interactive canvas stage">
+      <canvas id="c"></canvas>
+    </div>
+
+    <aside class="panel">
+      <div class="row">
+        <div>
+          <div style="font-weight:600; margin-bottom:2px;">互動強度</div>
+          <label>控制粒子速度與波紋擴散</label>
+        </div>
+        <input id="intensity" type="range" min="0.4" max="2.2" step="0.1" value="1.2" />
+      </div>
+
+      <div class="row">
+        <div>
+          <div style="font-weight:600; margin-bottom:2px;">粒子數量</div>
+          <label>越多越華麗，但更吃效能</label>
+        </div>
+        <input id="count" type="range" min="40" max="220" step="10" value="120" />
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button id="reset" style="flex:1;">重置</button>
+        <button id="freeze" style="flex:1;">暫停/播放</button>
+      </div>
+
+      <div class="stats">
+        <div class="pill" id="sizePill">size: —</div>
+        <div class="pill" id="fpsPill">fps: —</div>
+        <div class="pill" id="modePill">mode: live</div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // --- Canvas responsive + interactive particles/ripples ---
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    const intensityEl = document.getElementById('intensity');
+    const countEl = document.getElementById('count');
+    const resetBtn = document.getElementById('reset');
+    const freezeBtn = document.getElementById('freeze');
+
+    const sizePill = document.getElementById('sizePill');
+    const fpsPill = document.getElementById('fpsPill');
+    const modePill = document.getElementById('modePill');
+
+    let dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let W = 0, H = 0;
+    let running = true;
+
+    const pointer = { x: 0, y: 0, down: false };
+    const target = { x: 0, y: 0 }; // smooth follow
+
+    const ripples = [];
+    let particles = [];
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+    function resize(){
+      const r = stage.getBoundingClientRect();
+      W = Math.floor(r.width);
+      H = Math.floor(r.height);
+
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      sizePill.textContent = `size: ${W}×${H}`;
+      if (!pointer.x && !pointer.y){
+        pointer.x = target.x = W*0.5;
+        pointer.y = target.y = H*0.5;
+      }
+    }
+
+    function makeParticles(n){
+      const arr = [];
+      for (let i=0;i<n;i++){
+        arr.push({
+          x: rand(0,W), y: rand(0,H),
+          vx: rand(-.6,.6), vy: rand(-.6,.6),
+          r: rand(1.2, 2.6),
+          s: rand(0.6, 1.4)
+        });
+      }
+      return arr;
+    }
+
+    function addRipple(x,y){
+      ripples.push({ x, y, t: 0, life: rand(0.8, 1.2) });
+      if (ripples.length > 10) ripples.shift();
+    }
+
+    function onPointerMove(e){
+      const p = e.touches ? e.touches[0] : e;
+      const rect = stage.getBoundingClientRect();
+      pointer.x = clamp(p.clientX - rect.left, 0, rect.width);
+      pointer.y = clamp(p.clientY - rect.top, 0, rect.height);
+    }
+
+    stage.addEventListener('pointerdown', (e)=>{
+      pointer.down = true;
+      stage.setPointerCapture?.(e.pointerId);
+      onPointerMove(e);
+      addRipple(pointer.x, pointer.y);
+    });
+    stage.addEventListener('pointermove', onPointerMove);
+    stage.addEventListener('pointerup', ()=>{
+      pointer.down = false;
+    });
+    stage.addEventListener('click', (e)=>{
+      onPointerMove(e);
+      addRipple(pointer.x, pointer.y);
+    });
+    stage.addEventListener('touchstart', (e)=>{
+      onPointerMove(e);
+      addRipple(pointer.x, pointer.y);
+    }, { passive:true });
+
+    resetBtn.addEventListener('click', ()=>{
+      particles = makeParticles(Number(countEl.value));
+      ripples.length = 0;
+      addRipple(W*0.5, H*0.5);
+    });
+
+    freezeBtn.addEventListener('click', ()=>{
+      running = !running;
+      modePill.textContent = `mode: ${running ? 'live' : 'paused'}`;
+    });
+
+    countEl.addEventListener('input', ()=>{
+      particles = makeParticles(Number(countEl.value));
+    });
+
+    // FPS meter
+    let last = performance.now();
+    let fpsAcc = 0, fpsN = 0;
+
+    function step(now){
+      const dt = Math.min(0.033, (now - last)/1000);
+      last = now;
+
+      // FPS update
+      fpsAcc += 1 / Math.max(dt, 1e-6);
+      fpsN++;
+      if (fpsN >= 15){
+        fpsPill.textContent = `fps: ${Math.round(fpsAcc / fpsN)}`;
+        fpsAcc = 0; fpsN = 0;
+      }
+
+      if (running){
+        const k = Number(intensityEl.value);
+
+        // smooth follow to avoid jitter
+        target.x += (pointer.x - target.x) * 0.12;
+        target.y += (pointer.y - target.y) * 0.12;
+
+        ctx.clearRect(0,0,W,H);
+
+        // subtle fog
+        ctx.fillStyle = 'rgba(255,255,255,0.02)';
+        ctx.fillRect(0,0,W,H);
+
+        // ripples
+        for (let i=ripples.length-1;i>=0;i--){
+          const rp = ripples[i];
+          rp.t += dt * 0.9 * k;
+          const p = rp.t / rp.life;
+          const radius = (Math.min(W,H) * 0.06) + p * (Math.min(W,H) * 0.55);
+          const a = (1 - p) * 0.18;
+
+          ctx.beginPath();
+          ctx.arc(rp.x, rp.y, radius, 0, Math.PI*2);
+          ctx.strokeStyle = `rgba(255,255,255,${a})`;
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+
+          if (p >= 1) ripples.splice(i,1);
+        }
+
+        // particles
+        ctx.beginPath();
+        for (const pt of particles){
+          // attraction
+          const dx = target.x - pt.x;
+          const dy = target.y - pt.y;
+          const dist = Math.hypot(dx,dy) + 0.001;
+          const pull = (pointer.down ? 1.25 : 0.65) * k;
+
+          pt.vx += (dx / dist) * 0.22 * pull * dt;
+          pt.vy += (dy / dist) * 0.22 * pull * dt;
+
+          // damping
+          pt.vx *= (1 - 0.08 * dt);
+          pt.vy *= (1 - 0.08 * dt);
+
+          pt.x += pt.vx * 60 * pt.s * dt;
+          pt.y += pt.vy * 60 * pt.s * dt;
+
+          // bounds
+          if (pt.x < 0 || pt.x > W) pt.vx *= -0.9;
+          if (pt.y < 0 || pt.y > H) pt.vy *= -0.9;
+          pt.x = clamp(pt.x, 0, W);
+          pt.y = clamp(pt.y, 0, H);
+
+          ctx.moveTo(pt.x + pt.r, pt.y);
+          ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI*2);
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.fill();
+
+        // glow pointer
+        const g = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, Math.min(W,H)*0.22);
+        g.addColorStop(0, 'rgba(255,255,255,0.18)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0,0,W,H);
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    // init
+    resize();
+    particles = makeParticles(Number(countEl.value));
+    addRipple(W*0.5, H*0.5);
+
+    const ro = new ResizeObserver(resize);
+    ro.observe(stage);
+    window.addEventListener('resize', resize);
+
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>

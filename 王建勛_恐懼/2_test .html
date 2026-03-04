@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>情緒靈感互動｜自適應</title>
+  <style>
+    :root{
+      --bg1:#0b0f17;
+      --bg2:#0f1a2b;
+      --ink: rgba(255,255,255,.88);
+
+      --calm:#7fd1ff;
+      --warm:#ffb85c;
+      --stress:#ff5fa2;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1100px 800px at 18% 8%, rgba(255,255,255,.08), transparent 55%),
+        radial-gradient(900px 700px at 80% 45%, rgba(255,184,92,.12), transparent 60%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      color: var(--ink);
+    }
+
+    .stage{ position:relative; height:100%; width:100%; isolation:isolate; }
+    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+    .hud{
+      position:absolute; inset:0;
+      padding: clamp(14px, 2.2vw, 28px);
+      display:flex; justify-content:space-between; align-items:flex-start;
+      pointer-events:none; z-index:3;
+    }
+    .hud h1{
+      margin:0 0 8px 0;
+      font-size: clamp(18px, 2.2vw, 28px);
+      letter-spacing:.04em;
+    }
+    .hud p{ margin:0; opacity:.78; line-height:1.6; font-size: clamp(12px, 1.35vw, 14px); }
+    .tip{ text-align:right; opacity:.78; font-size: clamp(12px, 1.35vw, 14px); }
+    .tip b{ opacity:.95; }
+
+    /* 右側「容器」：不影響互動，只是氛圍 */
+    .glass{
+      position:absolute;
+      right: clamp(12px, 2vw, 18px);
+      top:50%;
+      transform: translateY(-50%);
+      width: min(240px, 34vw);
+      height: min(380px, 54vw);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+        radial-gradient(140px 120px at 70% 20%, rgba(255,255,255,.18), transparent 55%),
+        radial-gradient(140px 140px at 30% 85%, rgba(255,184,92,.10), transparent 60%);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      overflow:hidden;
+      z-index:2;
+      pointer-events:none;
+      backdrop-filter: blur(8px);
+    }
+    .liquid{
+      position:absolute; left:10px; right:10px; bottom:10px;
+      height:52%; border-radius:16px;
+      background:
+        radial-gradient(120px 80px at 60% 10%, rgba(255,255,255,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,184,92,.78), rgba(255,120,40,.48));
+      box-shadow: inset 0 0 30px rgba(0,0,0,.18);
+      opacity:.86;
+    }
+
+    @media (max-width: 720px){
+      .glass{
+        top:auto; bottom: 12px; right: 12px;
+        transform:none;
+        width: 44vw; height: 34vh;
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+
+    <div class="hud">
+      <div>
+        <h1>情緒靈感互動場</h1>
+        <p>用左鍵把情緒「放進畫面」：點一下生成、按住拖曳會連續生成。移動滑鼠會推開它們。</p>
+      </div>
+      <div class="tip">
+        <div>左鍵點：<b>生成形狀</b></div>
+        <div>左鍵拖：<b>連續生成</b></div>
+        <div>移動滑鼠：<b>推開/發亮</b></div>
+      </div>
+    </div>
+
+    <div class="glass"><div class="liquid"></div></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // ====== 自適應：真正改 canvas 像素尺寸（避免模糊）======
+    function resize(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width  = Math.floor(window.innerWidth  * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width  = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr,0,0,dpr,0,0); // 讓繪圖用 CSS 像素座標
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ====== 情緒色盤（可自己改權重）======
+    const COLORS = [
+      { c: getCSS('--calm'),   w: 0.45 },
+      { c: getCSS('--warm'),   w: 0.35 },
+      { c: getCSS('--stress'), w: 0.20 },
+    ];
+    function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+    function pickColor(){
+      const r = Math.random();
+      let acc = 0;
+      for(const p of COLORS){ acc += p.w; if(r <= acc) return p.c; }
+      return COLORS[0].c;
+    }
+    const rnd = (a,b)=> a + Math.random()*(b-a);
+
+    // ====== 物件（點/線/三角形）======
+    const shapes = [];
+    const MAX = 220; // 避免太多卡
+
+    function spawn(x,y, intensity=1){
+      if(shapes.length > MAX) shapes.splice(0, shapes.length - MAX);
+
+      const typeRoll = Math.random();
+      const type = (typeRoll < 0.52) ? 'dot' : (typeRoll < 0.80) ? 'line' : 'tri';
+
+      // 依螢幕寬度自動調整大小
+      const scale = Math.min(1.0, Math.max(0.75, window.innerWidth / 1200));
+      const sizeBase = (type === 'line') ? rnd(26, 90) : rnd(16, 64);
+      const s = sizeBase * scale * rnd(0.9, 1.15);
+
+      shapes.push({
+        type,
+        x, y,
+        vx: rnd(-0.25,0.25) * intensity,
+        vy: rnd(-0.22,0.22) * intensity,
+        r: rnd(-Math.PI, Math.PI),
+        vr: rnd(-0.012, 0.012),
+        s,
+        o: rnd(0.25, 0.9),
+        blur: rnd(0, 1.4),
+        c: pickColor(),
+        life: 1, // 會慢慢淡出（但不會一下消失）
+      });
+    }
+
+    // 初始鋪一些
+    function seed(){
+      shapes.length = 0;
+      const n = Math.round(Math.max(18, Math.min(46, window.innerWidth / 26)));
+      for(let i=0;i<n;i++){
+        spawn(rnd(40, window.innerWidth * 0.82), rnd(60, window.innerHeight - 60), 0.8);
+      }
+    }
+    seed();
+    window.addEventListener('resize', () => { resize(); seed(); });
+
+    // ====== 滑鼠互動（推開 + 發亮）======
+    const mouse = { x: -9999, y: -9999, down:false, lastSpawn:0 };
+
+    window.addEventListener('pointermove', (e)=>{
+      mouse.x = e.clientX; mouse.y = e.clientY;
+
+      // 按住左鍵拖曳：連續生成（節流）
+      if(mouse.down){
+        const now = performance.now();
+        if(now - mouse.lastSpawn > 18){
+          spawn(mouse.x + rnd(-8,8), mouse.y + rnd(-8,8), 1.2);
+          mouse.lastSpawn = now;
+        }
+      }
+    });
+
+    window.addEventListener('pointerdown', (e)=>{
+      if(e.button !== 0) return; // 只要左鍵
+      mouse.down = true;
+      mouse.lastSpawn = performance.now();
+      spawn(e.clientX, e.clientY, 1.6);
+    });
+
+    window.addEventListener('pointerup', (e)=>{
+      if(e.button !== 0) return;
+      mouse.down = false;
+    });
+
+    window.addEventListener('pointerleave', ()=>{
+      mouse.x = -9999; mouse.y = -9999; mouse.down = false;
+    });
+
+    // ====== 繪圖工具 ======
+    function hexToRgba(hex, a){
+      // 支援 #rrggbb
+      const h = hex.replace('#','');
+      const r = parseInt(h.slice(0,2),16);
+      const g = parseInt(h.slice(2,4),16);
+      const b = parseInt(h.slice(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function drawLightBeams(){
+      // 光束（自適應）
+      const w = window.innerWidth, h = window.innerHeight;
+      ctx.save();
+      ctx.translate(w*0.15, h*0.05);
+      ctx.rotate(-0.22);
+
+      const grad = ctx.createLinearGradient(0,0,w,0);
+      grad.addColorStop(0.00, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.12, 'rgba(255,248,220,0.10)');
+      grad.addColorStop(0.20, 'rgba(255,248,220,0.22)');
+      grad.addColorStop(0.28, 'rgba(255,248,220,0.06)');
+      grad.addColorStop(0.38, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.52, 'rgba(255,204,140,0.14)');
+      grad.addColorStop(0.60, 'rgba(255,204,140,0.22)');
+      grad.addColorStop(0.70, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.86, 'rgba(180,210,255,0.08)');
+      grad.addColorStop(1.00, 'rgba(255,255,255,0)');
+
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = grad;
+      ctx.fillRect(-w*0.3, -h*0.3, w*1.6, h*1.6);
+      ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function drawShape(s){
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.r);
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.o * s.life));
+      ctx.shadowBlur = s.blur * 14;
+      ctx.shadowColor = hexToRgba(s.c, 0.22);
+
+      if(s.type === 'dot'){
+        const r = s.s * 0.5;
+        const g = ctx.createRadialGradient(-r*0.2, -r*0.2, r*0.1, 0,0,r);
+        g.addColorStop(0, 'rgba(255,255,255,0.55)');
+        g.addColorStop(0.35, hexToRgba(s.c, 0.42));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0,0,r,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      if(s.type === 'line'){
+        const w = s.s * 1.9;
+        const h = Math.max(2, s.s * 0.08);
+        const g = ctx.createLinearGradient(-w/2,0,w/2,0);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(0.5, hexToRgba(s.c, 0.60));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        roundRect(-w/2, -h/2, w, h, 999);
+        ctx.fill();
+      }
+
+      if(s.type === 'tri'){
+        const a = s.s;
+        ctx.fillStyle = hexToRgba(s.c, 0.44);
+        ctx.beginPath();
+        ctx.moveTo(0, -a*0.62);
+        ctx.lineTo( a*0.58, a*0.45);
+        ctx.lineTo(-a*0.58, a*0.45);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function roundRect(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ====== 更新物理 + 互動力 ======
+    function step(){
+      const w = window.innerWidth, h = window.innerHeight;
+
+      // 背景清空
+      ctx.clearRect(0,0,w,h);
+
+      // 光束
+      drawLightBeams();
+
+      // 更新與互動
+      for(const s of shapes){
+        // 浮動
+        s.x += s.vx;
+        s.y += s.vy;
+        s.r += s.vr;
+
+        // 邊界反彈（留右側杯子空間）
+        const rightLimit = w * 0.86;
+        if(s.x < 10) { s.x = 10; s.vx *= -1; }
+        if(s.x > rightLimit) { s.x = rightLimit; s.vx *= -1; }
+        if(s.y < 10) { s.y = 10; s.vy *= -1; }
+        if(s.y > h-10) { s.y = h-10; s.vy *= -1; }
+
+        // 滑鼠推開力（近的更強）
+        const dx = s.x - mouse.x;
+        const dy = s.y - mouse.y;
+        const dist = Math.hypot(dx,dy);
+        const radius = Math.max(90, s.s * 2.2);
+
+        if(dist < radius){
+          const f = (1 - dist / radius);
+          const nx = dx / (dist || 1);
+          const ny = dy / (dist || 1);
+
+          // 推開 + 輕微抖動
+          s.vx += nx * f * 0.65;
+          s.vy += ny * f * 0.65;
+
+          // 互動時變亮（life > 1 的感覺）
+          s.life = Math.min(1.25, s.life + f * 0.06);
+
+          // 偶爾把顏色拉向壓力色（像滲出）
+          if(Math.random() < 0.010 * f){
+            s.c = getCSS('--stress');
+          }
+        } else {
+          // 慢慢回到正常亮度
+          s.life += (1 - s.life) * 0.03;
+        }
+
+        // 阻尼（避免越推越飛）
+        s.vx *= 0.94;
+        s.vy *= 0.94;
+
+        // 很慢的淡出（保持畫面乾淨）
+        s.o *= 0.9996;
+      }
+
+      // 畫形狀
+      // 先畫淡的再畫亮的（視覺更乾淨）
+      shapes
+        .slice()
+        .sort((a,b)=> (a.life*a.o) - (b.life*b.o))
+        .forEach(drawShape);
+
+      // 清掉太淡的
+      for(let i=shapes.length-1;i>=0;i--){
+        if(shapes[i].o < 0.08) shapes.splice(i,1);
+      }
+
+      requestAnimationFrame(step);
+    }
+    step();
+  </script>
+</body>
+</html>

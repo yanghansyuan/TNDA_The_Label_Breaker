@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interactive Night Cursor</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #1b1f24;
+      cursor: none;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    /* 全畫面毛玻璃層：只在按下左鍵時啟用，並在游標球體位置挖洞 */
+    .glass {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 120ms ease;
+
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+      background: rgba(255, 255, 255, 0.06);
+
+      /* 用 mask 在球體位置挖洞（洞內不模糊） */
+      --x: 50vw;
+      --y: 50vh;
+      --hole: 140px;
+
+      -webkit-mask-image: radial-gradient(
+        circle var(--hole) at var(--x) var(--y),
+        transparent 0 calc(var(--hole) - 2px),
+        rgba(0,0,0,1) calc(var(--hole) + 6px)
+      );
+      mask-image: radial-gradient(
+        circle var(--hole) at var(--x) var(--y),
+        transparent 0 calc(var(--hole) - 2px),
+        rgba(0,0,0,1) calc(var(--hole) + 6px)
+      );
+    }
+    .glass.on { opacity: 1; }
+
+    * { user-select: none; }
+  </style>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+  <div id="glass" class="glass"></div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const glass = document.getElementById('glass');
+
+    function resize() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ===== Stars =====
+    const STAR_COUNT = 90;
+    const stars = [];
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    function initStars() {
+      stars.length = 0;
+      for (let i = 0; i < STAR_COUNT; i++) {
+        stars.push({
+          x: rand(0, window.innerWidth),
+          y: rand(0, window.innerHeight),
+          r: rand(0.6, 1.8),
+          baseA: rand(0.12, 0.5),
+          tw: rand(0.8, 2.2),
+          ph: rand(0, Math.PI * 2)
+        });
+      }
+    }
+    initStars();
+    window.addEventListener('resize', initStars);
+
+    // ===== Cursor State =====
+    let mouseX = window.innerWidth * 0.5;
+    let mouseY = window.innerHeight * 0.5;
+    let prevX = mouseX, prevY = mouseY;
+
+    let isDown = false;
+    let speed = 0;
+    let moveEnergy = 0;
+    let ringAngle = 0;
+
+    // 球體放大 5 倍（原本 24 -> 120）
+    const SPHERE_R = 120;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      glass.classList.add('on');
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (e.button !== 0) return;
+      isDown = false;
+      glass.classList.remove('on');
+    });
+
+    function updateGlassMask() {
+      // 洞的半徑稍微比球大一點，讓球周圍也保持清晰
+      const hole = SPHERE_R + 22;
+      glass.style.setProperty('--x', mouseX + 'px');
+      glass.style.setProperty('--y', mouseY + 'px');
+      glass.style.setProperty('--hole', hole + 'px');
+    }
+
+    // ===== Drawing =====
+    function drawBackground() {
+      const g = ctx.createRadialGradient(
+        window.innerWidth * 0.5, window.innerHeight * 0.35, 50,
+        window.innerWidth * 0.5, window.innerHeight * 0.35, Math.max(window.innerWidth, window.innerHeight)
+      );
+      g.addColorStop(0, '#20262c');
+      g.addColorStop(1, '#161a1f');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const t = performance.now() * 0.001;
+      for (const s of stars) {
+        const a = s.baseA + 0.18 * Math.sin(t * s.tw + s.ph);
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, a)})`;
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawSphere(x, y, r, pressed) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (!pressed) {
+        // 黃色球體
+        const g = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r*1.25);
+        g.addColorStop(0, '#ffe67a');
+        g.addColorStop(0.45, '#f5c443');
+        g.addColorStop(1, '#c98a12');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 高光
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.ellipse(-r*0.25, -r*0.28, r*0.22, r*0.15, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        // 按下：更亮、更金屬、發光
+        ctx.shadowColor = 'rgba(255, 170, 40, 0.95)';
+        ctx.shadowBlur = 38;
+
+        const g = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r*1.45);
+        g.addColorStop(0, '#fff7d8');
+        g.addColorStop(0.20, '#ffe08a');
+        g.addColorStop(0.50, '#ffb247');
+        g.addColorStop(1, '#a84c00');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 更明顯的高光條
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.28;
+        for (let i = -4; i <= 4; i++) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1.2;
+          ctx.arc(0, 0, r*0.92, (i*0.22) + 0.15, (i*0.22) + 0.46);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        // 邊緣亮
+        ctx.strokeStyle = 'rgba(255, 235, 190, 0.42)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawConesRing(x, y, r, pressed, energy, angle) {
+      // 明確顯示 6 顆三角錐（尖點沿著球心環繞）
+      const count = 6;
+
+      // 環半徑略大於球體，讓尖點繞一圈
+      const ringR = r * 1.05;
+
+      // 模擬視角的橢圓（你想更像平面環就把 tilt 拉小）
+      const tilt = 0.62;
+
+      // 錐體大小（放大後要更明顯）
+      const coneLen = r * 0.35;     // 三角形長度（從尖到基底中心）
+      const coneHalfW = r * 0.13;   // 基底半寬
+
+      // 顯示強度：移動時更活，停下會慢慢淡，但仍可見
+      const alpha = 0.55 + 0.25 * energy;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(0.32); // 斜一點比較像「環」
+
+      ctx.globalAlpha = alpha;
+
+      for (let i = 0; i < count; i++) {
+        const a = angle + (i / count) * Math.PI * 2;
+
+        // 尖點位置（以球心為中心環繞）
+        const tipX = Math.cos(a) * ringR;
+        const tipY = Math.sin(a) * ringR * tilt;
+
+        // 三角錐方向：由球心 -> 尖點（讓尖指向外側）
+        const dirX = tipX;
+        const dirY = tipY;
+
+        const rot = Math.atan2(dirY, dirX);
+
+        ctx.save();
+        ctx.translate(tipX, tipY);
+        ctx.rotate(rot);
+
+        // 讓基底靠近球體：三角形往「反方向」長回來
+        ctx.beginPath();
+        ctx.moveTo(0, 0); // 尖點
+        ctx.lineTo(-coneLen, -coneHalfW);
+        ctx.lineTo(-coneLen,  coneHalfW);
+        ctx.closePath();
+
+        // 顏色更明確
+        const fill = pressed ? 'rgba(255, 205, 120, 0.92)' : 'rgba(195, 120, 25, 0.9)';
+        const edge = pressed ? 'rgba(255, 245, 220, 0.85)' : 'rgba(40, 22, 6, 0.65)';
+
+        ctx.fillStyle = fill;
+        ctx.fill();
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = edge;
+        ctx.stroke();
+
+        // 立體感：一條側面陰影線
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-coneLen, 0);
+        ctx.strokeStyle = pressed ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    function tick() {
+      const dx = mouseX - prevX;
+      const dy = mouseY - prevY;
+      const instSpeed = Math.sqrt(dx*dx + dy*dy);
+
+      speed = speed * 0.85 + instSpeed * 0.15;
+
+      const add = Math.min(1, speed / 22);
+      moveEnergy = Math.max(0, Math.min(1, moveEnergy * 0.92 + add * 0.22));
+
+      // 環轉動：就算停住也慢慢轉，移動時更快
+      ringAngle += 0.02 + moveEnergy * 0.20;
+
+      prevX = mouseX; prevY = mouseY;
+
+      drawBackground();
+
+      // 先畫三角錐環，再畫球（球在最上層）
+      drawConesRing(mouseX, mouseY, SPHERE_R, isDown, moveEnergy, ringAngle);
+      drawSphere(mouseX, mouseY, SPHERE_R, isDown);
+
+      updateGlassMask();
+
+      requestAnimationFrame(tick);
+    }
+    tick();
+  </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>My Happy Inner World</title>
+
+<style>
+html,body{
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    font-family:"Noto Sans TC",sans-serif;
+    background:#fff3d6;
+}
+
+canvas{
+    position:absolute;
+    top:0;
+    left:0;
+}
+
+#ui{
+    position:fixed;
+    top:24px;
+    left:24px;
+    background:rgba(255,255,255,0.92);
+    padding:20px 26px;
+    border-radius:16px;
+    backdrop-filter: blur(12px);
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+button{
+    padding:14px 22px;
+    border:none;
+    background:linear-gradient(45deg,#ffd36e,#ff9a76);
+    border-radius:12px;
+    cursor:pointer;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.memoryPopup{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    padding:44px;
+    border-radius:22px;
+    font-size:28px;
+    line-height:1.8;
+    max-width:720px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.25);
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+    <button onclick="addMemory()">加入一段快樂</button>
+</div>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let width,height;
+let blobs=[];
+let bubbles=[];
+let glow=0;
+let warmth=0;
+let zoom=1;
+
+
+// 暖色完整色譜
+const palette=[
+"#FFE08A", // 奶油黃
+"#FFD36E", // 金黃
+"#FFBE8A", // 杏
+"#FFA77A", // 蜜桃
+"#FF8F6B", // 橘
+"#FF7A7A", // 珊瑚
+"#FF9E9E", // 玫瑰
+"#FFC2A6", // 淡暖膚
+"#FFD6B3", // 奶橘
+"#E7A97B"  // 焦糖
+];
+
+function resize(){
+    width=canvas.width=window.innerWidth;
+    height=canvas.height=window.innerHeight;
+}
+window.addEventListener("resize",resize);
+resize();
+
+
+// 初始記憶
+let memories=[
+"黃色、細碎、滿滿的感覺",
+"小小的空間讓人安心",
+"毛茸茸、泡泡、陽光包圍",
+"滑順的時間流動",
+"心臟跳得很快，知道自己很開心",
+"暖暖的像被抱住",
+"快樂是成長的能量"
+];
+
+
+// 新增記憶
+function addMemory(){
+
+    const text=prompt("描述這段快樂：畫面、氣味、觸感、聲音…");
+    if(!text)return;
+
+    memories.push(text);
+
+    // 世界回應
+    glow=120;
+    warmth+=6;
+    zoom=1.08;
+
+    createBlob(width/2,height/2);
+    createBubbles(width/2,height/2);
+}
+
+
+
+// 記憶核心
+function createBlob(x,y){
+    blobs.push({
+        x,y,
+        size:80+Math.random()*60,
+        color:palette[Math.floor(Math.random()*palette.length)],
+        seed:Math.random()*1000,
+        text:memories[memories.length-1]
+    });
+}
+
+
+// 泡泡
+function createBubbles(x,y){
+    for(let i=0;i<30;i++){
+        bubbles.push({
+            x,y,
+            vx:(Math.random()-0.5)*3,
+            vy:(Math.random()-0.5)*3,
+            size:10+Math.random()*14,
+            life:220
+        });
+    }
+}
+
+
+// 點擊探索記憶
+canvas.addEventListener("mousedown",e=>{
+    blobs.forEach(blob=>{
+        const dx=e.clientX-blob.x;
+        const dy=e.clientY-blob.y;
+        if(Math.sqrt(dx*dx+dy*dy)<blob.size){
+            showMemory(blob.text);
+            createBubbles(blob.x,blob.y);
+        }
+    });
+});
+
+
+// 顯示記憶
+function showMemory(text){
+    const div=document.createElement("div");
+    div.className="memoryPopup";
+    div.innerText=text;
+    document.body.appendChild(div);
+    setTimeout(()=>div.remove(),3800);
+}
+
+
+// 柔軟色塊
+function drawBlob(blob){
+    ctx.beginPath();
+    const points=12;
+    for(let i=0;i<=points;i++){
+        const angle=(Math.PI*2/points)*i;
+        const r=blob.size+Math.sin(Date.now()/600+blob.seed+i)*22;
+        ctx.lineTo(blob.x+Math.cos(angle)*r,blob.y+Math.sin(angle)*r);
+    }
+    ctx.closePath();
+    ctx.fillStyle=blob.color;
+    ctx.fill();
+}
+
+
+// 動畫
+function animate(){
+
+    ctx.setTransform(zoom,0,0,zoom,width*(1-zoom)/2,height*(1-zoom)/2);
+
+    ctx.fillStyle=`hsl(35,100%,${92-warmth}%)`;
+    ctx.fillRect(0,0,width,height);
+
+    // 光爆
+    if(glow>0){
+        ctx.fillStyle=`rgba(255,255,255,${glow/120})`;
+        ctx.fillRect(0,0,width,height);
+        glow-=1.5;
+    }
+
+    // zoom 回彈
+    zoom+= (1-zoom)*0.06;
+
+    // blob 漂浮
+    blobs.forEach(blob=>{
+        blob.x+=Math.sin(Date.now()/1400+blob.seed)*0.5;
+        blob.y+=Math.cos(Date.now()/1600+blob.seed)*0.5;
+        drawBlob(blob);
+    });
+
+    // 泡泡
+    bubbles.forEach((b,i)=>{
+        b.x+=b.vx;
+        b.y+=b.vy;
+        b.life--;
+
+        ctx.globalAlpha=b.life/220;
+        ctx.beginPath();
+        ctx.arc(b.x,b.y,b.size,0,Math.PI*2);
+        ctx.fillStyle="rgba(255,255,255,0.85)";
+        ctx.fill();
+        ctx.globalAlpha=1;
+
+        if(b.life<=0)bubbles.splice(i,1);
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>

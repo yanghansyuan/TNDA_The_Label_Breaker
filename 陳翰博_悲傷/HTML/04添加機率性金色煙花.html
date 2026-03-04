@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>散去後的悲傷</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #888;
+            font-family: "Noto Serif TC", serif;
+            cursor: crosshair;
+            user-select: none;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 1s;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.5rem;
+            margin: 0;
+            opacity: 0.7;
+        }
+
+        p {
+            font-size: 0.8rem;
+            margin-top: 10px;
+            opacity: 0.5;
+        }
+
+        .instruction {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 25px;
+            border-radius: 30px;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            letter-spacing: 0.1rem;
+            transition: all 0.3s;
+        }
+
+        #start-screen:hover .instruction {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" onclick="startExperience()">
+        <h1>散去後的悲傷</h1>
+        <div class="instruction">點擊進入寧靜的空間</div>
+    </div>
+
+    <div id="ui-overlay">
+        <h1>散去後的悲傷</h1>
+        <p>當灰白消逝，偶爾會閃爍金色的回憶</p>
+    </div>
+
+    <script>
+        let particles = [];
+        const MAX_PARTICLES = 350;
+        
+        // 點擊計數與隨機機制
+        let clickCounter = 0;
+        // 修改為 8-20 次點擊觸發
+        let nextGoldenThreshold = Math.floor(Math.random() * (20 - 8 + 1)) + 8;
+
+        // 原生 Web Audio API 變數
+        let audioCtx;
+        let masterGain, masterFilter;
+        let subOsc, subGain;
+        let leadOsc, leadGain;
+        let audioInitialized = false;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            noStroke();
+            
+            // 初始化一些遠景粒子
+            for (let i = 0; i < 30; i++) {
+                particles.push(new Particle(random(width), random(height), false, false));
+            }
+        }
+
+        function initNativeAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            masterFilter = audioCtx.createBiquadFilter();
+            masterFilter.type = 'lowpass';
+            masterFilter.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            masterFilter.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            // Sub Bass (低頻)
+            subOsc = audioCtx.createOscillator();
+            subGain = audioCtx.createGain();
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            subGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            subOsc.connect(subGain);
+            subGain.connect(masterFilter);
+            subOsc.start();
+
+            // Lead Synth (互動音)
+            leadOsc = audioCtx.createOscillator();
+            leadGain = audioCtx.createGain();
+            leadOsc.type = 'sine';
+            leadOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            leadGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            leadOsc.connect(leadGain);
+            leadGain.connect(masterFilter);
+            leadOsc.start();
+        }
+
+        function startExperience() {
+            if (!audioInitialized) {
+                initNativeAudio();
+                masterGain.gain.exponentialRampToValueAtTime(0.8, audioCtx.currentTime + 2);
+                document.getElementById('start-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('start-screen').style.display = 'none';
+                }, 1200);
+                audioInitialized = true;
+            }
+        }
+
+        function mousePressed() {
+            if (!audioInitialized) return;
+            
+            clickCounter++;
+            let isGolden = false;
+
+            // 判斷是否達成金色觸發條件
+            if (clickCounter >= nextGoldenThreshold) {
+                isGolden = true;
+                clickCounter = 0;
+                // 重置時同樣使用 8-20 的隨機範圍
+                nextGoldenThreshold = Math.floor(Math.random() * (20 - 8 + 1)) + 8;
+            }
+            
+            let burstCount = isGolden ? 60 : 35; // 金色煙花規模更大
+            for (let i = 0; i < burstCount; i++) {
+                particles.push(new Particle(mouseX, mouseY, true, isGolden));
+            }
+
+            // 音訊反饋
+            if (audioCtx) {
+                let now = audioCtx.currentTime;
+                let brightness = isGolden ? 5000 : 3000;
+                let sustain = isGolden ? 0.4 : 0.1;
+
+                masterFilter.frequency.setTargetAtTime(brightness, now, 0.02);
+                masterFilter.frequency.setTargetAtTime(800, now + sustain, 0.5);
+                
+                leadGain.gain.setTargetAtTime(isGolden ? 0.4 : 0.25, now, 0.01);
+                leadGain.gain.setTargetAtTime(0, now + sustain, 0.3);
+            }
+        }
+
+        function draw() {
+            background(10, 10, 10, 25);
+
+            if (audioInitialized) {
+                updateAudioContext();
+            }
+
+            // 滑鼠移動產生的常規粒子
+            if (mouseX > 0 && mouseY > 0 && (pmouseX !== mouseX || pmouseY !== mouseY)) {
+                particles.push(new Particle(mouseX, mouseY, false, false));
+                
+                if (audioInitialized) {
+                    let freq = map(mouseY, height, 0, 150, 600);
+                    leadOsc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
+                    let speed = dist(mouseX, mouseY, pmouseX, pmouseY);
+                    let vol = constrain(map(speed, 0, 100, 0, 0.1), 0, 0.15);
+                    leadGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
+                }
+            } else if (audioInitialized) {
+                leadGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].display();
+                if (particles[i].isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            if (particles.length > MAX_PARTICLES) {
+                particles.shift();
+            }
+        }
+
+        function updateAudioContext() {
+            let cutoff = map(particles.length, 0, MAX_PARTICLES, 300, 2000);
+            masterFilter.frequency.setTargetAtTime(cutoff, audioCtx.currentTime, 0.2);
+            let lfo = sin(frameCount * 0.03) * 0.02 + 0.08;
+            subGain.gain.setTargetAtTime(lfo, audioCtx.currentTime, 0.1);
+        }
+
+        class Particle {
+            constructor(x, y, isBurst = false, isGolden = false) {
+                this.pos = createVector(x, y);
+                this.isBurst = isBurst;
+                this.isGolden = isGolden;
+                
+                if (this.isBurst) {
+                    let angle = random(TWO_PI);
+                    let speed = this.isGolden ? random(3, 9) : random(2, 6);
+                    this.vel = createVector(cos(angle) * speed, sin(angle) * speed);
+                    this.lifespan = 255;
+                    this.decay = this.isGolden ? random(1.5, 3) : random(3, 6); // 金色消散較慢
+                    this.size = this.isGolden ? random(3, 6) : random(2, 4);
+                } else {
+                    this.vel = createVector(random(-0.4, 0.4), random(-0.7, 0.1));
+                    this.lifespan = 255;
+                    this.decay = 1.2;
+                    this.size = random(1.5, 3.5);
+                }
+                
+                this.acc = createVector(0, 0);
+                this.noiseOffset = random(2000);
+                
+                // 顏色設定
+                if (this.isGolden) {
+                    // 金色系
+                    this.r = 255;
+                    this.g = random(180, 220);
+                    this.b = random(0, 50);
+                } else {
+                    // 灰白色系
+                    let v = random(180, 240);
+                    this.r = this.g = this.b = v;
+                }
+            }
+
+            update() {
+                if (this.isBurst) {
+                    this.vel.mult(0.96);
+                    if (this.isGolden) {
+                        this.acc.y = 0.02;
+                    }
+                } else {
+                    let n = noise(this.noiseOffset, frameCount * 0.008);
+                    this.acc.x = map(n, 0, 1, -0.02, 0.02);
+                }
+                
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                this.lifespan -= this.decay;
+                this.size *= 0.996;
+                this.noiseOffset += 0.01;
+            }
+
+            display() {
+                let alpha = this.isGolden ? this.lifespan * (0.8 + 0.2 * sin(frameCount * 0.2)) : this.lifespan;
+                
+                fill(this.r, this.g, this.b, alpha);
+                ellipse(this.pos.x, this.pos.y, this.size);
+                
+                if (this.isGolden && this.lifespan > 50) {
+                    fill(this.r, this.g, this.b, this.lifespan * 0.15);
+                    ellipse(this.pos.x, this.pos.y, this.size * 4);
+                } else if (this.lifespan > 180) {
+                    fill(255, 255, 255, this.lifespan * 0.1);
+                    ellipse(this.pos.x, this.pos.y, this.size * 2.5);
+                }
+            }
+
+            isDead() {
+                return this.lifespan < 0;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>

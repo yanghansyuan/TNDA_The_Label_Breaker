@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渴望 - 2_floating_world</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #e8e6df; /* 稍微深一點點的紙張色，讓發光感更明顯 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="artCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // 從你的草稿中提取的色彩靈感 (水藍、橘紅、正紅、螢光綠)
+        const colors = ['#3a86ff', '#f4a261', '#e63946', '#80ed99'];
+
+        // --- 1. 定義「浮游物件」類別 ---
+        class FloatingShape {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                // 緩緩飛行的速度 (隨機方向與緩慢速度)
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                // 旋轉角度與緩慢的旋轉速度
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.02;
+                
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 20 + 10;
+                // 隨機決定形狀類型：0=圓形, 1=三角形, 2=矩形, 3=帶尾巴的線條
+                this.type = Math.floor(Math.random() * 4); 
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.vAngle;
+
+                // 讓物件像在無限空間中，從一邊消失會從另一邊出來
+                if (this.x > canvas.width + 50) this.x = -50;
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.y > canvas.height + 50) this.y = -50;
+                if (this.y < -50) this.y = canvas.height + 50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                if (this.type === 0) { // 圓形 (點)
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 1) { // 鏤空三角形 (面/線)
+                    ctx.moveTo(0, -this.size);
+                    ctx.lineTo(this.size, this.size);
+                    ctx.lineTo(-this.size, this.size);
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (this.type === 2) { // 實心矩形 (面)
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size * 1.5);
+                } else if (this.type === 3) { // 帶尾巴的線條 (你的草稿特色)
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-this.size * 3, 0); // 長長的尾巴
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- 2. 定義「粒子特效」類別 ---
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                // 爆發的放射狀速度
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.color = color;
+                this.size = Math.random() * 4 + 1;
+                this.life = 1.0; // 生命週期 1.0 ~ 0
+                this.decay = Math.random() * 0.02 + 0.01; // 消失的速度
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life); // 逐漸透明
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 儲存畫面上的物件
+        const shapes = [];
+        const particles = [];
+
+        // 初始先在真空中隨機散落 15 個物件
+        for(let i = 0; i < 15; i++) {
+            shapes.push(new FloatingShape());
+        }
+
+        // --- 3. 滑鼠點擊互動 ---
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 0) { // 左鍵
+                // 隨機選一個顏色作為這次點擊的爆發色
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 產生散出的粒子特效 (15顆小粒子)
+                for(let i = 0; i < 15; i++) {
+                    particles.push(new Particle(event.clientX, event.clientY, burstColor));
+                }
+
+                // 在該位置隨機創造一個新的浮游物件
+                shapes.push(new FloatingShape(event.clientX, event.clientY));
+            }
+        });
+
+        // --- 4. 動畫主迴圈 ---
+        function animate() {
+            // 清除上一幀的畫面，準備畫新的一幀
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 更新並繪製所有浮游物件
+            shapes.forEach(shape => {
+                shape.update();
+                shape.draw();
+            });
+
+            // 更新並繪製所有粒子 (並移除生命週期結束的粒子)
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                if (p.life <= 0) {
+                    particles.splice(i, 1); // 刪除死掉的粒子
+                } else {
+                    p.draw();
+                }
+            }
+
+            // 呼叫下一幀
+            requestAnimationFrame(animate);
+        }
+
+        // 啟動動畫
+        animate();
+    </script>
+</body>
+</html>

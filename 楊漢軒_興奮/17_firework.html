@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>興奮粒子場 v10（煙火版）</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #eee;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      /* 拿掉白色光暈，只保留純黑背景 */
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform, opacity;
+      box-shadow: 0 0 18px rgba(0,0,0,0.55);
+    }
+
+    .shape-circle {
+      border-radius: 50%;
+    }
+
+    .shape-line {
+      border-radius: 999px;
+      transform-origin: 50% 50%;
+    }
+
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .shape-star {
+      clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+      );
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <script>
+    const stage = document.getElementById("stage");
+
+    // 邊界自適應：用實際舞台寬高
+    let STAGE_WIDTH = stage.clientWidth;
+    let STAGE_HEIGHT = stage.clientHeight;
+    window.addEventListener("resize", () => {
+      STAGE_WIDTH = stage.clientWidth;
+      STAGE_HEIGHT = stage.clientHeight;
+    });
+
+    const MAX_PARTICLES = 300;
+
+    // 高飽和、高亮度色票（彩色煙火階段用）
+    const colors = [
+      "#ff1744", // 亮紅
+      "#ffd600", // 亮黃
+      "#2979ff", // 電光藍
+      "#e040fb", // 紫粉
+      "#69f0ae", // 螢光綠
+      "#ff9100"  // 亮橙
+    ];
+    let colorIndex = 0;
+
+    const particles = [];
+    const shapeTypes = ["line", "triangle", "star", "circle"];
+
+    function handleTap(x, y) {
+      const count = 30 + Math.floor(Math.random() * 20);
+      const totalNeeded = particles.length + count;
+
+      if (totalNeeded > MAX_PARTICLES) {
+        const toRemove = totalNeeded - MAX_PARTICLES;
+        for (let i = 0; i < toRemove && particles.length > 0; i++) {
+          const old = particles.shift();
+          old.el.remove();
+        }
+      }
+
+      for (let i = 0; i < count; i++) {
+        const shape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        createParticle(x, y, shape);
+      }
+    }
+
+    stage.addEventListener("click", (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      handleTap(x, y);
+    });
+
+    function createParticle(cx, cy, shape) {
+      const el = document.createElement("div");
+      el.classList.add("particle");
+
+      const baseColor = colors[colorIndex % colors.length];
+      colorIndex++;
+      el.dataset.baseColor = baseColor;      // 先存起來之後用
+      el.style.backgroundColor = "#ffd700";  // 一開始全部金黃色
+
+      // 一開始煙火種子要小
+      const baseAlpha = 0.85 + Math.random() * 0.1;
+      el.style.opacity = baseAlpha.toString();
+
+      let baseSpeed;
+      let w, h;
+
+      switch (shape) {
+        case "line": {
+          el.classList.add("shape-line");
+          const thicknessLevels = [2, 4, 7];
+          const tIndex = Math.floor(Math.random() * thicknessLevels.length);
+          h = thicknessLevels[tIndex];
+          w = 60 + Math.random() * 40;          // 線條比之前稍微短一點
+          baseSpeed = 1500 + Math.random() * 900;
+          break;
+        }
+        case "triangle": {
+          el.classList.add("shape-triangle");
+          const sizeLevels = [14, 20, 28];      // 更小
+          const s = sizeLevels[Math.floor(Math.random() * sizeLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 900 + Math.random() * 480;
+          break;
+        }
+        case "star": {
+          el.classList.add("shape-star");
+          const sizeLevels = [16, 22, 30];      // 更小
+          const s = sizeLevels[Math.floor(Math.random() * sizeLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 760 + Math.random() * 420;
+          break;
+        }
+        default: {
+          el.classList.add("shape-circle");
+          const sizeLevels = [10, 16, 22];      // 更小
+          const s = sizeLevels[Math.floor(Math.random() * sizeLevels.length)];
+          w = s;
+          h = s;
+          baseSpeed = 880 + Math.random() * 480;
+        }
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+
+      const size = (w + h) / 2;
+      const sizeFactor = 1.7 - Math.min(size / 80, 1.0); // 小的更快
+      let speed = baseSpeed * sizeFactor;
+
+      let x = cx;
+      let y = cy;
+
+      const angle = Math.random() * Math.PI * 2;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+
+      el.style.transform = "translate(-50%, -50%) scale(0.3)"; // 種子更小
+
+      stage.appendChild(el);
+
+      const now = performance.now();
+      const life = 2200 + Math.random() * 1000; // 煙火存活久一點
+
+      particles.push({
+        el,
+        x,
+        y,
+        vx,
+        vy,
+        w,
+        h,
+        shape,
+        life,
+        createdAt: now,
+        spin: 0,
+        rotation: 0,
+        shrink: false,
+        targetW: w,
+        baseAlpha
+      });
+    }
+
+    let lastTime = null;
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      updateParticles(dt, timestamp);
+      requestAnimationFrame(animate);
+    }
+
+    function updateParticles(dt, now) {
+      const baseDrag = 0.97;
+      const wallDamping = 0.86;
+      const spinDecay = 0.94;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.createdAt;
+        const t = age / p.life;
+
+        if (t >= 1) {
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        let localDrag = baseDrag;
+        if (p.shape === "line") localDrag = 0.975;
+        else if (p.shape === "star") localDrag = 0.965;
+
+        p.vx *= localDrag;
+        p.vy *= localDrag;
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        const halfW = p.w / 2;
+        const halfH = p.h / 2;
+        const minX = halfW;
+        const maxX = STAGE_WIDTH - halfW;
+        const minY = halfH;
+        const maxY = STAGE_HEIGHT - halfH;
+
+        let collided = false;
+
+        if (p.x < minX) {
+          p.x = minX;
+          p.vx = -p.vx * wallDamping;
+          collided = true;
+        } else if (p.x > maxX) {
+          p.x = maxX;
+          p.vx = -p.vx * wallDamping;
+          collided = true;
+        }
+
+        if (p.y < minY) {
+          p.y = minY;
+          p.vy = -p.vy * wallDamping;
+          collided = true;
+        } else if (p.y > maxY) {
+          p.y = maxY;
+          p.vy = -p.vy * wallDamping;
+          collided = true;
+        }
+
+        if (collided) {
+          const spinImpulse = 1080;
+          const dir = Math.random() > 0.5 ? 1 : -1;
+          p.spin += spinImpulse * dir;
+
+          if (p.shape === "line" && !p.shrink) {
+            p.shrink = true;
+            p.targetW = p.w * 0.2;
+          }
+        }
+
+        if (p.shape === "line" && p.shrink) {
+          p.w += (p.targetW - p.w) * 0.25;
+          if (p.w < 2) p.w = 2;
+          p.el.style.width = p.w + "px";
+        }
+
+        p.spin *= spinDecay;
+        p.rotation += p.spin * dt;
+
+        // 顏色：前 20% 壽命是金黃，之後切換回原色
+        if (t < 0.05) {
+          p.el.style.backgroundColor = "#ffd700";
+        } else {
+          p.el.style.backgroundColor = p.el.dataset.baseColor || "#ffffff";
+        }
+
+        // 煙火版縮放：前 30% 快速膨脹，之後慢慢縮小
+        let scale;
+        if (t < 0.3) {
+          const k = t / 0.3;           // 0~1
+          scale = 0.3 + 0.9 * k;       // 0.3 -> 1.2
+        } else {
+          const k = (t - 0.3) / 0.7;   // 0~1
+          scale = 1.2 * (1 - k);       // 1.2 -> 0
+        }
+
+        // 淡出：用線性 1 - t，比原本慢
+        const opacity = p.baseAlpha * (1 - t);
+
+        const baseDirDeg = Math.atan2(p.vy, p.vx) * 180 / Math.PI;
+        const rotationDeg = baseDirDeg + p.rotation;
+
+        p.el.style.left = p.x + "px";
+        p.el.style.top = p.y + "px";
+        p.el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rotationDeg}deg)`;
+        p.el.style.opacity = opacity.toString();
+        // 保留較多飽和度，慢慢收斂
+        p.el.style.filter = `saturate(${1 - t * 0.2}) brightness(${1 - t * 0.1})`;
+      }
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emotional Flow</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Noto Sans TC", sans-serif;
+    background: linear-gradient(180deg, #dbe7f3, #f2f4f7);
+    overflow: hidden;
+}
+
+/* ---------------- 基礎內容 ---------------- */
+
+.content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 20vh 5vw;
+    color: #5f6c7b;
+}
+
+h1 {
+    font-weight: 300;
+    letter-spacing: 3px;
+}
+
+/* ---------------- 星空層 ---------------- */
+
+.stars {
+    position: fixed;
+    width: 200%;
+    height: 200%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgb(120, 28, 205);
+    opacity: 0.6;
+}
+
+/* ---------------- 波浪層 ---------------- */
+
+.background-waves {
+    position: fixed;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.3), transparent 40%);
+    animation: waveMove 30s linear infinite;
+    z-index: 2;
+}
+
+@keyframes waveMove {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ---------------- 泡泡 ---------------- */
+
+.bubble {
+    position: absolute;
+    bottom: -50px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(180,200,220,0.2));
+    animation: floatUp linear forwards;
+    cursor: pointer;
+}
+
+@keyframes floatUp {
+    to {
+        transform: translateY(-110vh);
+        opacity: 0;
+    }
+}
+
+.bubble.pop {
+    animation: popBubble 0.5s ease-out forwards;
+}
+
+@keyframes popBubble {
+    to {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+}
+
+/* ---------------- 玻璃層 ---------------- */
+
+.glass-layer {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.crack {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: url('https://i.imgur.com/6QJjZ3G.png') center/contain no-repeat;
+    opacity: 0;
+}
+
+.crack.active {
+    opacity: 1;
+    animation: fadeCrack 3s ease forwards;
+}
+
+@keyframes fadeCrack {
+    0% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* 液體滲出 */
+.drip {
+    position: absolute;
+    width: 4px;
+    height: 0;
+    background: linear-gradient(to bottom, #9fb3c8, #bfcad6);
+    animation: dripFlow 3s ease forwards;
+}
+
+@keyframes dripFlow {
+    to {
+        height: 80px;
+        opacity: 0;
+    }
+}
+
+/* ---------------- SVG 電話線 ---------------- */
+
+.phone-line {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 3;
+}
+
+.phone-line path {
+    fill: none;
+    stroke: #9fb3c8;
+    stroke-width: 2;
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    animation: drawLine 6s ease forwards;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="background-waves"></div>
+<div class="glass-layer" id="glassLayer"></div>
+
+<section class="content">
+    <h1>月光下的公園</h1>
+    <p style ="margin-left: 15px;">盛大結尾之後，只剩下風聲與回憶。</p>
+</section>
+
+<svg class="phone-line" viewBox="0 0 1440 200">
+<path d="M0 100 C 200 50, 400 150, 600 100 S 1000 50, 1440 120" />
+</svg>
+
+<script>
+
+/* ⭐ 生成星空 */
+const starContainer = document.getElementById("stars");
+for(let i=0;i<200;i++){
+    let star = document.createElement("div");
+    star.className="star";
+    star.style.left=Math.random()*200+"%";
+    star.style.top=Math.random()*200+"%";
+    starContainer.appendChild(star);
+}
+
+/* ⭐ 星空視差 */
+document.addEventListener("mousemove",(e)=>{
+    let x = (e.clientX / window.innerWidth - 0.5) * 20;
+    let y = (e.clientY / window.innerHeight - 0.5) * 20;
+    starContainer.style.transform = `translate(${x}px,${y}px)`;
+});
+
+/* 🫧 泡泡生成 */
+function createBubble(){
+    let bubble=document.createElement("div");
+    bubble.className="bubble";
+    let size=Math.random()*40+20;
+    bubble.style.width=size+"px";
+    bubble.style.height=size+"px";
+    bubble.style.left=Math.random()*100+"vw";
+    bubble.style.animationDuration=(Math.random()*10+10)+"s";
+
+    bubble.addEventListener("click",()=>{
+        bubble.classList.add("pop");
+        setTimeout(()=>bubble.remove(),500);
+    });
+
+    document.body.appendChild(bubble);
+    setTimeout(()=>bubble.remove(),20000);
+}
+setInterval(createBubble,1200);
+
+/* 💎 玻璃碎裂效果 */
+const glassLayer=document.getElementById("glassLayer");
+
+document.addEventListener("click",(e)=>{
+
+    let crack=document.createElement("div");
+    crack.className="crack active";
+    crack.style.left=(e.clientX-100)+"px";
+    crack.style.top=(e.clientY-100)+"px";
+
+    glassLayer.appendChild(crack);
+
+    /* 液體 */
+    let drip=document.createElement("div");
+    drip.className="drip";
+    drip.style.left=e.clientX+"px";
+    drip.style.top=e.clientY+"px";
+    glassLayer.appendChild(drip);
+
+    setTimeout(()=>{
+        crack.classList.remove("active");
+    },3000);
+});
+
+</script>
+
+</body>
+</html>

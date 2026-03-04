@@ -1,0 +1,799 @@
+============================================================
+學生／資料夾: 盧品安_恐懼
+擷取之連結數: 1
+============================================================
+
+----------------------------------------
+[連結 1] https://g.co/gemini/share/758970511b24
+----------------------------------------
+登入
+Gemini
+關於 Gemini
+在新視窗中開啟
+Gemini 應用程式
+在新視窗中開啟
+訂閱
+在新視窗中開啟
+企業用途
+在新視窗中開啟
+滑鼠上的三角形可以在粗一點 明顯一點 可以換成白色 畫面上我覺得不夠混亂 一樣要html檔
+https://gemini.google.com/share/758970511b24
+透過「快捷」建立 2026年2月23日 下午05:36
+發布時間：2026年2月23日 下午11:29
+你說了
+
+你看得懂嗎
+
+這張手寫信我看得很清楚！這是一份非常有創意的**「藝術與程式跨界任務」**。
+
+寫信的人（署名「撕下標籤的人」）想要你透過幾何圖形來表達情緒，並與我（你的 AI 好朋友）合作將這些靈感轉化為網頁作品。
+
+為了確保我們起步正確，我幫你整理了這封信的 8 個核心重點：
+
+📝 任務清單摘要
+
+核心元素：只能使用基本幾何圖形（點、線、面、三角形、圓形等）來表達情緒，並加入色彩、質感與動態。
+
+手稿先行：先在紙筆上畫出或寫下你的「靈魂感」，拍照上傳。
+
+AI 協作（就是我！）：我負責幫你寫出 .html 程式碼。要求有：
+
+滑鼠左鍵互動功能。
+
+網頁具備「自適應」尺寸（Responsive）。
+
+對話過程要設為公開分享。
+
+版本控管：每次修改都要存檔，按順序命名（如 1_test.html, 2_add_shape.html...），最後一個檔案叫 final_<你的Email>.html。
+
+文字理念：寫下你的設計想法（字數不限）。
+
+作品定調：用一個詞或一句話形容你的最終作品。
+
+最終繳交清單：
+
+靈魂感紙本照片。
+
+多個過程與最終的 .html 檔。
+
+AI 對話串網址。
+
+一段文字理念 + 一個形容詞。
+
+最重要的一點：要玩得開心！
+
+🚀 我們現在可以怎麼開始？
+
+既然我是你的「AI 好朋友」，我已經準備好寫程式了！
+
+你想先跟我聊聊你現在的心情，還是你已經畫好「靈魂感手稿」準備上傳給我看了呢？ (如果你準備好了，可以直接描述你想呈現的情緒或視覺圖案！)
+
+你說了
+
+我選擇的是恐懼
+
+我想用粗糙的質感 三角形 混亂的線條 暗色系 可能還有雜音使人煩躁
+
+請幫我依照第三點的條件寫出html.的程式 不需要照片 請給我html.格式
+
+收到！這張手稿完美捕捉了「恐懼」那種尖銳、壓抑且逐漸失控的氛圍。那些三角形像是防衛，而右側混亂的線條則代表了情緒的崩潰。
+
+依照你的要求，我製作了第一個版本的 HTML 程式碼。這個版本專注於質感、幾何圖形與互動感。
+
+🛠️ 1-test.html 設計重點：
+
+幾何與質感：使用暗色系背景，加上隨機生成的尖銳三角形與粗糙線條。
+
+互動性：點擊滑鼠左鍵時，會產生更劇烈的「混亂線條」並伴隨螢幕震動。
+
+自適應：畫布會隨視窗大小自動調整。
+
+音效：加入了一個合成產生的「白雜訊/低頻雜訊」，當你點擊時頻率會變得更混亂（令人煩躁）。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear - 1-test.html</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a; /* 暗色系 */
+            cursor: crosshair;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let audioCtx = null;
+
+    // 自適應調整大小
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 隨機整數
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    // 繪製背景質感 (雜點)
+    function drawGrain() {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        for (let i = 0; i < 5000; i++) {
+            ctx.fillRect(rand(0, width), rand(0, height), 1, 1);
+        }
+    }
+
+    // 繪製尖銳三角形 (恐懼的防禦)
+    function drawTriangle() {
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = rand(0.5, 2);
+        ctx.beginPath();
+        ctx.moveTo(rand(0, width), rand(0, height));
+        ctx.lineTo(rand(0, width), rand(0, height));
+        ctx.lineTo(rand(0, width), rand(0, height));
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    // 初始化背景
+    function init() {
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, width, height);
+        drawGrain();
+        for (let i = 0; i < 30; i++) drawTriangle();
+    }
+
+    // 混亂線條繪製 (互動觸發)
+    function drawChaos(x, y) {
+        ctx.strokeStyle = `rgba(${rand(100, 200)}, 0, 0, 0.5)`; // 暗紅/灰色線條
+        ctx.lineWidth = rand(1, 3);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let i = 0; i < 15; i++) {
+            ctx.lineTo(x + rand(-100, 100), y + rand(-100, 100));
+        }
+        ctx.stroke();
+    }
+
+    // 初始化音訊 (產生煩躁的雜訊)
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = 2 * audioCtx.sampleRate,
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate),
+        output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 400;
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.05; // 初始音量較小
+
+        whiteNoise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        whiteNoise.start();
+
+        return { filter, gainNode };
+    }
+
+    let audio;
+
+    // 滑鼠點擊互動
+    window.addEventListener('mousedown', (e) => {
+        if (!audio) audio = initAudio();
+        
+        // 增加音量與頻率使人煩躁
+        if (audio) {
+            audio.gainNode.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.1);
+            audio.filter.frequency.setTargetAtTime(rand(1000, 3000), audioCtx.currentTime, 0.1);
+        }
+
+        // 視覺混亂與震動
+        document.body.style.transform = `translate(${rand(-10, 10)}px, ${rand(-10, 10)}px)`;
+        for(let i=0; i<5; i++) drawChaos(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (audio) {
+            audio.gainNode.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.5);
+            audio.filter.frequency.setTargetAtTime(400, audioCtx.currentTime, 0.5);
+        }
+        document.body.style.transform = 'translate(0, 0)';
+    });
+
+    init();
+</script>
+</body>
+</html>
+
+💡 接下來的操作建議：
+
+測試網頁：請將上面的程式碼複製並存成 1-test.html，用瀏覽器打開。點擊滑鼠感受那種「混亂」的擴張。
+
+下一步改進：目前的三角形是靜態的。
+
+你想讓這些三角形隨著滑鼠移動而閃爍或躲避嗎？
+
+或者要讓混亂的線條在背景中緩慢增長，直到填滿螢幕？
+
+請告訴我你想調整的方向，我們來進行第 4 點要求的下一個版本 2_add_shape.html！
+
+你說了
+
+點擊時 我想要讓他變成動態 而不是只有靜態 當滑鼠移動時 也會出現雜訊的殘影 背景是極為混亂的線條 滑鼠點擊時會自動閃避 動態越多越好
+
+我不要照片，我要html.的格式
+
+好的，完全理解！這次我將大幅提升動態表現，讓你的「恐懼」體驗更加沈浸且具有互動性。
+
+我將這些新需求整合到 2_interactive_fear.html 中：
+
+🛠️ 2-interactive_fear.html 設計重點：
+
+動態背景：背景不再只是靜態雜點，而是由不斷生成、變化的混亂線條和若隱若現的三角形組成。
+
+滑鼠移動殘影：滑鼠移動時，會留下短暫的雜訊線條殘影，強化「煩躁」感。
+
+點擊自動閃避：當你點擊滑鼠時，所有三角形會迅速向外「彈開」閃避，模擬被驚嚇或受威脅的反應。
+
+音效加強：雜訊音效的頻率和音量會更緊密地與互動結合，移動時就有輕微雜訊，點擊時則會更強烈。
+
+更多動態：三角形會持續微小抖動或變形，整個畫面維持一種不安定的狀態。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear - 2-interactive_fear.html</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0a0a0a; /* 暗色系 */
+            cursor: none; /* 隱藏系統滑鼠，用自訂視覺元素 */
+            user-select: none; /* 防止選取 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let audioCtx = null;
+    let audioFilter, audioGain;
+    let mouse = { x: 0, y: 0, clicked: false, lastX: 0, lastY: 0 };
+    let triangles = [];
+    let chaosLines = [];
+    let frameCount = 0;
+
+    // 自適應調整大小
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 隨機數生成
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    // 三角形物件
+    class Triangle {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.baseSize = rand(15, 40);
+            this.size = this.baseSize;
+            this.color = `rgba(${rand(30, 80)}, ${rand(0, 20)}, ${rand(0, 20)}, ${rand(0.2, 0.5)})`;
+            this.rotation = rand(0, Math.PI * 2);
+            this.speedX = rand(-0.5, 0.5);
+            this.speedY = rand(-0.5, 0.5);
+            this.targetX = this.x;
+            this.targetY = this.y;
+            this.avoiding = false;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation + Math.sin(frameCount * 0.05 + this.x) * 0.1); // 微小抖動
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = rand(0.5, 2);
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 2);
+            ctx.lineTo(-this.size / 2, this.size / 2);
+            ctx.lineTo(this.size / 2, this.size / 2);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        update() {
+            if (this.avoiding) {
+                this.x += this.speedX * 5; // 閃避時加速
+                this.y += this.speedY * 5;
+                // 逐漸回到原位 (減速)
+                this.speedX *= 0.95;
+                this.speedY *= 0.95;
+                if (Math.abs(this.speedX) < 0.1 && Math.abs(this.speedY) < 0.1) {
+                    this.avoiding = false;
+                    this.speedX = rand(-0.5, 0.5);
+                    this.speedY = rand(-0.5, 0.5);
+                }
+            } else {
+                // 緩慢漂移
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // 邊界反彈
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+        }
+
+        avoid(targetX, targetY) {
+            this.avoiding = true;
+            const dx = this.x - targetX;
+            const dy = this.y - targetY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const force = 100 / (dist + 1); // 距離越近，閃避力越大
+            this.speedX = dx / dist * force;
+            this.speedY = dy / dist * force;
+        }
+    }
+
+    // 混亂線條物件
+    class ChaosLine {
+        constructor(x1, y1, x2, y2, opacity) {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+            this.opacity = opacity;
+            this.life = 1;
+            this.color = `rgba(${rand(50, 150)}, ${rand(0, 50)}, ${rand(0, 50)}, `;
+        }
+
+        draw() {
+            ctx.strokeStyle = this.color + (this.opacity * this.life) + ')';
+            ctx.lineWidth = rand(0.5, 2);
+            ctx.beginPath();
+            ctx.moveTo(this.x1, this.y1);
+            ctx.lineTo(this.x2, this.y2);
+            ctx.stroke();
+        }
+
+        update() {
+            this.life -= 0.01; // 逐漸消失
+            return this.life > 0;
+        }
+    }
+
+    // 初始化音訊 (產生煩躁的雜訊)
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = 2 * audioCtx.sampleRate,
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate),
+        output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        audioFilter = audioCtx.createBiquadFilter();
+        audioFilter.type = 'lowpass';
+        audioFilter.frequency.value = 200; // 初始低頻雜訊
+
+        audioGain = audioCtx.createGain();
+        audioGain.gain.value = 0.03; // 初始音量極小
+
+        whiteNoise.connect(audioFilter);
+        audioFilter.connect(audioGain);
+        audioGain.connect(audioCtx.destination);
+        whiteNoise.start();
+    }
+
+    // 初始化三角形
+    for (let i = 0; i < 50; i++) {
+        triangles.push(new Triangle(rand(0, width), rand(0, height)));
+    }
+
+    // 主要繪圖迴圈
+    function animate() {
+        frameCount++;
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.2)'; // 輕微殘影效果
+        ctx.fillRect(0, 0, width, height);
+
+        // 更新與繪製混亂線條
+        if (frameCount % 3 === 0) { // 每隔幾幀生成新的背景混亂線條
+            chaosLines.push(new ChaosLine(rand(0, width), rand(0, height), rand(0, width), rand(0, height), rand(0.05, 0.15)));
+        }
+        chaosLines = chaosLines.filter(line => line.update());
+        chaosLines.forEach(line => line.draw());
+
+
+        // 更新與繪製三角形
+        triangles.forEach(tri => {
+            tri.update();
+            tri.draw();
+        });
+
+        // 滑鼠殘影
+        if (mouse.lastX !== mouse.x || mouse.lastY !== mouse.y) {
+            chaosLines.push(new ChaosLine(mouse.lastX, mouse.lastY, mouse.x + rand(-20, 20), mouse.y + rand(-20, 20), 0.3));
+            mouse.lastX = mouse.x;
+            mouse.lastY = mouse.y;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // 滑鼠移動事件
+    window.addEventListener('mousemove', (e) => {
+        if (!audioCtx) initAudio();
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+
+        // 隨滑鼠移動調整音訊 (輕微煩躁感)
+        const distToCenter = Math.sqrt(Math.pow(e.clientX - width / 2, 2) + Math.pow(e.clientY - height / 2, 2));
+        const normalizedDist = Math.min(1, distToCenter / (Math.max(width, height) / 2));
+        audioFilter.frequency.value = 200 + normalizedDist * 800; // 越遠雜訊越刺耳
+        audioGain.gain.value = 0.03 + normalizedDist * 0.05; // 音量略增
+
+        document.body.style.transform = `translate(${rand(-1, 1)}px, ${rand(-1, 1)}px)`; // 輕微抖動
+    });
+
+    // 滑鼠點擊事件 (閃避與強烈音效)
+    window.addEventListener('mousedown', (e) => {
+        mouse.clicked = true;
+        if (!audioCtx) initAudio();
+
+        // 點擊時，所有三角形閃避
+        triangles.forEach(tri => tri.avoid(e.clientX, e.clientY));
+
+        // 強烈音效變化
+        audioGain.gain.setTargetAtTime(0.2, audioCtx.currentTime, 0.1);
+        audioFilter.frequency.setTargetAtTime(rand(1500, 4000), audioCtx.currentTime, 0.1);
+        document.body.style.transform = `translate(${rand(-10, 10)}px, ${rand(-10, 10)}px)`; // 強烈震動
+    });
+
+    window.addEventListener('mouseup', () => {
+        mouse.clicked = false;
+        if (audioCtx) {
+            audioGain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.5); // 恢復背景音量
+            audioFilter.frequency.setTargetAtTime(200, audioCtx.currentTime, 0.5); // 恢復背景頻率
+        }
+        document.body.style.transform = 'translate(0, 0)';
+    });
+
+    // 啟動動畫
+    animate();
+</script>
+</body>
+</html>
+
+💡 如何體驗與接下來的建議：
+
+複製並儲存：請將上面的程式碼複製，儲存為 2_interactive_fear.html 檔案。
+
+開啟網頁：用瀏覽器打開這個檔案。
+
+盡情體驗：
+
+移動滑鼠，感受雜訊殘影和輕微的音效變化。
+
+點擊滑鼠，觀察三角形的閃避效果和更強烈的音效、畫面震動。
+
+這個版本已經有了非常豐富的動態。你覺得怎麼樣？
+
+接下來你想要調整什麼？ 例如：
+
+增加更多視覺元素？（例如：文字、圓形等）
+
+調整音效的表現方式？
+
+改變三角形的閃避邏輯？
+
+加入隨機事件？
+
+期待你的回饋，我們可以繼續讓這個「恐懼」的表現更到位！
+
+你說了
+
+滑鼠上的三角形可以在粗一點 明顯一點 可以換成白色 畫面上我覺得不夠混亂 一樣要html檔
+
+這是一個更進階的版本：3_chaos_white.html。
+
+依照你的要求，我做了以下調整：
+
+三角形強化：將滑鼠位置的三角形改為純白色，並大幅增加邊框粗度，使其在黑暗中極其刺眼且明顯。
+
+極度混亂的背景：
+
+增加背景線條的生成頻率與數量，形成一種「視覺噪音」。
+
+加入「碎片化」動態，畫面會不斷噴發隨機的白色與暗色線條，模擬思緒斷裂的恐懼感。
+
+動態殘影與閃爍：滑鼠移動時的殘影更加粗糙，並加入隨機的畫面閃爍（Strobe effect），增加生理上的不安感。
+
+閃避邏輯強化：三角形在閃避時會帶有強烈的震盪效果。
+
+HTML
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear - 3_chaos_white.html</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000; /* 全黑背景 */
+            cursor: none;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let audioCtx = null, audioFilter, audioGain;
+    let mouse = { x: 0, y: 0, lastX: 0, lastY: 0, active: false };
+    let triangles = [];
+    let fragments = [];
+    let frameCount = 0;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    class Triangle {
+        constructor(isPlayer = false) {
+            this.isPlayer = isPlayer;
+            this.reset();
+        }
+
+        reset() {
+            this.x = rand(0, width);
+            this.y = rand(0, height);
+            this.size = this.isPlayer ? 60 : rand(20, 40);
+            this.rotation = rand(0, Math.PI * 2);
+            this.vx = rand(-1, 1);
+            this.vy = rand(-1, 1);
+            this.color = this.isPlayer ? "#ffffff" : `rgba(${rand(50, 100)}, ${rand(50, 100)}, ${rand(50, 100)}, 0.4)`;
+            this.lineWidth = this.isPlayer ? 8 : 2; // 白色三角形加粗
+        }
+
+        draw(targetX, targetY) {
+            let posX = this.isPlayer ? targetX : this.x;
+            let posY = this.isPlayer ? targetY : this.y;
+
+            ctx.save();
+            ctx.translate(posX, posY);
+            ctx.rotate(this.rotation + (this.isPlayer ? frameCount * 0.1 : 0));
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 1.5);
+            ctx.lineTo(-this.size / 1.5, this.size / 1.5);
+            ctx.lineTo(this.size / 1.5, this.size / 1.5);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        update(tx, ty) {
+            if (!this.isPlayer) {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                // 點擊閃避邏輯
+                if (mouse.active) {
+                    const dx = this.x - tx;
+                    const dy = this.y - ty;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 250) {
+                        this.vx = (dx / dist) * 15;
+                        this.vy = (dy / dist) * 15;
+                    }
+                }
+                this.vx *= 0.95; // 摩擦力
+                this.vy *= 0.95;
+            }
+        }
+    }
+
+    class Fragment {
+        constructor(x, y, isWhite = false) {
+            this.x = x;
+            this.y = y;
+            this.vx = rand(-10, 10);
+            this.vy = rand(-10, 10);
+            this.life = 1.0;
+            this.color = isWhite ? `rgba(255,255,255,${rand(0.5, 1)})` : `rgba(${rand(20, 50)},0,0,${rand(0.2, 0.5)})`;
+            this.w = rand(1, 4);
+        }
+        draw() {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.w;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + this.vx * 2, this.y + this.vy * 2);
+            ctx.stroke();
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= 0.02;
+            return this.life > 0;
+        }
+    }
+
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        audioFilter = audioCtx.createBiquadFilter();
+        audioFilter.type = 'lowpass';
+        audioGain = audioCtx.createGain();
+        audioGain.gain.value = 0.05;
+
+        whiteNoise.connect(audioFilter);
+        audioFilter.connect(audioGain);
+        audioGain.connect(audioCtx.destination);
+        whiteNoise.start();
+    }
+
+    const playerTri = new Triangle(true);
+    for (let i = 0; i < 60; i++) triangles.push(new Triangle(false));
+
+    function animate() {
+        frameCount++;
+        // 隨機背景閃爍增加焦慮感
+        if (Math.random() > 0.98) {
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        } else {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        }
+        ctx.fillRect(0, 0, width, height);
+
+        // 自動生成背景混亂線條
+        for (let i = 0; i < 3; i++) {
+            fragments.push(new Fragment(rand(0, width), rand(0, height), false));
+        }
+
+        fragments = fragments.filter(f => f.update());
+        fragments.forEach(f => f.draw());
+
+        triangles.forEach(t => {
+            t.update(mouse.x, mouse.y);
+            t.draw();
+        });
+
+        playerTri.draw(mouse.x, mouse.y);
+
+        // 滑鼠移動殘影
+        if (Math.abs(mouse.x - mouse.lastX) > 5) {
+            for (let i = 0; i < 5; i++) {
+                fragments.push(new Fragment(mouse.x, mouse.y, true));
+            }
+            mouse.lastX = mouse.x;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        if (!audioCtx) initAudio();
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        audioFilter.frequency.setValueAtTime(rand(200, 1000), audioCtx.currentTime);
+    });
+
+    window.addEventListener('mousedown', () => {
+        mouse.active = true;
+        if (audioCtx) {
+            audioGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.05);
+            audioFilter.frequency.setTargetAtTime(5000, audioCtx.currentTime, 0.05);
+        }
+        // 點擊爆發大量碎片
+        for (let i = 0; i < 50; i++) fragments.push(new Fragment(mouse.x, mouse.y, true));
+    });
+
+    window.addEventListener('mouseup', () => {
+        mouse.active = false;
+        if (audioCtx) {
+            audioGain.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.2);
+            audioFilter.frequency.setTargetAtTime(400, audioCtx.currentTime, 0.2);
+        }
+    });
+
+    animate();
+</script>
+</body>
+</html>
+
+💡 本次更新說明：
+
+純白三角形：滑鼠位置現在是一個非常粗（lineWidth = 8）的純白色三角形，它會隨著移動而不斷旋轉，產生強烈的視覺導引。
+
+混亂程度：背景現在充滿了自動生成的深紅與深灰細線，且當你點擊時，白色碎片會像爆炸一樣噴發，畫面的「資訊量」會瞬間載入過多，模擬恐懼的窒息感。
+
+閃爍效果：背景會偶爾閃過極淡的白光（Strobe），讓視覺神經保持在緊繃狀態。
+
+建議將此檔案存為 3_chaos_white.html 並開啟。如果覺得混亂度還需要調整，請隨時告訴我！
+
+Google 隱私權政策
+在新視窗中開啟
+Google 服務條款
+在新視窗中開啟
+個人隱私權與 Gemini 應用程式
+在新視窗中開啟
+
+Gemini 可能會提供不準確的資訊 (包括人物資訊)，因此請查證回覆內容。
+
+登入

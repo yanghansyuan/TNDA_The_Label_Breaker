@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>恐懼 — 點擊沉沒</title>
+  <style>
+    body { margin:0; overflow:hidden; background:#000; }
+    canvas { display:block; width:100%; height:100%; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+<script>
+// 畫布 + RWD
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let w, h;
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 沉沒狀態控制
+let sinking = false;
+let sinkTimer = 0;
+const sinkDuration = 600; // 約 10 秒 (60fps)
+
+// 噪點
+function drawNoise(intensity = 30) {
+  const imgData = ctx.createImageData(w, h);
+  const data = imgData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const n = (Math.random() - 0.5) * intensity;
+    data[i]     = n;
+    data[i+1]   = n;
+    data[i+2]   = n + 8;
+    data[i+3]   = Math.random() * 50;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// 遠方希望光點（上方微亮，下沉時變遠變暗）
+class HopeLight {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h * 0.3; // 上方區域
+    this.size = 1.5 + Math.random() * 3;
+    this.alpha = 0.7 + Math.random() * 0.3;
+  }
+  update() {
+    if (sinking) {
+      this.y += 0.5 + (sinkTimer / sinkDuration) * 2; // 緩慢下沉
+      this.alpha = Math.max(0.05, 0.9 - (sinkTimer / sinkDuration) * 1.2);
+      this.size *= 0.998; // 變小
+    }
+    if (this.y > h || this.alpha < 0.05) this.reset();
+  }
+  draw() {
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = `rgba(180,210,255,${this.alpha})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// 氣泡（點擊後從下方往上飄）
+class Bubble {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * w;
+    this.y = h + Math.random() * 100;
+    this.size = 4 + Math.random() * 12;
+    this.speed = 1.2 + Math.random() * 2.5;
+  }
+  update() {
+    if (sinking) {
+      this.y -= this.speed;
+      this.x += (Math.sin(this.y * 0.02) * 0.8); // 輕微左右漂
+      if (this.y < -this.size) this.reset();
+    }
+  }
+  draw() {
+    if (!sinking) return;
+    ctx.globalAlpha = 0.15 + Math.random() * 0.1;
+    ctx.fillStyle = '#e0f0ff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// 圓形不明物體（慢慢往下沉 + 眼睛）
+class AbyssalRound {
+  constructor() {
+    this.x = w / 2 + (Math.random() - 0.5) * w * 0.6;
+    this.y = h * 0.4 + Math.random() * h * 0.3;
+    this.size = 180 + Math.random() * 350;
+    this.speed = 0.6 + Math.random() * 1.2;
+    this.alpha = 0.08;
+    this.eyes = [];
+    for (let i = 0; i < 2 + Math.floor(Math.random() * 4); i++) {
+      this.eyes.push({
+        ox: (Math.random() - 0.5) * this.size * 0.6,
+        oy: (Math.random() - 0.5) * this.size * 0.4,
+        ps: 10 + Math.random() * 18,
+        blink: Math.random() * 400
+      });
+    }
+  }
+  update() {
+    if (sinking) {
+      this.y += this.speed * (sinkTimer / sinkDuration * 1.5 + 0.5);
+      this.alpha = Math.min(0.45, this.alpha + 0.0015);
+      this.eyes.forEach(e => {
+        e.blink--;
+        if (e.blink < 0) e.blink = 300 + Math.random() * 500;
+      });
+    }
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.shadowColor = '#00040a';
+    ctx.shadowBlur = 90 + (sinkTimer / sinkDuration) * 120;
+    ctx.fillStyle = '#000204';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 眼睛
+    this.eyes.forEach(e => {
+      const open = e.blink > 70;
+      ctx.globalAlpha = this.alpha * (open ? 1 : 0.35);
+      ctx.fillStyle = '#180000';
+      ctx.beginPath();
+      ctx.arc(this.x + e.ox, this.y + e.oy, e.ps * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#500000';
+      ctx.beginPath();
+      ctx.arc(this.x + e.ox, this.y + e.oy, e.ps, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+}
+
+// 物件陣列
+let lights = [];   for (let i = 0; i < 50; i++) lights.push(new HopeLight());
+let bubbles = [];  for (let i = 0; i < 40; i++) bubbles.push(new Bubble());
+let rounds = [];   // 每次點擊生成新的不明物體
+
+// 點擊觸發下沉
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 0) {
+    sinking = true;
+    sinkTimer = 0;
+    // 每次點擊新增 1–2 個圓形不明物體
+    for (let i = 0; i < 1 + Math.floor(Math.random() * 2); i++) {
+      rounds.push(new AbyssalRound());
+    }
+  }
+});
+
+// 動畫迴圈
+function animate() {
+  // 背景
+  ctx.fillStyle = '#000103';
+  ctx.fillRect(0, 0, w, h);
+  drawNoise(sinking ? 45 + (sinkTimer / sinkDuration) * 60 : 25);
+
+  // 上方微光漸層（下面吞噬）
+  let grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, `rgba(0,10,25,${sinking ? 0.18 - (sinkTimer/sinkDuration)*0.16 : 0.18})`);
+  grad.addColorStop(0.4, `rgba(0,5,15,${sinking ? 0.08 : 0.12})`);
+  grad.addColorStop(1, 'rgba(0,0,5,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // 希望光點
+  lights.forEach(l => { l.update(); l.draw(); });
+
+  // 氣泡
+  bubbles.forEach(b => { b.update(); b.draw(); });
+
+  // 圓形不明物體（往下沉）
+  rounds.forEach(r => { r.update(); r.draw(); });
+
+  // 沉沒計時 + 畫面變暗
+  if (sinking) {
+    sinkTimer++;
+    // 整體變暗（疊加黑層）
+    ctx.globalAlpha = (sinkTimer / sinkDuration) * 0.75;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+
+    // 視野模糊（高斯模糊模擬，簡易版用 shadow + 多層噪點）
+    if (sinkTimer > sinkDuration * 0.6) {
+      drawNoise(80); // 額外噪點層
+    }
+
+    if (sinkTimer >= sinkDuration) {
+      sinking = false;
+      // 可選擇清空或保留部分不明物體
+      // rounds = rounds.filter(r => Math.random() > 0.4); // 隨機保留一些
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
