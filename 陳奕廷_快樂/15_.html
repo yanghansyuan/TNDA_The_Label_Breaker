@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopamine Liquid Glass - Energetic Flow</title>
+    <style>
+        :root {
+            --sky-top: #87CEEB; 
+            --sky-bottom: #E0F7FA;
+            --glass-shine: rgba(255, 255, 255, 0.4);
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, var(--sky-top) 0%, var(--sky-bottom) 100%); }
+        body::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(125deg, var(--glass-shine) 0%, transparent 50%, rgba(0,0,0,0.05) 100%); pointer-events: none; z-index: 10; }
+        canvas { display: block; z-index: 5; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const PANTONE_COLORS = ['#FFD100', '#FF671F', '#FF808B', '#B4A1D8', '#A5D6A7'];
+        let particles = [];
+        let backgroundDots = [];
+        let isDrawing = false;
+        let frameCount = 0;
+        let isEliminationMode = false;
+        let baseGlobalWidth = 8;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initBackgroundDots();
+        }
+
+        function initBackgroundDots() {
+            backgroundDots = [];
+            for(let i=0; i<35; i++) {
+                backgroundDots.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random()-0.5) * 1.5, vy: (Math.random()-0.5) * 1.5, size: Math.random() * 2.5 + 1 });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class LiquidLine {
+            constructor(x, y, color, isSpread = false) {
+                const spread = isSpread ? 70 : 0;
+                this.x = x + (Math.random() - 0.5) * spread;
+                this.y = y + (Math.random() - 0.5) * spread;
+                
+                this.color = color;
+                // 1. 加速 8km：提升基礎速度區間至 4.0 ~ 5.5
+                const speedBase = 4.0 + Math.random() * 1.5;
+                this.vx = (Math.random() - 0.5) * speedBase; 
+                this.vy = (Math.random() - 0.5) * speedBase;
+                
+                this.points = [];
+                this.maxLength = 22; 
+                this.group = null;
+                this.groupAngle = 0;
+                this.markForDeletion = false;
+                
+                this.jitterSeed = Math.random() * 100;
+                // 2. 提高扭動頻率：讓線條在快跑時看起來更活潑
+                this.wobbleSpeed = 0.15 + Math.random() * 0.15; 
+            }
+
+            updatePhysics(currentGroups) {
+                const windX = Math.sin(frameCount * 0.01 + this.jitterSeed) * 0.6;
+                const windY = Math.cos(frameCount * 0.012 + this.jitterSeed) * 0.6;
+                const margin = isEliminationMode ? 60 : 35;
+
+                if (!this.group) {
+                    this.x += this.vx + windX;
+                    this.y += this.vy + windY;
+                    if (this.x < margin || this.x > canvas.width - margin) { this.vx *= -1.02; this.x = Math.max(margin, Math.min(canvas.width-margin, this.x)); }
+                    if (this.y < margin || this.y > canvas.height - margin) { this.vy *= -1.02; this.y = Math.max(margin, Math.min(canvas.height-margin, this.y)); }
+                    this.vx *= 0.998; this.vy *= 0.998; // 減少衰減，維持輕快速度
+                } else {
+                    if (isEliminationMode) {
+                        if (currentGroups.length === 2) {
+                            let otherGroup = currentGroups.find(g => g.id !== this.group.id);
+                            if (otherGroup) {
+                                const dx = otherGroup.center.x - this.group.center.x;
+                                const dy = otherGroup.center.y - this.group.center.y;
+                                const dist = Math.hypot(dx, dy);
+                                const pullForce = 1.0; // 吸引力也加強
+                                this.group.vx += (dx / dist) * pullForce;
+                                this.group.vy += (dy / dist) * pullForce;
+                                const speed = Math.hypot(this.group.vx, this.group.vy);
+                                if (speed > 16) { this.group.vx = (this.group.vx / speed) * 16; this.group.vy = (this.group.vy / speed) * 16; }
+                            }
+                        } else if (currentGroups.length === 1) {
+                            this.markForDeletion = true; 
+                        }
+                    }
+
+                    this.group.center.x += this.group.vx + windX;
+                    this.group.center.y += this.group.vy + windY;
+
+                    if (this.group.center.x < margin || this.group.center.x > canvas.width - margin) { this.group.vx *= -1.02; this.group.center.x = Math.max(margin, Math.min(canvas.width-margin, this.group.center.x));}
+                    if (this.group.center.y < margin || this.group.center.y > canvas.height - margin) { this.group.vy *= -1.02; this.group.center.y = Math.max(margin, Math.min(canvas.height-margin, this.group.center.y));}
+                    
+                    this.x = this.group.center.x;
+                    this.y = this.group.center.y;
+                }
+
+                this.points.unshift({ x: this.x, y: this.y });
+                if (this.points.length > this.maxLength) this.points.pop();
+            }
+
+            checkCollision(allParticles) {
+                if (this.markForDeletion) return;
+
+                if (!isEliminationMode) {
+                    if (!this.group) {
+                        let nearby = allParticles.filter(p => p !== this && !p.group && !p.markForDeletion && Math.hypot(this.x - p.x, this.y - p.y) < 85);
+                        if (nearby.length >= 2) {
+                            const sharedGroup = {
+                                center: { x: this.x, y: this.y },
+                                vx: (Math.random() - 0.5) * 5, 
+                                vy: (Math.random() - 0.5) * 5,
+                                id: Math.random()
+                            };
+                            this.group = sharedGroup;
+                            this.groupAngle = 0;
+                            nearby[0].group = sharedGroup;
+                            nearby[0].groupAngle = Math.PI / 3; 
+                            nearby[1].group = sharedGroup;
+                            nearby[1].groupAngle = Math.PI * 2 / 3;
+                        }
+                    }
+                } else if (this.group) {
+                    for (let other of allParticles) {
+                        if (other.group && other.group.id !== this.group.id) {
+                            const dist = Math.hypot(this.group.center.x - other.group.center.x, this.group.center.y - other.group.center.y);
+                            if (dist < 135) { 
+                                this.markGroupDeleted(this.group.id, allParticles);
+                                this.markGroupDeleted(other.group.id, allParticles);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            markGroupDeleted(id, allParticles) {
+                allParticles.forEach(p => {
+                    if (p.group && p.group.id === id) p.markForDeletion = true;
+                });
+            }
+
+            draw() {
+                if (this.markForDeletion || this.points.length < 2) return;
+
+                ctx.save();
+                ctx.strokeStyle = this.color;
+                const breathingWidth = baseGlobalWidth + Math.sin(frameCount * 0.15 + this.jitterSeed) * 1.5;
+                ctx.lineWidth = Math.max(2, breathingWidth);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetY = 3;
+
+                ctx.beginPath();
+                for(let i=0; i<this.points.length; i++) {
+                    const p = this.points[i];
+                    // 3. 全時快樂抖動：幅度微增，頻率變快
+                    const jitterX = Math.sin(frameCount * this.wobbleSpeed + i * 0.4 + this.jitterSeed) * 3.5;
+                    const jitterY = Math.cos(frameCount * (this.wobbleSpeed * 1.3) + i * 0.3 + this.jitterSeed) * 3.5;
+
+                    let drawX, drawY;
+
+                    if (this.group) {
+                        const offset = (i - this.maxLength / 2) * 11; 
+                        drawX = p.x + Math.cos(this.groupAngle) * offset + jitterX;
+                        drawY = p.y + Math.sin(this.groupAngle) * offset + jitterY;
+                    } else {
+                        const wave = Math.sin(frameCount * 0.15 + i * 0.4 + this.jitterSeed) * 12;
+                        drawX = p.x + wave + jitterX;
+                        drawY = p.y + wave + jitterY;
+                    }
+                    
+                    if (i === 0) ctx.moveTo(drawX, drawY);
+                    else ctx.lineTo(drawX, drawY);
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.48)';
+                ctx.lineWidth = Math.max(1, ctx.lineWidth / 2.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function handleInput(e) {
+            if (!isDrawing) return;
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            const throttleRate = isEliminationMode ? 14 : 7; // 生成頻率稍微變快
+            if (frameCount % throttleRate === 0) {
+                particles.push(new LiquidLine(x, y, PANTONE_COLORS[Math.floor(Math.random() * PANTONE_COLORS.length)], true));
+            }
+        }
+
+        window.addEventListener('mousedown', () => isDrawing = true);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('mousemove', handleInput);
+        window.addEventListener('touchstart', (e) => { isDrawing = true; handleInput(e); });
+        window.addEventListener('touchend', () => isDrawing = false);
+        window.addEventListener('touchmove', handleInput);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            backgroundDots.forEach(dot => {
+                dot.x += dot.vx + Math.sin(frameCount * 0.03 + dot.size) * 0.6;
+                dot.y += dot.vy;
+                if (dot.x < 0) dot.x = canvas.width; if (dot.x > canvas.width) dot.x = 0;
+                if (dot.y < 0) dot.y = canvas.height; if (dot.y > canvas.height) dot.y = 0;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath(); ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2); ctx.fill();
+            });
+
+            const groupMap = new Map();
+            particles.forEach(p => { if(p.group && !p.markForDeletion) groupMap.set(p.group.id, p.group); });
+            const currentGroups = Array.from(groupMap.values());
+            const currentGroupCount = currentGroups.length;
+
+            if (!isEliminationMode && currentGroupCount >= 10) isEliminationMode = true;
+            else if (isEliminationMode && currentGroupCount === 0) isEliminationMode = false;
+
+            const targetWidth = 8 + (currentGroupCount * 3.2);
+            baseGlobalWidth += (targetWidth - baseGlobalWidth) * 0.15;
+
+            particles.forEach(p => p.updatePhysics(currentGroups));
+            particles.forEach(p => p.checkCollision(particles));
+            
+            particles = particles.filter(p => !p.markForDeletion);
+            particles.forEach(p => p.draw());
+
+            if (particles.length > 150) particles.splice(0, particles.length - 150);
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

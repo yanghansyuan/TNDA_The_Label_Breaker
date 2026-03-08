@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopamine Liquid Glass - Joyful Interaction</title>
+    <style>
+        :root {
+            --sky-top: #87CEEB; 
+            --sky-bottom: #E0F7FA;
+            --glass-shine: rgba(255, 255, 255, 0.4);
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, var(--sky-top) 0%, var(--sky-bottom) 100%); }
+        body::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(125deg, var(--glass-shine) 0%, transparent 50%, rgba(0,0,0,0.05) 100%); pointer-events: none; z-index: 10; }
+        canvas { display: block; z-index: 5; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const PANTONE_COLORS = ['#FFD100', '#FF671F', '#FF808B', '#B4A1D8', '#A5D6A7'];
+        let particles = [];
+        let backgroundDots = [];
+        let isDrawing = false;
+        let frameCount = 0;
+        let eggMode = false; // 彩蛋模式開關
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initBackgroundDots();
+        }
+
+        function initBackgroundDots() {
+            backgroundDots = [];
+            for(let i=0; i<30; i++) {
+                backgroundDots.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random()-0.5) * 1, vy: (Math.random()-0.5) * 1, size: Math.random() * 3 + 1 });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class LiquidLine {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.points = [];
+                this.maxLength = 25; 
+                this.angle = Math.random() * Math.PI * 2;
+                this.waveSpeed = 0.08;
+                this.amplitude = 12;
+                this.group = null;
+                this.markForDeletion = false;
+            }
+
+            update() {
+                // 2. 隨機吹動邏輯 (變速)
+                const windX = Math.sin(frameCount * 0.01) * 0.5;
+                const windY = Math.cos(frameCount * 0.015) * 0.5;
+
+                if (!this.group) {
+                    this.x += this.vx + windX;
+                    this.y += this.vy + windY;
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                } else {
+                    // 組合線的運動
+                    this.group.center.x += this.group.vx + windX;
+                    this.group.center.y += this.group.vy + windY;
+                    
+                    if (this.group.center.x < 0 || this.group.center.x > canvas.width) this.group.vx *= -1;
+                    if (this.group.center.y < 0 || this.group.center.y > canvas.height) this.group.vy *= -1;
+
+                    this.x = this.group.center.x;
+                    this.y = this.group.center.y;
+                }
+
+                this.points.unshift({ x: this.x, y: this.y });
+                if (this.points.length > this.maxLength) this.points.pop();
+
+                if (!this.group) this.checkCollision();
+                else if (eggMode) this.checkGroupCollision(); // 彩蛋模式：組合球碰撞檢測
+            }
+
+            checkCollision() {
+                let nearby = particles.filter(p => p !== this && !p.group && !p.markForDeletion && Math.hypot(this.x - p.x, this.y - p.y) < 60);
+                if (nearby.length >= 2) {
+                    const sharedGroup = {
+                        center: { x: this.x, y: this.y },
+                        vx: (Math.random() - 0.5) * 5,
+                        vy: (Math.random() - 0.5) * 5,
+                        id: Math.random()
+                    };
+                    this.group = sharedGroup;
+                    this.groupAngle = 0;
+                    nearby[0].group = sharedGroup;
+                    nearby[0].groupAngle = Math.PI * 2 / 3;
+                    nearby[1].group = sharedGroup;
+                    nearby[1].groupAngle = Math.PI * 4 / 3;
+                }
+            }
+
+            checkGroupCollision() {
+                // 3. 彩蛋模式：組合球碰碰樂
+                particles.forEach(other => {
+                    if (other.group && other.group.id !== this.group.id) {
+                        const dist = Math.hypot(this.group.center.x - other.group.center.x, this.group.center.y - other.group.center.y);
+                        if (dist < 40) {
+                            this.markForDeletion = true;
+                            other.markForDeletion = true;
+                        }
+                    }
+                });
+            }
+
+            draw() {
+                if (this.markForDeletion) return;
+
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowOffsetY = 5;
+
+                // 3. 彩蛋觸發：變大變粗
+                let width = 8 + (particles.length * 0.1);
+                if (eggMode) width *= 2.5;
+
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = width;
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+                this.points.forEach((p, i) => {
+                    const wave = Math.sin(frameCount * this.waveSpeed + i * 0.3) * this.amplitude;
+                    let drawX, drawY;
+
+                    if (this.group) {
+                        // 1. 以中點為交接點進行旋轉
+                        const offset = (i - this.maxLength / 2) * 8; // (i - 中點索引)
+                        drawX = p.x + Math.cos(this.groupAngle) * offset;
+                        drawY = p.y + Math.sin(this.groupAngle) * offset;
+                    } else {
+                        drawX = p.x + wave;
+                        drawY = p.y + wave;
+                    }
+                    
+                    if (i === 0) ctx.moveTo(drawX, drawY);
+                    else ctx.lineTo(drawX, drawY);
+                });
+                ctx.stroke();
+
+                // 亮面玻璃質感
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                ctx.lineWidth = width / 3;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function handleInput(e) {
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            if (isDrawing && frameCount % 3 === 0) {
+                particles.push(new LiquidLine(x, y, PANTONE_COLORS[Math.floor(Math.random() * PANTONE_COLORS.length)]));
+            }
+        }
+
+        window.addEventListener('mousedown', () => isDrawing = true);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('mousemove', handleInput);
+        window.addEventListener('touchstart', () => isDrawing = true);
+        window.addEventListener('touchmove', handleInput);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            // 背景小點點
+            backgroundDots.forEach(dot => {
+                dot.x += dot.vx + Math.sin(frameCount * 0.02);
+                dot.y += dot.vy;
+                if (dot.x < 0) dot.x = canvas.width; if (dot.x > canvas.width) dot.x = 0;
+                if (dot.y < 0) dot.y = canvas.height; if (dot.y > canvas.height) dot.y = 0;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath(); ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // 統計組合球數量
+            const groups = new Set(particles.filter(p => p.group).map(p => p.group.id));
+            eggMode = groups.size >= 25;
+
+            // 更新與繪製
+            particles = particles.filter(p => !p.markForDeletion);
+            particles.forEach(p => { p.update(); p.draw(); });
+
+            // 限制數量避免效能下降
+            if (particles.length > 150) particles.shift();
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

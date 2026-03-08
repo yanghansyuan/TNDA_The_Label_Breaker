@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopamine Liquid Glass - Relax Version</title>
+    <style>
+        :root {
+            --sky-top: #87CEEB; 
+            --sky-bottom: #E0F7FA;
+            --glass-shine: rgba(255, 255, 255, 0.4);
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, var(--sky-top) 0%, var(--sky-bottom) 100%); }
+        body::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(125deg, var(--glass-shine) 0%, transparent 50%, rgba(0,0,0,0.05) 100%); pointer-events: none; z-index: 10; }
+        canvas { display: block; z-index: 5; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const PANTONE_COLORS = ['#FFD100', '#FF671F', '#FF808B', '#B4A1D8', '#A5D6A7'];
+        let particles = [];
+        let backgroundDots = [];
+        let isDrawing = false;
+        let frameCount = 0;
+        let isEliminationMode = false;
+        let globalWidth = 8;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initBackgroundDots();
+        }
+
+        function initBackgroundDots() {
+            backgroundDots = [];
+            for(let i=0; i<30; i++) {
+                backgroundDots.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random()-0.5) * 0.8, vy: (Math.random()-0.5) * 0.8, size: Math.random() * 2 + 1 });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class LiquidLine {
+            constructor(x, y, color, isSpread = false) {
+                const spread = isSpread ? 50 : 0;
+                this.x = x + (Math.random() - 0.5) * spread;
+                this.y = y + (Math.random() - 0.5) * spread;
+                
+                this.color = color;
+                // 1. 速度變慢成 15km：將速度係數從 6 降為 2.5
+                this.vx = (Math.random() - 0.5) * 2.5; 
+                this.vy = (Math.random() - 0.5) * 2.5;
+                this.points = [];
+                this.maxLength = 22; 
+                this.group = null;
+                this.groupAngle = 0;
+                this.markForDeletion = false;
+            }
+
+            updatePhysics() {
+                // 隨風搖曳感稍微增強
+                const windX = Math.sin(frameCount * 0.008) * 0.4;
+                const windY = Math.cos(frameCount * 0.01) * 0.4;
+
+                const margin = isEliminationMode ? 60 : 30;
+
+                if (!this.group) {
+                    this.x += this.vx + windX;
+                    this.y += this.vy + windY;
+                    if (this.x < margin || this.x > canvas.width - margin) this.vx *= -1;
+                    if (this.y < margin || this.y > canvas.height - margin) this.vy *= -1;
+                } else {
+                    this.group.center.x += this.group.vx + windX;
+                    this.group.center.y += this.group.vy + windY;
+                    if (this.group.center.x < margin || this.group.center.x > canvas.width - margin) this.group.vx *= -1;
+                    if (this.group.center.y < margin || this.group.center.y > canvas.height - margin) this.group.vy *= -1;
+                    this.x = this.group.center.x;
+                    this.y = this.group.center.y;
+                }
+
+                this.points.unshift({ x: this.x, y: this.y });
+                if (this.points.length > this.maxLength) this.points.pop();
+            }
+
+            checkCollision(allParticles) {
+                if (this.markForDeletion) return;
+
+                if (!isEliminationMode) {
+                    if (!this.group) {
+                        let nearby = allParticles.filter(p => p !== this && !p.group && !p.markForDeletion && Math.hypot(this.x - p.x, this.y - p.y) < 60);
+                        if (nearby.length >= 2) {
+                            const sharedGroup = {
+                                center: { x: this.x, y: this.y },
+                                vx: (Math.random() - 0.5) * 3, // 組合球也慢速移動
+                                vy: (Math.random() - 0.5) * 3,
+                                id: Math.random()
+                            };
+                            this.group = sharedGroup;
+                            this.groupAngle = 0;
+                            nearby[0].group = sharedGroup;
+                            nearby[0].groupAngle = Math.PI / 3; 
+                            nearby[1].group = sharedGroup;
+                            nearby[1].groupAngle = Math.PI * 2 / 3;
+                        }
+                    }
+                } else if (this.group) {
+                    for (let other of allParticles) {
+                        if (other.group && other.group.id !== this.group.id) {
+                            const dist = Math.hypot(this.group.center.x - other.group.center.x, this.group.center.y - other.group.center.y);
+                            // 保持高靈敏消除
+                            if (dist < 110) { 
+                                this.markGroupDeleted(this.group.id, allParticles);
+                                this.markGroupDeleted(other.group.id, allParticles);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            markGroupDeleted(id, allParticles) {
+                allParticles.forEach(p => {
+                    if (p.group && p.group.id === id) p.markForDeletion = true;
+                });
+            }
+
+            draw() {
+                if (this.markForDeletion || this.points.length < 2) return;
+
+                ctx.save();
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = globalWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 5;
+                ctx.shadowOffsetY = 4;
+
+                ctx.beginPath();
+                for(let i=0; i<this.points.length; i++) {
+                    const p = this.points[i];
+                    let drawX, drawY;
+
+                    if (this.group) {
+                        const offset = (i - this.maxLength / 2) * 10; 
+                        drawX = p.x + Math.cos(this.groupAngle) * offset;
+                        drawY = p.y + Math.sin(this.groupAngle) * offset;
+                    } else {
+                        const wave = Math.sin(frameCount * 0.1 + i * 0.3) * 10;
+                        drawX = p.x + wave;
+                        drawY = p.y + wave;
+                    }
+                    
+                    if (i === 0) ctx.moveTo(drawX, drawY);
+                    else ctx.lineTo(drawX, drawY);
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                ctx.lineWidth = globalWidth / 2.5;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function handleInput(e) {
+            if (!isDrawing) return;
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            const throttleRate = isEliminationMode ? 16 : 8;
+            if (frameCount % throttleRate === 0) {
+                particles.push(new LiquidLine(x, y, PANTONE_COLORS[Math.floor(Math.random() * PANTONE_COLORS.length)], true));
+            }
+        }
+
+        window.addEventListener('mousedown', () => isDrawing = true);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('mousemove', handleInput);
+        window.addEventListener('touchstart', (e) => { isDrawing = true; handleInput(e); });
+        window.addEventListener('touchend', () => isDrawing = false);
+        window.addEventListener('touchmove', handleInput);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            backgroundDots.forEach(dot => {
+                dot.x += dot.vx + Math.sin(frameCount * 0.02) * 0.4;
+                dot.y += dot.vy;
+                if (dot.x < 0) dot.x = canvas.width; if (dot.x > canvas.width) dot.x = 0;
+                if (dot.y < 0) dot.y = canvas.height; if (dot.y > canvas.height) dot.y = 0;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath(); ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2); ctx.fill();
+            });
+
+            const groupIds = new Set();
+            particles.forEach(p => { if(p.group && !p.markForDeletion) groupIds.add(p.group.id); });
+            const currentGroupCount = groupIds.size;
+
+            // 2. 彩蛋觸發門檻改成 10 組
+            if (!isEliminationMode && currentGroupCount >= 10) isEliminationMode = true;
+            else if (isEliminationMode && currentGroupCount === 0) isEliminationMode = false;
+
+            const targetWidth = 8 + (currentGroupCount * 2.8);
+            globalWidth += (targetWidth - globalWidth) * 0.1;
+
+            particles.forEach(p => p.updatePhysics());
+            particles.forEach(p => p.checkCollision(particles));
+            
+            particles = particles.filter(p => !p.markForDeletion);
+            particles.forEach(p => p.draw());
+
+            if (particles.length > 150) particles.splice(0, particles.length - 150);
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

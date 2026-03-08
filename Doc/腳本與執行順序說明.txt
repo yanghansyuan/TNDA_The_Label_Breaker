@@ -4,11 +4,13 @@
 
 以下依「建議執行順序」排列，從收齊作業 → 擷取對話 → 評分 → 彙整與產出。
 
+※ 下方「一鍵步驟 N」= run_all_scripts.bat 的參數 N（例：run_all_scripts.bat 3 只跑步驟 3）。
+
 ----------------------------------------
 【階段一】檢查與收齊 AI 連結
 ----------------------------------------
 
-1. run_check_missing_ai_links.bat
+一鍵步驟 1. run_check_missing_ai_links.bat
    → 執行：check_missing_ai_links.py
    → 做什麼：檢查各學生資料夾是否有「AI對話串網址.docx」或「AI對話串網址.txt」且內容含 AI 連結。會列出「命名正確」「在子資料夾」「需改檔名」「完全沒有」四類，方便催繳或要求學生補交。
    → 依賴：pip install pypdf（有學生交 PDF 時才需）
@@ -17,42 +19,54 @@
 【階段二】擷取 AI 對話內容
 ----------------------------------------
 
-2. run_extract_ai_chat.bat
+・run_extract_ai_chat.bat（單一學生，無對應一鍵步驟）
    → 執行：extract_ai_chat_from_docx.py
-   → 做什麼：從「目前目錄」的「AI對話串網址.docx」讀取連結，抓取對話內容並存成「AI對話內容.txt」。適合單一學生、單一 docx 時手動執行（需先 cd 到該生資料夾，或腳本支援指定路徑時在該處執行）。
+   → 做什麼：從「目前目錄」的「AI對話串網址.docx」讀取連結，抓取對話內容並存成「AI對話內容.txt」。適合單一學生、單一 docx 時手動執行（需先 cd 到該生資料夾）。
 
-3. run_extract_ai_chats_all.bat
+一鍵步驟 2. run_extract_ai_chats_all.bat
    → 執行：batch_extract_ai_chats.py
    → 做什麼：一次處理「學生作業」下所有學生：從各人的 AI 連結檔（docx/txt 等）讀取連結，用瀏覽器開啟並擷取對話，寫入該生資料夾的「AI對話內容.txt」。約 30 人需 15–25 分鐘。
    → 依賴：pip install playwright → playwright install chromium
 
+一鍵步驟 3. analyze_prompt_and_feedback.py ＋ prepare_scoring_for_cursor.py
+   → 做什麼：
+     (1) 掃描各學生資料夾內「已存在」的 AI對話內容.txt，擷取 prompt、統計 token、產出同事評語，寫入 Data\prompt_feedback.json（一鍵時帶 -i 僅處理尚無資料者）。
+     (2) 掃描「有 AI對話內容 但尚無評分表」的學生，產出 Doc\請AI評分_待辦.md，內含已填好名單的完整評分提示詞。
+   → Cursor 串接：執行步驟 3 後，開啟 Doc\請AI評分_待辦.md，依檔內說明在 Composer 中 @ 各生的 AI對話內容.txt 並貼上評分指示，即可一次請 AI 產出所有待評分學生的 評分表 CSV，無需手動輸入評分需求。
+   → 依賴：無（只讀本機 .txt，不從網路擷取）
+
 ----------------------------------------
-【階段三】評分（無自動腳本，需手動或由 AI 評分）
+【階段三】評分（由 AI 或手動產出評分表 CSV）
 ----------------------------------------
 
-  （目前沒有「自動打各自分數」的 script。評分表 CSV 是在 Cursor 對話中由 AI 依 AI對話內容.txt 產出，或手動填寫後存成「{資料夾名}_評分表.csv」。）
+  · 一鍵步驟 3 會產出 Doc\請AI評分_待辦.md：在 Cursor 中開啟該檔，依說明送給 Composer（@ 各生 AI對話內容.txt ＋ 貼上評分指示），AI 即會產出「{資料夾名}_評分表.csv」存到該生資料夾。
+  · 或手動依 Doc\評分用AI提示詞.txt 貼給 AI／手動填寫，存成「{資料夾名}_評分表.csv」。
 
 ----------------------------------------
 【階段四】彙整評分表與產出
 ----------------------------------------
 
-4. run_merge_score_sheets.bat
+一鍵步驟 4. run_merge_score_sheets.bat
    → 執行：merge_score_sheets.py
    → 做什麼：掃描各學生資料夾的「{資料夾名}_評分表.csv」，彙整成一個 Excel「評分表_總表.xlsx」：第一張工作表「總覽」為所有人資料貼在一起（每人前有姓名、中間空一行，標題改為該生平均星等）；其後每生一張工作表，工作表名稱 = 資料夾名稱。
    → 依賴：pip install openpyxl
 
-5. gen_radar_svg.py（無 .bat，請用命令列）
+一鍵步驟 5. gen_radar_svg.py（無 .bat，可透過一鍵步驟 5 或命令列）
    → 做什麼：掃描各學生資料夾的「{資料夾名}_評分表.csv」，依「得分」欄的五維星等產出雷達圖，存成該生資料夾內的「{資料夾名}_雷達圖.svg」。不帶參數即處理所有有評分表的學生；也可指定單一學生：python gen_radar_svg.py "周昱翔_開心" 5 4 4 4 5
    → 依賴：無（純 Python）
 
-6. run_summarize_scores.bat
+一鍵步驟 6. run_summarize_scores.bat
    → 執行：summarize_scores.py
    → 做什麼：一次瀏覽全部學生的評分表，產出「評分總覽報告.txt」（普遍優缺點、高低分差異、可圖表化摘要）、「評分總覽_圖表資料.csv」（各維度平均與 5★／4★ 比例，供 Excel 繪圖）、「評分總覽_各生.csv」（每位學生五維分數與平均，可排序比較）。
    → 依賴：無（純 Python）
 
-7. run_gen_overview_charts.bat
+一鍵步驟 7. build_gallery_data.py（無獨立 .bat，可透過一鍵步驟 7 執行）
+   → 做什麼：掃描各學生資料夾的 final HTML、評分表、雷達圖、文字理念、靈感紙、AI 連結等，並讀取 Data\prompt_feedback.json，產出 Gallery\gallery_data.json、gallery_embedded.js，供藝廊網頁使用。
+   → 依賴：無（純 Python）
+
+一鍵步驟 8. run_gen_overview_charts.bat
    → 執行：gen_overview_charts.py
-   → 做什麼：讀取上述兩個 CSV，產出 PNG 圖表：圖1 各維度平均星等（長條圖）、圖2 各維度得分分布 5★/4★/3★以下（堆疊長條圖）、圖3 各維度 5★ 比例（圓餅圖）、圖4 使用 AI 分布（圓餅圖）、圖5 學生平均分數分布（直方圖）。需先執行 run_summarize_scores.bat。
+   → 做什麼：讀取上述兩個 CSV，產出 PNG 圖表：圖1 各維度平均星等（長條圖）、圖2 各維度得分分布 5★/4★/3★以下（堆疊長條圖）、圖3 各維度 5★ 比例（圓餅圖）、圖4 使用 AI 分布（圓餅圖）、圖5 學生平均分數分布（直方圖）。需先執行步驟 6。
    → 依賴：pip install matplotlib
 
 ----------------------------------------
@@ -86,18 +100,20 @@
 ・執行結束後，本說明檔末尾會自動附加一行「最後一鍵執行：日期 時間」，可由此確認上次完整跑完的時間。
 
 ========================================
-建議執行順序（摘要）
+建議執行順序（摘要）與一鍵步驟對照
 ========================================
 
-  1. run_check_missing_ai_links.bat     （檢查誰還沒交 AI 連結）
-  2. run_extract_ai_chats_all.bat       （一次擷取所有人的 AI 對話）
-  3. （一鍵步驟 3）analyze_prompt_and_feedback.py → 掃描 AI對話內容、統計 prompt/ token、產出同事評語，寫入 Data\prompt_feedback.json，供 build_gallery_data 使用
-  4. （手動或請 AI）為每位學生評分，產出各資料夾的「{名稱}_評分表.csv」
-  5. run_merge_score_sheets.bat         （產生評分表_總表.xlsx）
-  6. python gen_radar_svg.py            （為有評分表的學生產出雷達圖 SVG）
-  7. run_summarize_scores.bat           （產出評分總覽報告與圖表用 CSV，比較全部學生）
-  8. run_gen_overview_charts.bat       （產出評分總覽長條圖、圓餅圖、直方圖 PNG）
-  9. build_gallery_data.py             （產出 Gallery 用 gallery_data.json、gallery_embedded.js；或一鍵用 run_all_scripts.bat 一次跑完 1～8）
+  一鍵步驟 1. run_check_missing_ai_links.bat     （檢查誰還沒交 AI 連結）
+  一鍵步驟 2. run_extract_ai_chats_all.bat       （一次擷取所有人的 AI 對話，約 15–25 分鐘）
+  一鍵步驟 3. analyze_prompt_and_feedback.py     （掃描 AI對話內容.txt、統計 prompt/token、產出同事評語 → Data\prompt_feedback.json；一鍵執行時為 -i 僅處理尚無資料者）
+  （手動）     為每位學生評分，產出各資料夾的「{名稱}_評分表.csv」
+  一鍵步驟 4. run_merge_score_sheets.bat         （產生評分表_總表.xlsx）
+  一鍵步驟 5. gen_radar_svg.py                    （為有評分表的學生產出雷達圖 SVG）
+  一鍵步驟 6. run_summarize_scores.bat            （產出評分總覽報告與圖表用 CSV）
+  一鍵步驟 7. build_gallery_data.py               （產出 Gallery 用 gallery_data.json、gallery_embedded.js）
+  一鍵步驟 8. run_gen_overview_charts.bat        （產出評分總覽長條圖、圓餅圖、直方圖 PNG）
+
+  例：run_all_scripts.bat 3 只跑步驟 3；run_all_scripts.bat 4 8 跑步驟 4～8。
 
 ========================================
 最後一鍵執行：週一 2026/03/02 22:13:11.61 
@@ -130,3 +146,12 @@
 最後一鍵執行（步驟 3-8）：週三 2026/03/04 15:59:11.27 
 最後一鍵執行（步驟 3-8）：週三 2026/03/04 16:13:34.94 
 最後一鍵執行（步驟 3-8）：週三 2026/03/04 16:17:43.00 
+最後一鍵執行（步驟 3-8）：週三 2026/03/04 17:06:14.52 
+ 
+最後一鍵執行（步驟 4-8）：週日 2026/03/08 22:50:05.56 
+ 
+最後一鍵執行（步驟 4-8）：週日 2026/03/08 22:53:25.12 
+ 
+最後一鍵執行（步驟 4-8）：週日 2026/03/08 22:57:31.80 
+ 
+最後一鍵執行（步驟 3-8）：週日 2026/03/08 23:05:50.06 

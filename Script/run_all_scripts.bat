@@ -67,9 +67,13 @@ if %1==2 (
   goto :eof
 )
 if %1==3 (
-  echo [3/8] analyze_prompt_and_feedback.py ...
-  python "%SCRIPT%analyze_prompt_and_feedback.py" > "%DOC%\log_03_analyze_prompt_feedback.txt" 2>&1
+  echo [3/8] analyze_prompt_and_feedback.py （-i 僅處理尚無 prompt 資料的學生）...
+  python "%SCRIPT%analyze_prompt_and_feedback.py" -i > "%DOC%\log_03_analyze_prompt_feedback.txt" 2>&1
+  python "%SCRIPT%prepare_scoring_for_cursor.py" >> "%DOC%\log_03_analyze_prompt_feedback.txt" 2>&1
+  echo [3/8] prepare_scoring_for_cursor.py （產出 Doc\請AI評分_待辦.md，供 Cursor Composer 評分）...
+  python "%SCRIPT%prepare_scoring_for_cursor.py" >> "%DOC%\log_03_analyze_prompt_feedback.txt" 2>&1
   echo   → Doc\log_03_analyze_prompt_feedback.txt
+  echo   → Doc\請AI評分_待辦.md
   echo.
   goto :eof
 )

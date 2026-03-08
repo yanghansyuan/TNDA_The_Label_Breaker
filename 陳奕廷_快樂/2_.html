@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Liquid Glass - Dopamine Edition</title>
+    <style>
+        :root {
+            /* 晴朗天空色系 */
+            --sky-top: #87CEEB; 
+            --sky-bottom: #E0F7FA;
+            --glass-shine: rgba(255, 255, 255, 0.4);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
+        }
+
+        /* 模擬 iOS 液態玻璃的立體反射層 */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(125deg, var(--glass-shine) 0%, transparent 50%, rgba(0,0,0,0.05) 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        canvas {
+            display: block;
+            /* 移除全域模糊，保持物件清晰 */
+            z-index: 5;
+        }
+
+        #instruction {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            color: #1A5276;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 500;
+            letter-spacing: 1px;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instruction">滑動螢幕，感受液態玻璃的快樂扭動</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const PANTONE_COLORS = [
+            '#FFD100', // 115C
+            '#FF671F', // Orange 021C
+            '#FF808B', // Red 0331C
+            '#B4A1D8', // Violet 0631C
+            '#A5D6A7'  // Green 0921C
+        ];
+
+        let particles = [];
+        let backgroundDots = [];
+        let isDrawing = false;
+        let frameCount = 0;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initBackgroundDots();
+        }
+
+        // 初始化像蝴蝶一樣飄動的白點
+        function initBackgroundDots() {
+            backgroundDots = [];
+            for(let i=0; i<30; i++) {
+                backgroundDots.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random()-0.5) * 1,
+                    vy: (Math.random()-0.5) * 1,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class LiquidLine {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                
+                // 4. 線條長度增加到約 5 公分 (約 180px)
+                this.maxLength = 25; 
+                this.points = [];
+                
+                // 5. 線條粗細隨總數增加
+                this.baseWidth = 6 + (particles.length * 0.2); 
+                
+                this.angle = Math.random() * Math.PI * 2;
+                this.waveSpeed = 0.05 + Math.random() * 0.1;
+                this.amplitude = 10 + Math.random() * 10;
+                
+                this.group = null; // 用於儲存吸附後的群組
+                this.groupAngleOffset = 0;
+            }
+
+            update() {
+                if (!this.group) {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // 邊界反彈
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                } else {
+                    // 吸附後的運動邏輯：繞中心點轉動
+                    this.groupAngleOffset += 0.02;
+                    const finalAngle = this.group.baseAngle + this.groupAngleOffset;
+                    this.x = this.group.center.x;
+                    this.y = this.group.center.y;
+                    this.angle = finalAngle;
+                }
+
+                this.points.unshift({ x: this.x, y: this.y });
+                if (this.points.length > this.maxLength) this.points.pop();
+
+                // 檢測吸附邏輯
+                if (!this.group) {
+                    this.checkCollision();
+                }
+            }
+
+            checkCollision() {
+                let nearby = particles.filter(p => p !== this && !p.group && 
+                    Math.hypot(this.x - p.x, this.y - p.y) < 60);
+
+                if (nearby.length >= 2) {
+                    // 湊齊三條線，形成驚喜球
+                    const groupCenter = { x: this.x, y: this.y };
+                    const groupObj = { center: groupCenter, baseAngle: 0 };
+                    
+                    this.group = { ...groupObj, baseAngle: 0 };
+                    nearby[0].group = { ...groupObj, baseAngle: Math.PI * 2 / 3 };
+                    nearby[1].group = { ...groupObj, baseAngle: Math.PI * 4 / 3 };
+                }
+            }
+
+            draw() {
+                ctx.save();
+                // 2. iOS 液態效果：使用高光陰影而非模糊
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowOffsetY = 5;
+
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.baseWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                this.points.forEach((p, i) => {
+                    const wave = Math.sin(frameCount * this.waveSpeed + i * 0.3) * this.amplitude;
+                    // 如果有群組，朝向固定角度
+                    const drawX = p.x + (this.group ? Math.cos(this.angle) * i * 8 : wave);
+                    const drawY = p.y + (this.group ? Math.sin(this.angle) * i * 8 : wave);
+                    
+                    if (i === 0) ctx.moveTo(drawX, drawY);
+                    else ctx.lineTo(drawX, drawY);
+                });
+                ctx.stroke();
+
+                // 加上一點玻璃高光
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                ctx.lineWidth = this.baseWidth / 3;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        function handleInput(e) {
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            if (isDrawing) {
+                // 4. 出現頻率變為原本的三分之一
+                if (frameCount % 3 === 0) {
+                    const color = PANTONE_COLORS[Math.floor(Math.random() * PANTONE_COLORS.length)];
+                    particles.push(new LiquidLine(x, y, color));
+                }
+            }
+            if (particles.length > 60) particles.shift();
+        }
+
+        window.addEventListener('mousedown', () => isDrawing = true);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('mousemove', handleInput);
+        window.addEventListener('touchstart', (e) => { isDrawing = true; });
+        window.addEventListener('touchmove', handleInput);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            // 繪製背景蝴蝶點點
+            backgroundDots.forEach(dot => {
+                dot.x += dot.vx + Math.sin(frameCount * 0.02); // 蝴蝶扇動感
+                dot.y += dot.vy;
+                if (dot.x < 0) dot.x = canvas.width;
+                if (dot.x > canvas.width) dot.x = 0;
+                if (dot.y < 0) dot.y = canvas.height;
+                if (dot.y > canvas.height) dot.y = 0;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 繪製液態線條
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

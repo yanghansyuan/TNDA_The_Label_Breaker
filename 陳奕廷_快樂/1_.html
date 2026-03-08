@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopamine Happiness - Liquid Glass Interaction</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* 背景：PANTONE 534C (深藍) 到 542C (淺藍) */
+            background: linear-gradient(180deg, #1D3557 0%, #7FB3D5 100%);
+        }
+
+        canvas {
+            display: block;
+            filter: blur(4px) contrast(1.2); /* 營造液態融合感的關鍵濾鏡 */
+        }
+
+        #instruction {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: sans-serif;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instruction">點擊並拖曳滑鼠，創造你的快樂多巴胺</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // PANTONE 顏色定義
+        const colors = [
+            '#FFD100', // 115C (Yellow)
+            '#FF671F', // Orange 021C
+            '#FF808B', // Red 0331C (粉紅調紅)
+            '#B4A1D8', // Violet 0631C (修正拼字)
+            '#A5D6A7'  // Green 0921C (粉嫩綠)
+        ];
+
+        let particles = [];
+        let isDrawing = false;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class WaveLine {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.angle = Math.random() * Math.PI * 2;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 4,
+                    y: (Math.random() - 0.5) * 4
+                };
+                this.points = [];
+                this.length = 15 + Math.random() * 10;
+                this.phase = Math.random() * 10;
+                this.frequency = 0.1 + Math.random() * 0.2; // 扭動頻率
+                this.amplitude = 5 + Math.random() * 15;   // 扭動振幅
+                this.isLinked = false;
+                this.linkedTo = [];
+            }
+
+            update() {
+                // 1. 輕飄飄與天馬行空的移動
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.phase += this.frequency;
+
+                // 邊界反彈 (驚喜反彈)
+                if (this.x < 0 || this.x > canvas.width) this.velocity.x *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.velocity.y *= -1;
+
+                // 2. 扭動身體的點位計算
+                this.points.unshift({ x: this.x, y: this.y });
+                if (this.points.length > this.length) this.points.pop();
+
+                // 3. 磁吸驚喜：尋找附近的線條
+                if (!this.isLinked && particles.length > 1) {
+                    particles.forEach(other => {
+                        if (other !== this && !other.isLinked && this.linkedTo.length < 2) {
+                            const dx = this.x - other.x;
+                            const dy = this.y - other.y;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            
+                            if (dist < 50) { // 磁吸距離
+                                this.linkedTo.push(other);
+                                other.isLinked = true;
+                                if (this.linkedTo.length === 2) this.isLinked = true;
+                            }
+                        }
+                    });
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.globalAlpha = 0.8;
+
+                // 繪製波浪線 (不同扭動效果)
+                ctx.beginPath();
+                this.points.forEach((p, i) => {
+                    const offset = Math.sin(this.phase + i * 0.5) * this.amplitude;
+                    if (i === 0) ctx.moveTo(p.x + offset, p.y + offset);
+                    else ctx.lineTo(p.x + offset, p.y + offset);
+                });
+                ctx.stroke();
+
+                // 繪製驚喜球結點
+                if (this.linkedTo.length > 0) {
+                    ctx.beginPath();
+                    this.linkedTo.forEach(other => {
+                        ctx.moveTo(this.x, this.y);
+                        ctx.lineTo(other.x, other.y);
+                    });
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        function handleMove(e) {
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            if (isDrawing) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new WaveLine(x, y, color));
+                
+                // 限制數量維持流暢度
+                if (particles.length > 100) particles.shift();
+            }
+        }
+
+        window.addEventListener('mousedown', () => isDrawing = true);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchstart', (e) => { isDrawing = true; handleMove(e); });
+        window.addEventListener('touchend', () => isDrawing = false);
+        window.addEventListener('touchmove', handleMove);
+
+        function animate() {
+            // 清除畫布，帶有一點透明度以產生殘影感
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 設定為透亮模式
+            ctx.globalCompositeOperation = 'screen';
+
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

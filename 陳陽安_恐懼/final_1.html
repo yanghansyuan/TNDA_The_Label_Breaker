@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Flood Rising</title>
+
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+background:#070b12;
+overflow:hidden;
+height:100vh;
+}
+
+/* ================= SCENE ================= */
+
+.scene{
+position:relative;
+width:100vw;
+height:100vh;
+overflow:hidden;
+}
+
+/* ================= RAIN ================= */
+
+.rainLayer{
+position:absolute;
+width:100%;
+height:100%;
+pointer-events:none;
+}
+
+.drop{
+position:absolute;
+width:2px;
+border-radius:2px;
+animation:rain linear infinite;
+}
+
+.r1{background:#9be7ff;height:25px;opacity:.8;}
+.r2{background:#4fc3f7;height:18px;opacity:.6;}
+.r3{background:#1e88e5;height:12px;opacity:.4;}
+
+@keyframes rain{
+0%{transform:translateY(-100px)}
+100%{transform:translateY(110vh)}
+}
+
+/* ================= FLOOD ================= */
+
+.flood{
+position:absolute;
+bottom:0;
+width:100%;
+height:0%;
+background:#06324c;
+overflow:hidden;
+}
+
+/* ================= WAVES ================= */
+
+.surface{
+position:absolute;
+bottom:0;
+width:100%;
+height:200px;
+pointer-events:none;
+}
+
+.waveBack{
+position:absolute;
+bottom:0;
+width:200%;
+height:200px;
+animation:waveSlide 12s linear infinite;
+z-index:1;
+}
+
+.waveFront{
+position:absolute;
+bottom:0;
+width:200%;
+height:200px;
+animation:waveSlide 9s linear infinite reverse;
+z-index:2;
+}
+
+@keyframes waveSlide{
+0%{transform:translateX(0)}
+100%{transform:translateX(-50%)}
+}
+
+/* ================= BUBBLES ================= */
+
+.bubbleLayer{
+position:absolute;
+bottom:0;
+width:100%;
+height:100%;
+pointer-events:none;
+}
+
+.bubble{
+position:absolute;
+background:rgba(255,255,255,0.7);
+border-radius:50%;
+animation:bubbleRise linear infinite;
+}
+
+@keyframes bubbleRise{
+
+0%{
+transform:translateY(0);
+opacity:0;
+}
+
+10%{opacity:1;}
+
+100%{
+transform:translateY(-500px);
+opacity:0;
+}
+
+}
+
+/* ================= SHAKE ================= */
+
+.shake{
+animation:shakeAnim var(--shakeSpeed,0.2s) infinite;
+}
+
+@keyframes shakeAnim{
+
+0%{transform:translate(0,0)}
+25%{transform:translate(4px,-3px)}
+50%{transform:translate(-4px,2px)}
+75%{transform:translate(3px,3px)}
+100%{transform:translate(-3px,-2px)}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="scene">
+
+<div class="rainLayer" id="rain1"></div>
+<div class="rainLayer" id="rain2"></div>
+<div class="rainLayer" id="rain3"></div>
+
+<div class="flood" id="flood">
+<div class="bubbleLayer" id="bubbles"></div>
+</div>
+
+<div class="surface" id="surface">
+
+<svg class="waveBack" viewBox="0 0 1200 200" preserveAspectRatio="none">
+<path d="M0,100 C150,40 350,160 600,100 C850,40 1050,160 1200,100 L1200,200 L0,200 Z" fill="#2bbcff"/>
+</svg>
+
+<svg class="waveFront" viewBox="0 0 1200 200" preserveAspectRatio="none">
+<path d="M0,120 C200,60 400,180 600,120 C800,60 1000,180 1200,120 L1200,200 L0,200 Z" fill="#06324c"/>
+</svg>
+
+</div>
+
+</div>
+
+<script>
+
+/* ===== RAIN ===== */
+
+function makeRain(layer,count,type){
+
+const el=document.getElementById(layer)
+
+for(let i=0;i<count;i++){
+
+let d=document.createElement("div")
+
+d.className="drop "+type
+
+d.style.left=Math.random()*100+"%"
+d.style.animationDuration=(0.7+Math.random()*0.8)+"s"
+d.style.animationDelay=Math.random()*2+"s"
+
+el.appendChild(d)
+
+}
+
+}
+
+makeRain("rain1",120,"r1")
+makeRain("rain2",90,"r2")
+makeRain("rain3",60,"r3")
+
+/* ===== FLOOD RISE ===== */
+
+const flood=document.getElementById("flood")
+const surface=document.getElementById("surface")
+
+let start=null
+let duration=30000
+let draining=false
+
+function animateFlood(t){
+
+if(draining) return
+
+if(!start) start=t
+
+let progress=(t-start)/duration
+if(progress>1) progress=1
+
+let height=progress*80
+
+flood.style.height=height+"%"
+surface.style.bottom=height+"%"
+
+requestAnimationFrame(animateFlood)
+
+}
+
+requestAnimationFrame(animateFlood)
+
+/* ===== BUBBLES ===== */
+
+function makeBubble(){
+
+const layer=document.getElementById("bubbles")
+
+let b=document.createElement("div")
+b.className="bubble"
+
+let size=3+Math.random()*7
+
+b.style.width=size+"px"
+b.style.height=size+"px"
+
+b.style.left=Math.random()*100+"%"
+b.style.bottom=Math.random()*40+"px"
+
+b.style.animationDuration=(3+Math.random()*4)+"s"
+
+layer.appendChild(b)
+
+setTimeout(()=>b.remove(),7000)
+
+}
+
+setInterval(makeBubble,180)
+
+/* ===== LONG PRESS SYSTEM ===== */
+
+const waveFront=document.querySelector(".waveFront")
+const waveBack=document.querySelector(".waveBack")
+
+let holding=false
+let holdStart=0
+let shakeSpeed=0.25
+
+function isMouseInWater(e){
+
+let floodHeightPercent=parseFloat(flood.style.height)||0
+let floodPx=window.innerHeight*(floodHeightPercent/100)
+
+let waterTop=window.innerHeight-floodPx-200
+
+return e.clientY>waterTop
+
+}
+
+document.addEventListener("mousedown",e=>{
+
+if(!isMouseInWater(e)) return
+
+holding=true
+holdStart=Date.now()
+
+document.body.style.transform="scale(0.99)"
+document.body.classList.add("shake")
+
+})
+
+document.addEventListener("mouseup",()=>{
+
+holding=false
+
+document.body.style.transform="scale(1)"
+document.body.classList.remove("shake")
+
+})
+
+/* ===== HOLD LOOP ===== */
+
+function holdLoop(){
+
+if(holding){
+
+let t=(Date.now()-holdStart)/1000
+
+shakeSpeed=Math.max(0.05,0.25-(t*0.04))
+document.body.style.setProperty("--shakeSpeed",shakeSpeed+"s")
+
+if(t>5 && !draining){
+
+startDrain()
+
+}
+
+}
+
+requestAnimationFrame(holdLoop)
+
+}
+
+holdLoop()
+
+/* ===== WAVE SHAKE ===== */
+
+let waveTime=0
+
+function waveShake(){
+
+waveTime+=0.1
+
+if(holding){
+
+let t=(Date.now()-holdStart)/1000
+
+let amp=2 + t*6
+
+let offset=Math.sin(waveTime*8)*amp
+
+waveFront.style.transform=`translateX(0) translateY(${offset}px)`
+waveBack.style.transform=`translateX(0) translateY(${offset*0.6}px)`
+
+}else{
+
+waveFront.style.transform=""
+waveBack.style.transform=""
+
+}
+
+requestAnimationFrame(waveShake)
+
+}
+
+waveShake()
+
+/* ===== DRAIN WATER ===== */
+
+function startDrain(){
+
+draining=true
+
+let startHeight=parseFloat(flood.style.height)||0
+let startTime=null
+let duration=2000
+
+function drain(t){
+
+if(!startTime) startTime=t
+
+let p=(t-startTime)/duration
+if(p>1) p=1
+
+let h=startHeight*(1-p)
+
+flood.style.height=h+"%"
+surface.style.bottom=h+"%"
+
+if(p<1){
+
+requestAnimationFrame(drain)
+
+}else{
+
+restartFlood()
+
+}
+
+}
+
+requestAnimationFrame(drain)
+
+}
+
+/* ===== RESTART ===== */
+
+function restartFlood(){
+
+draining=false
+start=null
+
+requestAnimationFrame(animateFlood)
+
+}
+
+</script>
+
+</body>
+</html>
