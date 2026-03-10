@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bubble Cup</title>
+
+<style>
+
+body{
+margin:0;
+overflow:hidden;
+background:#eef4f7;
+}
+
+canvas{
+display:block;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let bubbles = [];
+
+function resize(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+
+// 建立泡泡
+function createBubble(x,y){
+
+bubbles.push({
+x:x,
+y:y,
+r:10 + Math.random()*20,
+speed:(Math.random()*0.5+0.2),
+offset:Math.random()*1000
+});
+
+}
+
+
+// 初始泡泡
+for(let i=0;i<30;i++){
+
+createBubble(
+Math.random()*canvas.width,
+Math.random()*canvas.height
+);
+
+}
+
+
+// 點擊互動
+canvas.addEventListener("mousedown",function(e){
+
+let mx = e.clientX;
+let my = e.clientY;
+
+let hit = false;
+
+for(let i=0;i<bubbles.length;i++){
+
+let b = bubbles[i];
+let dx = mx - b.x;
+let dy = my - b.y;
+
+if(Math.sqrt(dx*dx+dy*dy) < b.r){
+
+bubbles.splice(i,1);
+hit = true;
+break;
+
+}
+
+}
+
+if(!hit){
+
+createBubble(mx,my);
+
+}
+
+});
+
+
+
+function drawCup(){
+
+let w = canvas.width;
+let h = canvas.height;
+
+ctx.strokeStyle="black";
+ctx.lineWidth=4;
+
+ctx.beginPath();
+ctx.moveTo(w*0.2,h*0.1);
+ctx.lineTo(w*0.8,h*0.1);
+ctx.lineTo(w*0.9,h*0.9);
+ctx.lineTo(w*0.1,h*0.9);
+ctx.closePath();
+ctx.stroke();
+
+}
+
+
+
+function drawBubbles(){
+
+for(let b of bubbles){
+
+// 上下慢慢漂
+b.y -= b.speed;
+
+b.x += Math.sin(Date.now()*0.001 + b.offset)*0.1;
+
+if(b.y < 0){
+b.y = canvas.height;
+}
+
+ctx.beginPath();
+ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+ctx.strokeStyle="#5aa9e6";
+ctx.lineWidth=2;
+ctx.stroke();
+
+}
+
+}
+
+
+
+function animate(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+drawCup();
+
+drawBubbles();
+
+requestAnimationFrame(animate);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>

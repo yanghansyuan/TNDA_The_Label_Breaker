@@ -3,6 +3,9 @@
 掃描各學生資料夾內的「AI對話內容.txt」，擷取使用者的發言（prompt）、
 統計 prompt 數與約略 token 數，並依得分與 prompt 使用風格撰寫個人化評語，
 結果寫入 Data/prompt_feedback.json，供 build_gallery_data 併入藝廊資料。
+
+可選參數：傳入一個學生資料夾名稱（例如 胡珮晴_平靜）則只處理該生，
+並會先載入既有 prompt_feedback.json、只更新該生後寫回。
 """
 import csv
 import json
@@ -343,11 +346,55 @@ def generate_colleague_comment(student_name, prompt_count, token_count, avg_star
 
 def main():
     os.makedirs(DATA_DIR, exist_ok=True)
-    feedback = {}
     scores_by_student = load_scores_from_csv()
+    feedback_path = os.path.join(DATA_DIR, "prompt_feedback.json")
 
-    for name in iter_student_folders():
+    # 解析參數：--incremental / -i；或單一學生資料夾名稱
+    args = [a for a in sys.argv[1:] if a and not a.startswith("-")]
+    incremental = "--incremental" in sys.argv or "-i" in sys.argv
+    single_student = args[0].strip() if args else None
+
+    # 若指定單一學生，解析為資料夾名稱（支援只傳名稱或相對/絕對路徑）
+    if single_student:
+        name_cand = single_student.replace("\\", "/").strip()
+        if os.path.isdir(name_cand):
+            single_student = os.path.basename(os.path.normpath(name_cand))
+        else:
+            under_base = os.path.join(BASE_DIR, name_cand)
+            if os.path.isdir(under_base):
+                single_student = os.path.basename(os.path.normpath(under_base))
+            else:
+                print(f"  錯誤：找不到學生資料夾「{single_student}」。")
+                sys.exit(1)
+        # 只處理該生時先載入既有 JSON，只更新這一筆
+        feedback = {}
+        if os.path.isfile(feedback_path):
+            try:
+                with open(feedback_path, "r", encoding="utf-8") as f:
+                    feedback = json.load(f)
+            except Exception:
+                pass
+        student_list = [single_student]
+        print(f"  僅處理 1 位學生：{single_student}")
+    else:
+        feedback = {}
+        if incremental and os.path.isfile(feedback_path):
+            try:
+                with open(feedback_path, "r", encoding="utf-8") as f:
+                    feedback = json.load(f)
+            except Exception:
+                feedback = {}
+            if feedback:
+                print("（incremental 模式：已載入既有 prompt_feedback.json，僅處理尚無 prompt 資料的學生）")
+        student_list = list(iter_student_folders())
+
+    for name in student_list:
         folder = os.path.join(BASE_DIR, name)
+        if not os.path.isdir(folder):
+            continue
+        if incremental and not single_student and feedback.get(name, {}).get("promptCount", 0) > 0:
+            print(f"  {name}: 已有資料，略過")
+            continue
         text = _read_ai_chat_file(folder)
         score_info = scores_by_student.get(name, {})
 
@@ -386,10 +433,9 @@ def main():
         }
         print(f"  {name}: {len(prompts)} 個 prompt，約 {token_count} token")
 
-    out_path = os.path.join(DATA_DIR, "prompt_feedback.json")
-    with open(out_path, "w", encoding="utf-8") as f:
+    with open(feedback_path, "w", encoding="utf-8") as f:
         json.dump(feedback, f, ensure_ascii=False, indent=2)
-    print(f"\n已寫入 {out_path}，共 {len(feedback)} 位學生。")
+    print(f"\n已寫入 {feedback_path}，共 {len(feedback)} 位學生。")
 
 
 if __name__ == "__main__":

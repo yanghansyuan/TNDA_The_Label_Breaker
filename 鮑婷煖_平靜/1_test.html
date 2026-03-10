@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Calm Rain</title>
+
+<style>
+html, body{
+margin:0;
+padding:0;
+overflow:hidden;
+background:#e9eef2;
+}
+
+canvas{
+display:block;
+}
+</style>
+
+</head>
+
+<body>
+
+<canvas id="rainCanvas"></canvas>
+
+<script>
+
+const canvas = document.getElementById("rainCanvas");
+const ctx = canvas.getContext("2d");
+
+let width;
+let height;
+
+function resize(){
+width = canvas.width = window.innerWidth;
+height = canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+
+// 雨滴
+let drops = [];
+
+for(let i=0;i<120;i++){
+drops.push({
+x:Math.random()*width,
+y:Math.random()*height,
+speed:2+Math.random()*3,
+size:2+Math.random()*2
+});
+}
+
+
+// 水波紋
+let ripples = [];
+
+canvas.addEventListener("mousedown", function(e){
+
+ripples.push({
+x:e.clientX,
+y:e.clientY,
+r:0,
+alpha:0.6
+});
+
+});
+
+function drawGround(){
+
+ctx.fillStyle="black";
+
+ctx.beginPath();
+
+ctx.moveTo(0,height);
+
+ctx.quadraticCurveTo(width/2,height-150,width,height);
+
+ctx.lineTo(width,height);
+ctx.lineTo(0,height);
+
+ctx.fill();
+
+}
+
+
+function drawRain(){
+
+ctx.fillStyle="#4a90e2";
+
+for(let d of drops){
+
+ctx.beginPath();
+ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
+ctx.fill();
+
+d.y+=d.speed;
+
+if(d.y>height){
+d.y=0;
+d.x=Math.random()*width;
+}
+
+}
+
+}
+
+
+function drawRipples(){
+
+for(let i=0;i<ripples.length;i++){
+
+let r = ripples[i];
+
+ctx.strokeStyle="rgba(70,120,200,"+r.alpha+")";
+
+ctx.beginPath();
+ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+ctx.stroke();
+
+r.r+=2;
+r.alpha-=0.01;
+
+if(r.alpha<=0){
+ripples.splice(i,1);
+i--;
+}
+
+}
+
+}
+
+
+function animate(){
+
+ctx.clearRect(0,0,width,height);
+
+drawRain();
+
+drawGround();
+
+drawRipples();
+
+requestAnimationFrame(animate);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>

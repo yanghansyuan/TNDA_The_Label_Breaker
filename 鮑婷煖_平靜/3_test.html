@@ -1,0 +1,249 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Healing Bubble Cup</title>
+
+<style>
+
+body{
+margin:0;
+overflow:hidden;
+background:#edf4f8;
+}
+
+canvas{
+display:block;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let bubbles = [];
+let particles = [];
+
+function resize(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+
+// 杯子範圍
+function cupBounds(){
+
+let w = canvas.width;
+let h = canvas.height;
+
+return {
+left:w*0.25,
+right:w*0.75,
+top:h*0.18,
+bottom:h*0.88
+};
+
+}
+
+
+// 產生泡泡
+function createBubble(x,y){
+
+let c = cupBounds();
+
+bubbles.push({
+x:x,
+y:y,
+r:6 + Math.random()*14,
+speed:0.15 + Math.random()*0.25,
+offset:Math.random()*1000
+});
+
+}
+
+
+// 初始泡泡（密集）
+for(let i=0;i<80;i++){
+
+let c = cupBounds();
+
+createBubble(
+Math.random()*(c.right-c.left)+c.left,
+Math.random()*(c.bottom-c.top)+c.top
+);
+
+}
+
+
+// 點擊互動
+canvas.addEventListener("mousedown",function(e){
+
+let mx = e.clientX;
+let my = e.clientY;
+
+let hit = false;
+
+for(let i=0;i<bubbles.length;i++){
+
+let b = bubbles[i];
+let dx = mx-b.x;
+let dy = my-b.y;
+
+if(Math.sqrt(dx*dx+dy*dy) < b.r){
+
+// 破裂粒子
+for(let j=0;j<10;j++){
+
+particles.push({
+x:b.x,
+y:b.y,
+vx:(Math.random()-0.5)*2,
+vy:(Math.random()-0.5)*2,
+life:40
+});
+
+}
+
+bubbles.splice(i,1);
+hit = true;
+break;
+
+}
+
+}
+
+if(!hit){
+
+createBubble(mx,my);
+
+}
+
+});
+
+
+
+// 畫杯子
+function drawCup(){
+
+let w = canvas.width;
+let h = canvas.height;
+
+ctx.strokeStyle="#222";
+ctx.lineWidth=4;
+
+ctx.beginPath();
+ctx.moveTo(w*0.25,h*0.15);
+ctx.quadraticCurveTo(w*0.5,h*0.05,w*0.75,h*0.15);
+ctx.lineTo(w*0.85,h*0.9);
+ctx.lineTo(w*0.15,h*0.9);
+ctx.closePath();
+
+ctx.stroke();
+
+}
+
+
+// 畫水
+function drawWater(){
+
+let c = cupBounds();
+
+let gradient = ctx.createLinearGradient(0,c.top,0,c.bottom);
+
+gradient.addColorStop(0,"rgba(120,180,220,0.25)");
+gradient.addColorStop(1,"rgba(80,150,200,0.35)");
+
+ctx.fillStyle = gradient;
+
+ctx.fillRect(c.left,c.top,c.right-c.left,c.bottom-c.top);
+
+}
+
+
+// 畫氣泡
+function drawBubbles(){
+
+let c = cupBounds();
+
+for(let b of bubbles){
+
+b.y -= b.speed;
+
+b.x += Math.sin(Date.now()*0.001 + b.offset)*0.2;
+
+if(b.y < c.top){
+b.y = c.bottom;
+}
+
+ctx.beginPath();
+ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+
+ctx.strokeStyle="rgba(90,170,230,0.9)";
+ctx.lineWidth=2;
+ctx.stroke();
+
+}
+
+}
+
+
+// 粒子（破裂效果）
+function drawParticles(){
+
+for(let i=0;i<particles.length;i++){
+
+let p = particles[i];
+
+p.x += p.vx;
+p.y += p.vy;
+
+p.life--;
+
+ctx.beginPath();
+ctx.arc(p.x,p.y,2,0,Math.PI*2);
+ctx.fillStyle="rgba(180,220,255,0.8)";
+ctx.fill();
+
+if(p.life<=0){
+particles.splice(i,1);
+i--;
+}
+
+}
+
+}
+
+
+
+function animate(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+drawWater();
+drawCup();
+drawBubbles();
+drawParticles();
+
+requestAnimationFrame(animate);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
+```

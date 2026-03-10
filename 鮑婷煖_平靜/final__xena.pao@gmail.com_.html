@@ -1,0 +1,373 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Calm Water</title>
+
+<style>
+body{
+margin:0;
+overflow:hidden;
+background:linear-gradient(#dfeff6,#b8d8ea);
+}
+
+canvas{
+display:block;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let bubbles = [];
+let particles = [];
+let waves = [];
+let vortexes = [];
+let currents = [];
+
+function resize(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+
+// 建立泡泡
+function createBubble(x,y){
+
+bubbles.push({
+x:x,
+y:y,
+r:8 + Math.random()*18,
+speed:0.1 + Math.random()*0.2,
+offset:Math.random()*1000
+});
+
+}
+
+
+// 初始泡泡
+for(let i=0;i<90;i++){
+
+createBubble(
+Math.random()*canvas.width,
+Math.random()*canvas.height
+);
+
+}
+
+
+// 左鍵（保持不變）
+canvas.addEventListener("mousedown",function(e){
+
+if(e.button !== 0) return;
+
+let mx = e.clientX;
+let my = e.clientY;
+
+let hit = false;
+
+for(let i=0;i<bubbles.length;i++){
+
+let b = bubbles[i];
+let dx = mx-b.x;
+let dy = my-b.y;
+
+if(Math.sqrt(dx*dx+dy*dy) < b.r){
+
+for(let j=0;j<14;j++){
+
+particles.push({
+x:b.x,
+y:b.y,
+vx:(Math.random()-0.5)*3,
+vy:(Math.random()-0.5)*3,
+life:40
+});
+
+}
+
+bubbles.splice(i,1);
+hit=true;
+break;
+
+}
+
+}
+
+if(!hit){
+createBubble(mx,my);
+}
+
+waves.push({
+x:mx,
+y:my,
+r:0,
+alpha:0.4
+});
+
+});
+
+
+// 右鍵（保持不變）
+canvas.addEventListener("contextmenu",function(e){
+
+e.preventDefault();
+
+let mx = e.clientX;
+let my = e.clientY;
+
+vortexes.push({
+x:mx,
+y:my,
+life:180
+});
+
+waves.push({
+x:mx,
+y:my,
+r:0,
+alpha:0.6
+});
+
+});
+
+
+// 中鍵（水流推動）
+canvas.addEventListener("mousedown",function(e){
+
+if(e.button !== 1) return;
+
+let mx = e.clientX;
+let my = e.clientY;
+
+currents.push({
+x:mx,
+y:my,
+strength:3,
+life:120
+});
+
+waves.push({
+x:mx,
+y:my,
+r:0,
+alpha:0.5
+});
+
+});
+
+
+
+
+// 水波
+function drawWaves(){
+
+for(let i=0;i<waves.length;i++){
+
+let w = waves[i];
+
+ctx.beginPath();
+ctx.arc(w.x,w.y,w.r,0,Math.PI*2);
+ctx.strokeStyle="rgba(255,255,255,"+w.alpha+")";
+ctx.lineWidth=2;
+ctx.stroke();
+
+w.r += 1.5;
+w.alpha -= 0.005;
+
+if(w.alpha<=0){
+waves.splice(i,1);
+i--;
+}
+
+}
+
+}
+
+
+// 漩渦
+function updateVortex(){
+
+for(let v of vortexes){
+
+for(let b of bubbles){
+
+let dx = v.x - b.x;
+let dy = v.y - b.y;
+
+let dist = Math.sqrt(dx*dx + dy*dy);
+
+if(dist < 200){
+
+let angle = Math.atan2(dy,dx) + Math.PI/2;
+
+b.x += Math.cos(angle)*0.5;
+b.y += Math.sin(angle)*0.5;
+
+}
+
+}
+
+v.life--;
+
+}
+
+vortexes = vortexes.filter(v => v.life>0);
+
+}
+
+
+
+// 水流推動
+function updateCurrents(){
+
+for(let c of currents){
+
+for(let b of bubbles){
+
+let dx = b.x - c.x;
+let dy = b.y - c.y;
+
+let dist = Math.sqrt(dx*dx+dy*dy);
+
+if(dist < 220){
+
+let force = (220-dist)/220;
+
+b.x += dx/dist * force * 2;
+b.y += dy/dist * force * 2;
+
+}
+
+}
+
+c.life--;
+
+}
+
+currents = currents.filter(c=>c.life>0);
+
+}
+
+
+
+// 泡泡
+function drawBubbles(){
+
+for(let b of bubbles){
+
+b.y -= b.speed;
+
+b.x += Math.sin(Date.now()*0.001 + b.offset)*0.3;
+
+if(b.y < -20){
+b.y = canvas.height+20;
+}
+
+let grad = ctx.createRadialGradient(
+b.x-b.r*0.3,
+b.y-b.r*0.3,
+b.r*0.2,
+b.x,
+b.y,
+b.r
+);
+
+grad.addColorStop(0,"rgba(255,255,255,0.7)");
+grad.addColorStop(0.5,"rgba(180,220,255,0.25)");
+grad.addColorStop(1,"rgba(150,200,255,0.1)");
+
+ctx.beginPath();
+ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+ctx.fillStyle=grad;
+ctx.fill();
+
+ctx.strokeStyle="rgba(255,255,255,0.6)";
+ctx.lineWidth=1;
+ctx.stroke();
+
+}
+
+}
+
+
+// 粒子
+function drawParticles(){
+
+for(let i=0;i<particles.length;i++){
+
+let p = particles[i];
+
+p.x += p.vx;
+p.y += p.vy;
+
+p.life--;
+
+ctx.beginPath();
+ctx.arc(p.x,p.y,2,0,Math.PI*2);
+ctx.fillStyle="rgba(255,255,255,0.7)";
+ctx.fill();
+
+if(p.life<=0){
+particles.splice(i,1);
+i--;
+}
+
+}
+
+}
+
+
+// 微水流
+function drawWaterFlow(){
+
+let t = Date.now()*0.0005;
+
+ctx.fillStyle="rgba(255,255,255,0.03)";
+
+for(let i=0;i<20;i++){
+
+let y = Math.sin(t+i)*40 + i*80;
+
+ctx.fillRect(0,y,canvas.width,2);
+
+}
+
+}
+
+
+
+function animate(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+updateVortex();
+updateCurrents();
+
+drawWaterFlow();
+drawBubbles();
+drawParticles();
+drawWaves();
+
+requestAnimationFrame(animate);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
+```
