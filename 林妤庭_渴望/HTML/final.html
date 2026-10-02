@@ -372,6 +372,10 @@
    let isPlungerDragging = false;
    let power = 0;
    let selectedMarbleId = null;
+   let galleryDemoActive = false;
+   let galleryDemoSnapshot = null;
+   let galleryDemoEpoch = 0;
+   let galleryDemoMarble = null;
 
    window.onload = () => {
        // 設定日期格式為阿拉伯數字
@@ -389,6 +393,7 @@
    };
 
    function save() {
+       if (galleryDemoActive) return;
        localStorage.setItem('tw_pinball_v2', JSON.stringify(marbles));
    }
 
@@ -504,8 +509,10 @@
        const el = document.getElementById(`marble-${id}`);
        if (!el) return;
        el.classList.add('is-launching');
+       const launchEpoch = galleryDemoEpoch;
       
        setTimeout(() => {
+           if (launchEpoch !== galleryDemoEpoch) return;
            const m = marbles.find(item => item.id === id);
            if (m) {
                m.completed = true;
@@ -518,6 +525,56 @@
    }
 
    // 彈珠拖曳功能
+   // Exhibition-only marbles stay in memory and never touch the visitor's diary.
+   window.galleryDemo = {
+       start() {
+           if (galleryDemoActive) return;
+           galleryDemoSnapshot = { marbles, selectedMarbleId,
+               text: document.getElementById('diaryInput').value,
+               category: document.getElementById('categoryInput').value };
+           galleryDemoActive = true;
+           galleryDemoEpoch++;
+           marbles = [];
+           galleryDemoMarble = null;
+           selectedMarbleId = null;
+           renderStage();
+       },
+       tick() {
+           if (!galleryDemoActive) return;
+           if (galleryDemoMarble) {
+               plunger.style.transition = 'top 0.15s ease-out';
+               plunger.style.top = '0px';
+               launchMarble(galleryDemoMarble.id, 130);
+               galleryDemoMarble = null;
+               return;
+           }
+           marbles = marbles.filter(m => !m.completed);
+           document.getElementById('diaryInput').value = '展演示範：讓願望出發';
+           const input = document.getElementById('categoryInput');
+           input.selectedIndex = Math.floor(Math.random() * input.options.length);
+           storeMarble();
+           const marble = marbles[marbles.length - 1];
+           if (marble) {
+               selectMarble(marble.id);
+               plunger.style.transition = 'top 0.5s ease-in';
+               plunger.style.top = '130px';
+               galleryDemoMarble = marble;
+           }
+       },
+       stop() {
+           if (!galleryDemoActive) return;
+           galleryDemoEpoch++;
+           galleryDemoActive = false;
+           marbles = galleryDemoSnapshot.marbles;
+           selectedMarbleId = galleryDemoSnapshot.selectedMarbleId;
+           document.getElementById('diaryInput').value = galleryDemoSnapshot.text;
+           document.getElementById('categoryInput').value = galleryDemoSnapshot.category;
+           plunger.style.top = '0px';
+           renderStage();
+           galleryDemoSnapshot = null;
+       }
+   };
+
    function makeDraggable(el, id) {
        let offsetX = 0, offsetY = 0;
        const onMouseDown = (e) => {

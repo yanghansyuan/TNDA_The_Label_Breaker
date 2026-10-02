@@ -94,6 +94,7 @@
     /* 展演模式：僅顯示 HTML 預覽，無邊框按鈕標題，網格緊密貼合（上方 menu 保留） */
     body.showcase-mode .card-header,
     body.showcase-mode .card-actions { display: none !important; }
+    body.showcase-mode > header { backdrop-filter: none; }
     body.showcase-mode .card {
       border: none;
       border-radius: 0;
@@ -575,6 +576,11 @@
         <input type="checkbox" id="showcaseMode" />
         展演模式
       </label>
+      <label class="toolbar showcase-check" style="margin-left: 0.5rem;" title="在展演模式自動操作所有展示中的作品；取消勾選即可恢復手動互動。音訊仍受瀏覽器播放權限限制。">
+        <input type="checkbox" id="showcaseAutoplay" disabled />
+        全體自動播放
+      </label>
+      <span id="showcaseAutoplayStatus" role="status" style="font-size: 0.85rem;"></span>
       <div class="showcase-size-wrap" id="showcaseSizeWrap">
         <label for="showcaseCellSize">網格大小</label>
         <input type="range" id="showcaseCellSize" min="120" max="600" value="340" step="10" />
@@ -644,6 +650,7 @@
   </div>
 
   <script src="gallery_embedded.js"></script>
+  <script src="gallery_autoplay.js"></script>
   <script>
     (function () {
       const data = window.GALLERY_DATA;
@@ -747,6 +754,7 @@
 
       function renderGrid() {
         const grid = document.getElementById("grid");
+        window.GalleryAutoplay.clear();
         grid.innerHTML = "";
         const anyEmotionSelected = Object.keys(emotionState).some(function (e) { return emotionState[e]; });
         const showAllEmotion = !anyEmotionSelected;
@@ -801,7 +809,8 @@
           const preview = document.createElement("div");
           preview.className = "card-preview";
           const iframe = document.createElement("iframe");
-          iframe.src = relPath(entry.finalHtmlRel);
+          window.GalleryAutoplay.attach(iframe, entry);
+          if (show) iframe.src = relPath(entry.finalHtmlRel);
           iframe.title = entry.studentName + " - " + (entry.emotion || "");
           preview.appendChild(iframe);
           card.appendChild(preview);
@@ -1242,10 +1251,18 @@
         renderGrid();
       });
       var showcaseModeEl = document.getElementById("showcaseMode");
+      var showcaseAutoplayEl = document.getElementById("showcaseAutoplay");
+      window.GalleryAutoplay.setStatusElement(document.getElementById("showcaseAutoplayStatus"));
+      showcaseAutoplayEl.addEventListener("change", function () {
+        window.GalleryAutoplay.setActive(showcaseModeEl.checked && this.checked);
+      });
       var showcaseSizeEl = document.getElementById("showcaseCellSize");
       var showcaseSizeLabelEl = document.getElementById("showcaseCellSizeLabel");
       showcaseModeEl.addEventListener("change", function () {
         document.body.classList.toggle("showcase-mode", this.checked);
+        showcaseAutoplayEl.disabled = !this.checked;
+        if (!this.checked) showcaseAutoplayEl.checked = false;
+        window.GalleryAutoplay.setActive(this.checked && showcaseAutoplayEl.checked);
       });
       function updateShowcaseSize() {
         var px = showcaseSizeEl.value;

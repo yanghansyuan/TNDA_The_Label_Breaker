@@ -78,7 +78,8 @@
   // Mouse interaction (left button)
   canvas.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    canvas.setPointerCapture(e.pointerId);
+    // Synthetic exhibition gestures have no native pointer to capture.
+    if (e.isTrusted) canvas.setPointerCapture(e.pointerId);
     pointer.down = true;
     const {x,y} = toCanvas(e.clientX, e.clientY);
     pointer.x = x; pointer.y = y;
